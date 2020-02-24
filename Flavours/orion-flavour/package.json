@@ -10,7 +10,7 @@
   "author": "Juan Andrés Sánchez Segado (jasanchez@odins.es)",
   "license": "MIT",
   "dependencies": {
-    "axios": "^0.18.0",
+    "axios": "^0.18.1",
     "http": "0.0.0",
     "mqtt": "^2.18.8"
   },

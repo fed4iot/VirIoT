@@ -1,0 +1,22 @@
+python3 f4i.py add-flavour -c http://127.0.0.1:8090 -f mqtt-f -d "silo with a Mosquitto broker" -s "" -y "/home/andrea/yaml_MC/flavours-raw-mqtt.yaml"
+
+--------------------
+
+python3 f4i.py create-vsilo -c http://127.0.0.1:8090 -t tenant1 -f mqtt-f -s Silo1
+
+-------------------
+
+python3 f4i.py add-thingvisor -c http://127.0.0.1:8090 -n EGM-Abbass -d "OneM2M data from EGM Abbass sensor" -p "{'CSEurl':'https://fed4iot.eglobalmark.com','origin':'Superman', 'poaPort':'8089','cntArn':'Abbas123456/humidity/value','poaIP':'127.0.0.1','vThingName':'EGM-Abbas123456-humidity','vThingDescription':'OneM2M humidity data from EGM Abbass sensor'}" -y "/home/andrea/yaml_MC/thingVisor-oneM2M.yaml"
+
+or
+
+python3 f4i.py add-thingvisor -c http://127.0.0.1:8090 -n weather -p "{'cities':['Rome', 'Tokyo','Murcia','Grasse','Heidelberg'], 'rate':60}" -d "Weather ThingVisor" -y "/home/andrea/yaml_MC/thingVisor-weather.yaml"
+
+or
+
+...
+
+--------------------
+
+python3 f4i.py add-vthing -c http://127.0.0.1:8090 -t tenant1 -s Silo1 -v EGM-Abbass/EGM-Abbas123456-humidity
+

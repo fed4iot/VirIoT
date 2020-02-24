@@ -1,0 +1,956 @@
+{
+	"info": {
+		"_postman_id": "dabdd905-0158-4828-a6bd-0434d8d64198",
+		"name": "fed4iot",
+		"description": "commands for fed4iot virtualization framework",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "siloCreate",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"vSiloName\":\"Silo1\",\n\t\"tenantID\":\"tenant1\",\n\t\"flavourID\":\"Mobius-pub-sub\",\n\t\"debug_mode\" : false\n}"
+				},
+				"url": {
+					"raw": "127.0.0.1:8090/siloCreate",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8090",
+					"path": [
+						"siloCreate"
+					]
+				},
+				"description": "Create an IoT Virtual Silo"
+			},
+			"response": []
+		},
+		{
+			"name": "siloDestroy",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"tenantID\":\"tenant1\",\n\t\"vSiloName\":\"Silo1\"\n}"
+				},
+				"url": {
+					"raw": "127.0.0.1:8090/siloDestroy",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8090",
+					"path": [
+						"siloDestroy"
+					]
+				},
+				"description": "Delete an IoT Virtual Silo"
+			},
+			"response": []
+		},
+		{
+			"name": "addVThing",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"tenantID\":\"tenant1\",\n\t\"vSiloID\":\"Silo1\",\n\t\"vThingID\": \"helloWorld/hello\"\n}"
+				},
+				"url": {
+					"raw": "127.0.0.1:8090/addVThing",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8090",
+					"path": [
+						"addVThing"
+					]
+				},
+				"description": "Add vThing"
+			},
+			"response": []
+		},
+		{
+			"name": "deleteVThing",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"tenantID\":\"tenant1\",\n\t\"vSiloID\":\"Silo1\",\n\t\"vThingID\": \"helloWorld/hello\"\n}"
+				},
+				"url": {
+					"raw": "127.0.0.1:8090/deleteVThing",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8090",
+					"path": [
+						"deleteVThing"
+					]
+				},
+				"description": "Delete vThing"
+			},
+			"response": []
+		},
+		{
+			"name": "addThingVisor",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"description\": \"hello thingVisor\",\n    \"imageName\": \"fed4iot/helloworld-tv:2.1\",\n    \"thingVisorID\": \"helloWorld\",\n    \"params\": \"\",\n\t\"debug_mode\" : false\n}"
+				},
+				"url": {
+					"raw": "127.0.0.1:8090/addThingVisor",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8090",
+					"path": [
+						"addThingVisor"
+					]
+				},
+				"description": "add virtual Thing Visor"
+			},
+			"response": []
+		},
+		{
+			"name": "deleteThingVisor",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"thingVisorID\":\"helloWorld\"\n}"
+				},
+				"url": {
+					"raw": "127.0.0.1:8090/deleteThingVisor",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8090",
+					"path": [
+						"deleteThingVisor"
+					]
+				},
+				"description": "delete virtual Thing Visor"
+			},
+			"response": []
+		},
+		{
+			"name": "addFlavour",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"flavourDescription\": \"IoT slice formed by an oneM2M Mobius broker\",\n    \"imageName\": \"fed4iot/mobius-base-f:2.1\",\n    \"flavourID\": \"Mobius-base-f\",\n    \"flavourParams\": \"Mobius\"\n}"
+				},
+				"url": {
+					"raw": "127.0.0.1:8090/addFlavour",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8090",
+					"path": [
+						"addFlavour"
+					]
+				},
+				"description": "add a slice Flavour to the system"
+			},
+			"response": []
+		},
+		{
+			"name": "deleteFlavour",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"flavourID\":\"Mobius-base-f\"\n}"
+				},
+				"url": {
+					"raw": "127.0.0.1:8090/deleteFlavour",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8090",
+					"path": [
+						"deleteFlavour"
+					]
+				},
+				"description": "del a slice Flavour"
+			},
+			"response": []
+		},
+		{
+			"name": "listThingVisors",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "127.0.0.1:8090/listThingVisors",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8090",
+					"path": [
+						"listThingVisors"
+					]
+				},
+				"description": "list of available Thing Visors"
+			},
+			"response": []
+		},
+		{
+			"name": "listFlavours",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "127.0.0.1:8090/listFlavours",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8090",
+					"path": [
+						"listFlavours"
+					]
+				},
+				"description": "list of available IoT slice flavour"
+			},
+			"response": [
+				{
+					"name": "listFlavours",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "127.0.0.1:8090/listFlavours",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8090",
+							"path": [
+								"listFlavours"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Content-Length",
+							"value": "277"
+						},
+						{
+							"key": "Access-Control-Allow-Origin",
+							"value": "*"
+						},
+						{
+							"key": "Server",
+							"value": "Werkzeug/0.15.4 Python/3.5.2"
+						},
+						{
+							"key": "Date",
+							"value": "Tue, 11 Jun 2019 10:08:23 GMT"
+						}
+					],
+					"cookie": [],
+					"body": "[\n    {\n        \"flavourParams\": \"\",\n        \"flavourID\": \"Mobius-pub-sub\",\n        \"imageName\": \"fed4iot/mobius-pub-sub-f:2.1\",\n        \"creationTime\": \"2019-05-29T13:13:15.123650\",\n        \"flavourDescription\": \"IoT slice formed by an oneM2M Mobius broker. Content instance inserted through MQTT api\",\n        \"status\": \"ready\"\n    }\n]"
+				}
+			]
+		},
+		{
+			"name": "listVirtualSilos",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "127.0.0.1:8090/listVirtualSilos",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8090",
+					"path": [
+						"listVirtualSilos"
+					]
+				},
+				"description": "list of running IoT Virtual Silos"
+			},
+			"response": []
+		},
+		{
+			"name": "inspectTenant",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"tenantID\":\"tenant1\"\n}"
+				},
+				"url": {
+					"raw": "127.0.0.1:8090/inspectTenant",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8090",
+					"path": [
+						"inspectTenant"
+					]
+				},
+				"description": "inspect Tenant information"
+			},
+			"response": []
+		},
+		{
+			"name": "inspectVirtualSilo",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"vSiloID\":\"tenant1_Silo1\"\n}"
+				},
+				"url": {
+					"raw": "127.0.0.1:8090/inspectVirtualSilo",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8090",
+					"path": [
+						"inspectVirtualSilo"
+					]
+				},
+				"description": "inspect Virtual Silo information"
+			},
+			"response": []
+		},
+		{
+			"name": "inspectThingVisor",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"thingVisorID\":\"helloWorld\"\n}"
+				},
+				"url": {
+					"raw": "127.0.0.1:8090/inspectThingVisor",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8090",
+					"path": [
+						"inspectThingVisor"
+					]
+				},
+				"description": "inspect Thing Visor information"
+			},
+			"response": []
+		},
+		{
+			"name": "addThingVisorOM2M",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"description\":\"copy cnt value from a source oneM2M AE\",\n    \"thingVisorID\":\"oneM2MTemp1\",\n    \"imageName\":\"fed4iot/onem2m-tv\",\n    \"params\":{\"CSEurl\":\"http://172.17.0.14:7579\",\"cntArn\":\"sensor1/temp\"},\n    \"debug_mode\" : false\n}"
+				},
+				"url": {
+					"raw": "127.0.0.1:8090/addThingVisor",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8090",
+					"path": [
+						"addThingVisor"
+					]
+				},
+				"description": "add virtual Thing Visor for oneM2M copy"
+			},
+			"response": []
+		},
+		{
+			"name": "addThingVisorWeather",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"description\":\"this virtual sensor provides current temperature, humidity and pressure of the cities specified in params\",\n  \"thingVisorID\":\"vWeather\",\n  \"imageName\":\"fed4iot/v-weather-tv:2.1\",\n  \"params\":\"{'cities':['Rome', 'Tokyo']}\",\n  \"debug_mode\" : false\n}"
+				},
+				"url": {
+					"raw": "127.0.0.1:8090/addThingVisor",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8090",
+					"path": [
+						"addThingVisor"
+					]
+				},
+				"description": "add virtual thing Visor for temperature, pressure and humidity in speciefied cities"
+			},
+			"response": []
+		},
+		{
+			"name": "addThingVisorBenchmark",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"description\":\"this virtual sensor provides some benchmarking virtual things\",\n  \"thingVisorID\":\"benchmark\",\n  \"imageName\":\"fed4iot/benchmark-tv:2.1\",\n  \"params\":\"\",\n  \"debug_mode\" : false\n}"
+				},
+				"url": {
+					"raw": "127.0.0.1:8090/addThingVisor",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8090",
+					"path": [
+						"addThingVisor"
+					]
+				},
+				"description": "add virtual thing Visor for benchmarking Viriot system"
+			},
+			"response": []
+		},
+		{
+			"name": "login",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"userID\": \"tenant1\",\n\t\"password\": \"password\"\n}"
+				},
+				"url": {
+					"raw": "127.0.0.1:8090/login",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8090",
+					"path": [
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "unregister",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"userID\":\"tenant1\"\n}"
+				},
+				"url": {
+					"raw": "127.0.0.1:8090/unregister",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8090",
+					"path": [
+						"unregister"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "logout",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "127.0.0.1:8090/logout",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8090",
+					"path": [
+						"logout"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "register",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"userID\":\"tenant1\",\n\t\"password\":\"password\",\n\t\"role\":\"user\"\n}"
+				},
+				"url": {
+					"raw": "127.0.0.1:8090/register",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8090",
+					"path": [
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "listVThings",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "127.0.0.1:8090/listVThings",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8090",
+					"path": [
+						"listVThings"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

@@ -1,0 +1,21 @@
+# Example of neutral-format
+# neutral-format {"data":<NGSI-LD Entity Array>, "meta": {"vThingID":<v_thing_ID>, ....}}
+# vThingID is mandatory, making possible to identify the vThingID without exploiting the data_out topic name
+
+ngsiLdEntity1 = {"id": "urn:ngsi-ld:HelloSensor1",
+                    "type": "my-counter",
+                    "counter": {"type": "Property", "value": str(c)}}
+
+ngsiLdEntity2 = {"id": "urn:ngsi-ld:HelloSensor2",
+                    "type": "my-double-counter",
+                    "double-counter": {"type": "Property", "value": str(2*c)}}
+
+data=[ngsiLdEntity1, ngsiLdEntity2]
+
+
+# message tranfered on data_out topics by thingVisors
+message = {"data": data, "meta": {"vThingID": v_thing_ID}} 
+
+# message tranfered on data_in topics by vSilo controllers
+message = {"data": data, "meta": {"vSiloID": v_silo_ID}} 
+

@@ -1,0 +1,35 @@
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: f4i-tv-fiware
+spec:
+  serviceName: f4i-tv-svc-fiware
+  selector:
+    matchLabels:
+      app: f4i-fiware
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: f4i-fiware
+    spec:
+      containers:
+      - name: f4i-fiware
+        image: fed4iot/fiware-greedy-tv:2.2
+        ports:
+        - containerPort: 1030
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: f4i-tv-svc-fiware
+  labels:
+    app: f4i-fiware
+spec:
+  type: NodePort
+  ports:
+  - port: 1030
+    targetPort:
+    nodePort:
+  selector:
+    app: f4i-fiware

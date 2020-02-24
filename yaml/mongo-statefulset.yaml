@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongodb-mc
+spec:
+  serviceName: db-svc-mc
+  replicas: 1
+  selector:
+    matchLabels:
+      app: database
+  template:
+    metadata:
+      labels:
+        app: database
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo:4.2.2
+        ports:
+        - containerPort: 27017  
+        env:
+          - name: MONGO_INITDB_ROOT_USERNAME
+            value: admin
+          - name: MONGO_INITDB_ROOT_PASSWORD
+            value: passw0rd
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-svc-mc
+  labels:
+    app: database
+spec:
+  type: NodePort
+  ports:
+  - port: 27017
+    targetPort:
+    nodePort:
+  selector:
+    app: database

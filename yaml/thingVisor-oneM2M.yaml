@@ -1,0 +1,35 @@
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: f4i-tv-onem2m
+spec:
+  serviceName: f4i-tv-svc-onem2m
+  selector:
+    matchLabels:
+      app: f4i-onem2m
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: f4i-onem2m
+    spec:
+      containers:
+      - name: f4i-onem2m
+        image: fed4iot/onem2m-tv:2.2
+        ports:
+        - containerPort: 8089
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: f4i-tv-svc-onem2m
+  labels:
+    app: f4i-onem2m
+spec:
+  type: NodePort
+  ports:
+  - port: 8089
+    targetPort:
+    nodePort:
+  selector:
+    app: f4i-onem2m

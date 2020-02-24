@@ -1,0 +1,4 @@
+f4i CLI command
+
+
+f4i.py add-thingvisor -i fed4iot/fiware-greedy-tv:2.2 -n thingVisorID_Greedy -p '{\"ocb_service\":[\"trafico\",\"aparcamiento\",\"pluviometria\",\"tranvia\",\"autobuses\",\"bicis\",\"lecturas\",\"gps\",\"suministro\"], \"ocb_ip\":\"fiware-dev.inf.um.es\", \"ocb_port\":\"1026\", \"notificacion_protocol\":\"http\", \"notify_ip\":\"160.80.82.44\"}' -d "Greedy thing visor"

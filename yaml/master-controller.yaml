@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: f4i-master-controller-ss
+spec:
+  serviceName: f4i-master-controller-svc
+  replicas: 1
+  selector:
+    matchLabels:
+      app: f4i-master-controller
+  template:
+    metadata:
+      labels:
+        app: f4i-master-controller
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: zone
+                operator: DoesNotExist
+      containers:
+      - name: f4i-master-controller
+        image: fed4iot/master-controller:3.0
+        ports:
+        - containerPort: 8090
+        volumeMounts:
+        - mountPath: /app/data/settings.py
+          name: config-volume
+          subPath: settings.py
+      volumes:
+      - name: config-volume
+        configMap:
+          name: viriot-configmap
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: f4i-master-controller-svc
+  labels:
+    app: f4i-master-controller
+spec:
+  type: NodePort
+  ports:
+  - port: 8090
+    targetPort:
+    nodePort:
+  selector:
+    app: f4i-master-controller
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: viriot-cluster-role
+rules:
+- apiGroups: [""]
+  resources: ["deployments", "services", "nodes", "pods"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: viriot-cluster-role
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: viriot-cluster-role
+  apiGroup: rbac.authorization.k8s.io

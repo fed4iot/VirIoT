@@ -1,0 +1,55 @@
+version: '3.1'
+
+services:
+  flavour:
+    image: fed4iot/fiware-f
+    tty: true
+    ports:
+        - "1029:1026"
+        - "27019:27017"
+
+#  mongo:
+#    image: mongo:3.4
+#    command: --nojournal
+#    ports:
+#      - "127.0.0.1:27018:27017"
+#  orion:
+#    image: fiware/orion
+#    ports:
+#      - "1028:1026"
+#    command: -dbhost mongo
+#    depends_on:
+#      - mongo
+#  iotagent:
+#    image: fiware/iotagent-json
+#    depends_on:
+#        - mongo
+#    ports:
+#        - "4041:4041"
+#    volumes:
+#       - ./iotajson/config.js:/opt/iotajson/config.js
+
+    environment:
+#        - "IOTA_CB_HOST=iotagent"
+#        - "IOTA_CB_PORT=1026"
+#        - "IOTA_NORTH_PORT=4041"
+#        - "IOTA_REGISTRY_TYPE=mongodb"
+#        - "IOTA_MONGO_HOST=mongo"
+#        - "IOTA_MONGO_PORT=27017"
+#        - "IOTA_MONGO_DB=iotagent-json"
+#        - "IOTA_PROVIDER_URL=http://iotagent:4041"
+#        - "IOTA_MQTT_HOST=http://155.54.99.118"
+#        - "IOTA_MQTT_PORT=1884"
+#        - "IOTA_MQTT_USERNAME=iota"
+#        - "IOTA_MQTT_PASSWORD=iotapass"
+#        - "IOTA_MQTT_QOS=2"
+        # - "IOTA_MQTT_RETAIN=false"
+      - MQTTDataBrokerIP=155.54.99.118
+      - MQTTDataBrokerPort=1884    
+      - MQTTControlBrokerIP=155.54.99.118
+      - MQTTControlBrokerPort=1884    
+      - tenantID=tenantID_1
+      - vSiloID=vSiloID_1
+      - flavourID=flavourID_1
+      - MQTTbrokerUsername=IoTPlatformMQTTUser
+      - MQTTbrokerPassword=1234MQTT

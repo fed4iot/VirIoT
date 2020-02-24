@@ -1,0 +1,128 @@
+ThingVisor creation API:
+<master-controller>/addThingVisor
+method POST
+body is a JSON object with the following syntax:
+{
+    "description": string, a description of the ThingVisor. Mandatory
+    "imageName": string, the name of the docker image containing the ThingVisor (must be lowercase). Mandatory
+    "thingVisorID": string, an identifier of the ThingVisor inside the VirIoT system
+                    thingVisorID must not contains '/', '#', '+' characters
+    "params": JSON object, the parameters to be passed in the ThingVisor. Optional
+	"debug_mode" : boolean, switch on/off the debug mode. In debug mode the container will not be launched, but the
+	               ThingVisor is registered in system database
+}
+
+All data needed by the ThingVisor must be included in "params" as JSON object. Params are passed by master-controller
+to the container as os environment variable at container startup time.
+
+The example below shows the creation of a thingVisor using master-controller/addThingVisor API and how to
+use "params" object:
+POST body:
+{
+    "description": "test thingVisor",
+    "imageName": "test-thing-visor-image",
+    "thingVisorID": "testTV",
+    "params": {"myString":"testString"},
+	"debug_mode" : false
+}
+
+In ThingVisor code (e.g. Python), the variable "myString" can be used as follows:
+    params = json.loads(os.environ["params"])
+    myString = params["myString"]
+
+Other variables such as port mapping must be queried by the thingVisor to the system database.
+Follows an example to fetch port mapping in python3 (system db is mongoDB in this example)
+
+    # Mongodb settings
+    time.sleep(1.5)  # wait before query the system database
+    db_name = "viriotDB"  # name of system database
+    thing_visor_collection = "thingVisorC"
+    db_IP = os.environ['systemDatabaseIP']  # IP address of system database
+    db_port = os.environ['systemDatabasePort']  # port of system database
+    db_client = MongoClient('mongodb://' + db_IP + ':' + str(db_port) + '/')
+    db = db_client[db_name]
+    port_mapping = db[thing_visor_collection].find_one({"thingVisorID": thing_visor_ID}, {"port": 1, "_id": 0})
+
+
+ThingVisor must notify the creation of all managed virtual things by sending one mqtt control message per virtual thing.
+The topic name used for the notification is:
+    TV/<thingVisorID>/c_out
+
+The payload is a JSON encoded string with the following mandatory keys:
+    command: string, the command type (MUST be equal to 'createVThing'). Mandatory
+    thingVisorID: string, the identifier of the ThingVisor inside the VirIoT system. Mandatory
+    vThing: JSON object, the virtual thing to be notified. Mandatory
+        id: string, the identifier of the virtual thing, with the syntax <thingVisorID>/<vThingLID>. Mandatory
+            <vThingLID> is the local identifier of the virtual thing
+            characters '/', '#', '+' are not allowed in <vThingLID>
+        label: string, a human readable label to identify the virtual thing. Mandatory
+        description: string, a description of the virtual thing. Mandatory
+    v_thing_topic: string, the mqtt topic name prefix of the virtual thing for data and control. Mandatory
+                   v_thing_topic name scheme is vThing/<thingVisorID>/<vThingLID>
+
+Example:
+mqtt topic:
+    TV/vWeather/c_out
+payload:
+    {
+        'command': 'createVThing',
+        'thingVisorID': 'vWeather',
+        'vThing':
+        {
+            'label': 'thermometer in Rome',
+            'id': 'vWeather/Rome_temp',
+            'description': 'current temperature, Kelvin'
+        }
+    }
+
+Data items of a virtual thing must be published in the topic <v_thing_topic>/data, e.g vThing/vWeather/Rome_temp/data.
+Mqtt data messages are JSON encoded string, published by using neutral format.
+Neutral format JSON consists of a JSON object with the following keys:
+    vThingID: string, the identifier of the virtual thing, with the syntax <thingVisorID>/<vThingLID>. Mandatory
+    valueType: string, the data type (boolean, float, string, double, int)
+    value: string, the value of the data item
+
+Following JSON represent an example of data message published on the topic 'vThing/vWeather/Rome_temp'
+{
+    'vThingID': 'vWeather/Rome_temp'
+    'value': '289.15',
+    'valueType': 'float',
+}
+
+ThingVisor must add a subscription to the following control topics
+    TV/<thingVisorID>/c_in
+    vThing/<thingVisorID>/<vThingLID>/c_in
+
+The topic TV/<thingVisorID>/c_in is used to send control commands to ThingVisor. At the moment only one control
+command exists: 'destroyTV'. This command is sent by master-controller when a ThingVisor (and all its virtual things)
+need to be destroyed. ThingVisor should clear all active connections and subscriptions when receives destroyTV control
+command.
+The payload of this mqtt message is JSON encoded, e.g.
+{
+    'command': 'destroyTV',
+    'thingVisorID': 'vWeather'
+}
+In case of receiving destroyTV command, ThingVisor must publish a virtual thing delete command in topic
+vThing/<vThingID>/c-out. This command must be published for each virtual thing managed by the ThingVisor.
+The syntax of vThing delete command is the following (JSON encode):
+    command: string, must be equal to 'deleteVThing'
+    vSiloID: string, identifier of virtual silo. Must be equal to 'ALL',
+    vThingID: string, vThing to be deleted from all virtual silos, whose ID is <thingVisorID>/<vThingLID>
+E.g
+{
+    'command': 'deleteVThing',
+    'vSiloID': 'ALL',
+    'vThingID': ''vWeather/Rome_temp''
+}
+
+Once all the vThing delete commands have been sent, ThingVisor must publish an destroyTVAck control message in order to
+notify the master-controller that the "shutdown" procedure has ended and the ThingVisor can be terminated.
+The syntax of destroyTVAck control message is the following:
+    command: string, must be equal to 'destroyTVAck'
+    thingVisorID: string, the identifier of the ThingVisor
+E.g
+{
+    'command': 'destroyTVAck',
+    'thingVisorID': 'vWeather'
+}
+destroyTVAck control message is published on topic TV/<thingVisorID>/c-out

@@ -1,6 +1,5 @@
 'use strict'
 
-
 const app = require('./app')
 
 const axios = require('axios');
@@ -11,6 +10,8 @@ var orion = require("./orion");
 
 var util = require("./util")
 
+const entitiesDM = require('./DataModels/entities')
+
 var libWrapperUtils = require("./wrapperUtils")
 var libfromNGSIv2 = require("./fromNGSIv2")
 
@@ -19,9 +20,7 @@ var mqtt = require('mqtt')
 var isGreedy
 var isAggregated
 var isGroupingByType
-
-//Only from "noGreedy" Thing visors.
-var vThingListInternalTV = []
+var vThingLocalIDAggregated
 
 var vThingList = []
 var vThingListAggValueContext = []
@@ -53,7 +52,22 @@ var ocb_attrList
 var dest_ocb_type
 var dest_ocb_attrList
 
-var valuevThingTypeLD
+var noGreedyListService
+var noGreedyListServicePath
+var noGreedyListTypes
+var noGreedyListTypesAttributes
+var noGreedyListDestTypes
+var noGreedyListDestAttributesTypes
+
+var parkingsite_id
+var parkingsite_disSpacePCCapacity
+var parkingsite_maxHeight
+var parkingsite_carWash
+var parkingsite_valet
+var parkingsite_phoneNumber
+var parkingsite_webSite
+var parkingsite_mail
+var parkingsite_address
 
 var params
 
@@ -85,9 +99,6 @@ var commandCreateVThing
 var commandGetContextRequest
 var commandGetContextResponse
 
-var commandMappedPort
-
-
 var mapped_port
 var urlNotify
 var subscriptionIdOCBList = []
@@ -114,10 +125,10 @@ try {
     //MQTTbrokerIP = config.MQTTbrokerIP
     //MQTTbrokerPort = config.MQTTbrokerPort
     
-    MQTTDataBrokerIP = config.MQTTDataBrokerIP,
-    MQTTDataBrokerPort = config.MQTTDataBrokerPort,
-    MQTTControlBrokerIP = config.MQTTControlBrokerIP,
-    MQTTControlBrokerPort = config.MQTTControlBrokerPort,
+    MQTTDataBrokerIP = config.MQTTDataBrokerIP
+    MQTTDataBrokerPort = config.MQTTDataBrokerPort
+    MQTTControlBrokerIP = config.MQTTControlBrokerIP
+    MQTTControlBrokerPort = config.MQTTControlBrokerPort
     
     systemDatabaseIP=config.systemDatabaseIP
     systemDatabasePort = config.systemDatabasePort
@@ -135,7 +146,6 @@ try {
 
     commandDestroyTV = config.commandDestroyTV
     commandDestroyTVAck = config.commandDestroyTVAck
-    commandMappedPort = config.commandMappedPort
     commandDeleteVThing = config.commandDeleteVThing
     commandCreateVThing = config.commandCreateVThing
     commandGetContextRequest = config.commandGetContextRequest
@@ -157,28 +167,8 @@ try {
     if (typeof isGroupingByType === "undefined" && isGreedy) {
         isGroupingByType = true
     }
-
-    /* ****************************************************************************************************** */
     
-    //PDTE_JUAN:TODO todo este bloque afecta a la potencia que quedamos darle a nogreedy
-    //hay que analizar las consecuencias de esta potencia que dejamos abierta....
-    
-
-    ocb_type = config.ocb_type
-    ocb_attrList = config.ocb_attrList
-
-    dest_ocb_type = config.dest_ocb_type
-    dest_ocb_attrList = config.dest_ocb_attrList
-
-    valuevThingTypeLD = ocb_type
-
-    //To fix NGSI-LD entity type in no Greedy ThingVisor and obtain a new NGSI-LD id
-    if (isGreedy == false && typeof dest_ocb_type !== "undefined") {
-        valuevThingTypeLD = dest_ocb_type
-    }
-
-    /* ****************************************************************************************************** */
-
+    vThingLocalIDAggregated = config.vThingLocalIDAggregated
 
     if (params == '' || typeof params === 'undefined' || 
         params.ocb_ip == '' || typeof params.ocb_ip === 'undefined') {
@@ -236,14 +226,183 @@ try {
 
     ocb_ip = params.ocb_ip
     ocb_port = params.ocb_port
+
+    noGreedyListService = config.noGreedyListService || [""]
+    noGreedyListServicePath = config.noGreedyListServicePath || '/#'
+    noGreedyListTypes = config.noGreedyListTypes
+    noGreedyListTypesAttributes = config.noGreedyListTypesAttributes
+    noGreedyListDestTypes = config.noGreedyListDestTypes
+    noGreedyListDestAttributesTypes = config.noGreedyListDestAttributesTypes
+
     if (isGreedy) {
         ocb_service = params.ocb_service || [""]
         ocb_servicePath = '/#'
     } else {
-        //PDTE_JUAN:TODO aqui se quitará esta forma de hacerlo, se cargarán los arrays directamente del fichero de configuración
-        ocb_service = params.ocb_service || [""]
-        ocb_servicePath = params.ocb_servicePath || '/#'    
+        ocb_service = noGreedyListService
+        ocb_servicePath = noGreedyListServicePath
+        //PDTE_JUAN: TODO ocb_servicePath = config.noGreedyListServicePath || [['/#']]
     }
+
+    if (isGreedy == true) {  //For compatibility with initProcess only (nested "for" statements)
+        ocb_type = []
+
+        for(var i = 0; i < ocb_service.length;i++){
+            ocb_type.push([i])
+        }
+    } else {
+        ocb_type = noGreedyListTypes
+    }
+
+    ocb_attrList = noGreedyListTypesAttributes
+
+    dest_ocb_type = noGreedyListDestTypes
+
+    dest_ocb_attrList = noGreedyListDestAttributesTypes
+
+    parkingsite_id = config.parkingsite_id
+    parkingsite_disSpacePCCapacity = config.parkingsite_disSpacePCCapacity
+    parkingsite_maxHeight = config.parkingsite_maxHeight
+    parkingsite_carWash = config.parkingsite_carWash
+    parkingsite_valet = config.parkingsite_valet
+    parkingsite_phoneNumber = config.parkingsite_phoneNumber
+    parkingsite_webSite = config.parkingsite_webSite
+    parkingsite_mail = config.parkingsite_mail
+    parkingsite_address = config.parkingsite_address
+
+    //Configuration controls...
+    if (isGreedy == false) {
+
+        //noGreedyListService.length>0
+        if (noGreedyListService.length <= 0 || typeof noGreedyListService === 'undefined') {
+            console.error("Error - processing ThingVisor's configuration params: invalid length (noGreedyListService).")
+            return
+        }
+
+        //noGreedyListTypes.length>0
+        if (noGreedyListTypes.length <= 0 || typeof noGreedyListTypes === 'undefined') {
+            console.error("Error - processing ThingVisor's configuration params: invalid length (noGreedyListTypes).")
+            return
+        }
+
+        //noGreedyListTypesAttributes.length>0
+        if (noGreedyListTypesAttributes.length <= 0 || typeof noGreedyListTypesAttributes === 'undefined') {
+            console.error("Error - processing ThingVisor's configuration params: invalid length (noGreedyListTypesAttributes).")
+            return
+        }
+
+        //noGreedyListDestTypes.length>0
+        if (noGreedyListDestTypes.length <= 0 || typeof noGreedyListDestTypes === 'undefined') {
+            console.error("Error - processing ThingVisor's configuration params: invalid length (noGreedyListDestTypes).")
+            return
+        }
+
+        //noGreedyListDestAttributesTypes.length>0
+        if (noGreedyListDestAttributesTypes.length <= 0 || typeof noGreedyListDestAttributesTypes === 'undefined') {
+            console.error("Error - processing ThingVisor's configuration params: invalid length (noGreedyListDestAttributesTypes).")
+            return
+        }
+
+        //noGreedyListService.length == noGreedyListTypes.length
+        if (noGreedyListService.length != noGreedyListTypes.length) {
+            console.error("Error - processing ThingVisor's configuration params: (noGreedyListService/noGreedyListTypes) have different first level length.")
+            return
+        }
+
+        //noGreedyListTypes.length == noGreedyListTypesAttributes.length
+        if (noGreedyListTypes.length != noGreedyListTypesAttributes.length) {
+            console.error("Error - processing ThingVisor's configuration params: (noGreedyListTypes/noGreedyListTypesAttributes) have different first level length.")
+            return
+        }
+
+        //noGreedyListTypes.length == noGreedyListDestTypes.length
+        if (noGreedyListTypes.length != noGreedyListDestTypes.length) {
+            console.error("Error - processing ThingVisor's configuration params: (noGreedyListTypes/noGreedyListDestTypes) have different first level length.")
+            return
+        }
+
+        //noGreedyListDestTypes.length == noGreedyListDestAttributesTypes.length
+        if (noGreedyListDestTypes.length != noGreedyListDestAttributesTypes.length) {
+            console.error("Error - processing ThingVisor's configuration params: (noGreedyListDestTypes/noGreedyListDestAttributesTypes) have different first level length.")
+            return
+        }
+
+        for(var i = 0; i < noGreedyListService.length;i++){
+
+            //noGreedyListTypes[i].length != 0
+            if (noGreedyListTypes[i].length == 0) {
+                console.error("Error - processing ThingVisor's configuration params: invalid length (noGreedyListTypes second level).")
+                return
+            }
+
+            //noGreedyListDestTypes[i].length != 0
+            if (noGreedyListDestTypes[i].length == 0) {
+                console.error("Error - processing ThingVisor's configuration params: invalid length (noGreedyListDestTypes second level).")
+                return
+            }
+
+            //noGreedyListTypes[i].length == noGreedyListTypesAttributes[i].length
+            if (noGreedyListTypes[i].length != noGreedyListTypesAttributes[i].length) {
+                console.error("Error - processing ThingVisor's configuration params: (noGreedyListTypes/noGreedyListTypesAttributes) have different second level length.")
+                return
+            }
+
+            //noGreedyListTypes[i].length == noGreedyListDestTypes[i].length
+            if (noGreedyListTypes[i].length != noGreedyListDestTypes[i].length) {
+                console.error("Error - processing ThingVisor's configuration params: (noGreedyListTypes/noGreedyListDestTypes) have different second level length.")
+                return
+            }
+
+            for(var k = 0; k < noGreedyListTypes[i].length;k++){
+                //noGreedyListTypes[i][k] != '' NO SUPPORTED
+                if (noGreedyListTypes[i][k] == "") {
+                    console.error("Error - processing ThingVisor's configuration params: invalid value '' (noGreedyListTypes second level).")
+                    return
+                }
+
+                //noGreedyListDestTypes[i][k] != '' NO SUPPORTED
+                if (noGreedyListDestTypes[i][k] == "") {
+                    console.error("Error - processing ThingVisor's configuration params: invalid value '' (noGreedyListDestTypes second level).")
+                    return
+                }
+            }
+
+            //noGreedyListTypesAttributes[i].length == noGreedyListDestAttributesTypes[i].length
+            if (noGreedyListTypesAttributes[i].length != 0 && noGreedyListTypesAttributes[i].length != noGreedyListDestAttributesTypes[i].length) {
+                console.error("Error - processing ThingVisor's configuration params: (noGreedyListTypesAttributes/noGreedyListDestAttributesTypes) have different second level length.")
+                return
+            }
+
+            for(var k = 0; k < noGreedyListTypesAttributes[i].length;k++){
+                //noGreedyListTypesAttributes[i][k].length == noGreedyListDestAttributesTypes[i][k].length
+                if (noGreedyListTypesAttributes[i][k].length != 0 && noGreedyListTypesAttributes[i][k].length != noGreedyListDestAttributesTypes[i][k].length) {
+                    console.error("Error - processing ThingVisor's configuration params: (noGreedyListTypesAttributes/noGreedyListDestAttributesTypes) have different third level length.")
+                    return
+                }
+
+                for(var l = 0; l < noGreedyListTypesAttributes[i][k].length;l++){
+                    //noGreedyListTypesAttributes[i][k][l] != '' NO SUPPORTED
+                    if (noGreedyListTypesAttributes[i][k][l] == "") {
+                        console.error("Error - processing ThingVisor's configuration params: invalid value '' (noGreedyListTypesAttributes third level).")
+                        return
+                    }
+
+                    //noGreedyListDestAttributesTypes[i][k][l] != '' NO SUPPORTED
+                    if (noGreedyListDestAttributesTypes[i][k][l] == "") {
+                        console.error("Error - processing ThingVisor's configuration params: invalid value '' (noGreedyListDestAttributesTypes third level).")
+                        return
+                    }
+                }
+            }
+        }
+    }
+
+    if (systemDatabasePort == '' || typeof systemDatabasePort === 'undefined') {
+        console.error("Error - processing ThingVisor's environment variables: 'systemDatabasePort' param not found.")
+        return
+    }
+
+    /* ****************************************************************************************************** */
+
     notificacion_protocol = params.notificacion_protocol || 'http'
     notify_ip = params.notify_ip || ''
     notificacion_port_container = config.notificacion_port_container || ''
@@ -254,6 +413,7 @@ try {
         return
     }
 
+    //entitiesPerVThingID is only considered if "isGroupingByType" == false
     entitiesPerVThingID = parseInt(params.entitiesPerVThingID || '0')
 
     if (entitiesPerVThingID < 0){
@@ -262,12 +422,6 @@ try {
 
     MQTTbrokerUsername = params.MQTTbrokerUsername || ''
     MQTTbrokerPassword = params.MQTTbrokerPassword || ''
-
-    //PDTE_JUAN: Quit, only for development environment...
-    if (MQTTDataBrokerIP == "155.54.99.118" && MQTTDataBrokerPort == "1884") {
-        MQTTbrokerUsername = 'IoTPlatformMQTTUser'
-        MQTTbrokerPassword = '1234MQTT'
-    }
 
     //Options MQTT connection
     optionsControl = {
@@ -408,19 +562,6 @@ clientMosquittoMqttControl.on("message", async function(topic, payload) {
                 //console.log("Destroying TV")
 
                 const responseShutdown = await shutdown(0)
-            
-            } else if (payLoadObject.command==commandMappedPort) {
-                //mapped_port command example {"command": "mapped_port", "port": {"1030/tcp": "32779"}}
-                //PDTE_JUAN: ¿Standby? without decission about this... vs Query to Database System
-
-                var responseStartThingVisor
-
-                responseStartThingVisor = await startThingVisor(payLoadObject.port[notificacion_port_container+'/tcp'])
-
-//                console.log("responseStartThingVisor")
-//                console.log(responseStartThingVisor)
-
-                //PDTE_JUAN: TODO process responseStartThingVisor value (true or false) send topic message¿?¿?
 
             } else {
                 console.error("invalid command (" + payLoadObject.command + ") in topic '" + topic + "'");                      
@@ -515,14 +656,28 @@ if (handleCBSubscriptions==false) {
 */
 
 //const app = require('./app')
-    
+
+//Obtain the param value of an specific entity.
+function obtainEntityDM(param) // min and max included
+{
+
+    return entitiesDM[param]
+
+}
+
 //Consume Orion Context Broker notifications..
 app.post(config.pathNotification, async function(req,res) {
     try {
         console.log("")
         console.log(util.unixTime(Date.now()) + " - POST /notification")
     
+        var date = new Date();
+
+        const timestampValue = util.ISODateString(date)
+
         const dataBody = req.body.data
+
+        var service=req.headers['fiware-service'] || ""
 
         if (isGreedy) {
         
@@ -530,77 +685,223 @@ app.post(config.pathNotification, async function(req,res) {
             
                 const dataBodyLD = libfromNGSIv2.fromNGSIv2toNGSILD(dataBody[i],"")
 
-                const responseSendDataMQTT = await sendDataMQTT(dataBody[i], dataBodyLD)
+                const responseSendDataMQTT = await sendDataMQTT(dataBody[i], dataBodyLD, service)
                    
             }
         } else {
 
             //console.log(req.body.data)
-            //PDTE_JUAN:TODO ver el tratamiento con el enfoque nuevo, si afecta en algo...
 
             for(var i = 0; i < dataBody.length; i++) {
 
                 var entityv2TV = {}
 
                 entityv2TV.id = dataBody[i].id
+
                 //Changing entity type.
-                entityv2TV.type = valuevThingTypeLD
+                //1) Obtain service element index in ocb_service array
+                var serviceIndex
+                var typeIndex
+                var typeResult
 
-                for(let attr in dataBody[i]){
-                    if ( attr != "id" && attr != "type"){
-                        if ( ocb_attrList.length == 0 ) {
-                            entityv2TV[attr] = dataBody[i][attr]
-                        } else {
-                            for(var k = 0; k < ocb_attrList.length; k++) {
-                                if (ocb_attrList[k] == attr) {
-                                    try {
-                                        entityv2TV[dest_ocb_attrList[k]] = dataBody[i][attr]
-                                    } catch(e) {
-                                        console.log("Mapping NGSI-LD attribute - not found for '" + attr + "'")
-                                    }
-                                    break;
-                                }
-                            }
-                        } 
+                serviceIndex = obtainArrayIndex(ocb_service,service)
 
+                if (serviceIndex!=-1) { //Found.
+                    var typeIndex = obtainArrayIndex(ocb_type[serviceIndex],dataBody[i].type)
+                    //2) Obtain type element index in ocb_type
+                    if (typeIndex!=-1) {
+                        //3) Assing new type from dest_ocb_type
+                        entityv2TV.type = dest_ocb_type[serviceIndex][typeIndex]
+                        typeResult = dest_ocb_type[serviceIndex][typeIndex]
                     }
                 }
 
-                //Obtain "@context"
-                if (typeof dataBody[i]["@context"] !== 'undefined' && typeof entityv2TV["@context"] === "undefined") {
-                    entityv2TV["@context"] = dataBody[i]["@context"]
-                }
-
-                 //Obtain "dateCreated"
-                if (typeof dataBody[i].dateCreated !== 'undefined' && typeof entityv2TV.dateCreated === 'undefined') {
-                    entityv2TV.dateCreated = dataBody[i].dateCreated
-                }
-                
-                //Obtain "dateModified"
-                if (typeof dataBody[i].dateModified !== 'undefined' && typeof entityv2TV.dateModified === 'undefined') {
-                    entityv2TV.dateModified = dataBody[i].dateModified
-                }                
-                //Obtain timestamp
-                if (typeof dataBody[i].timestamp !== 'undefined' && typeof entityv2TV.timestamp === 'undefined') {
-                    entityv2TV.timestamp = dataBody[i].timestamp
-                }
-
-                //Obtain "location"
-                if (typeof dataBody[i].location !== 'undefined' && typeof entityv2TV.location === 'undefined') {
-                    entityv2TV.location = dataBody[i].location
-                }
-
-                const dataBodyLD = libfromNGSIv2.fromNGSIv2toNGSILD(entityv2TV,"")
-
-                if (isAggregated) {
-                    const responseStoreData = await storeData(dataBody[i], dataBodyLD)
+                if(typeof entityv2TV.type === 'undefined' || typeof typeResult === 'undefined'){
+                    console.error('Notification error: Building type... not found.')
                 } else {
-                    const responseSendDataMQTT = await sendDataMQTT(dataBody[i], dataBodyLD)
+
+                    var entity_template
+
+                    var entityDataModel = {}
+
+                    var mappedAttr = []
+
+                    var isEntityDataModel = false
+
+                    //isAggregated == false condition is needed because, if we use a type defined in entities.js in dest_ocb_type array, 
+                    //it fails when aggregated data model entities are different than the entities.js one. 
+                    //If we won't this condition, we need to be careful. We must define types, in dest_ocb_type, 
+                    //are not included in entities.js file.
+                    if((typeResult == 'parkingsite' || typeResult == 'parkingmeter') && isAggregated == false){
+                    //if(typeResult == 'parkingsite' || typeResult == 'parkingmeter'){
+                        entity_template = obtainEntityDM(typeResult)
+                        entityDataModel = JSON.parse(JSON.stringify(entity_template));
+                        entityDataModel.id = entityDataModel.id.replace("---",dataBody[i].id)
+                        isEntityDataModel = true
+
+                    }
+
+                    for(let attr in dataBody[i]){
+                        if ( attr != "id" && attr != "type"){
+                            //Can recover all attributes
+                            if (ocb_attrList[serviceIndex][typeIndex].length == 0 && isEntityDataModel == false) {
+                                entityv2TV[attr] = dataBody[i][attr]
+                            } else {
+                                /*
+                                //Recover only attributes was defined.
+                                for(var k = 0; k < ocb_attrList[serviceIndex][typeIndex].length; k++) {
+                                    if (ocb_attrList[serviceIndex][typeIndex][k] == attr) {
+                                        try {
+                                            entityv2TV[dest_ocb_attrList[serviceIndex][typeIndex][k]] = dataBody[i][attr]
+                                        } catch(e) {
+                                            console.log("Mapping NGSI-LD attribute - not found for '" + attr + "'")
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                                */
+                                //Recover only attributes was defined.
+                                for(var k = 0; k < ocb_attrList[serviceIndex][typeIndex].length; k++) {
+                                    if (ocb_attrList[serviceIndex][typeIndex][k] == attr) {
+                                        try {
+
+                                            if (isEntityDataModel) {
+                                                if ( dataBody[i][attr].type.toUpperCase() == "TEXT".toUpperCase() || 
+                                                    dataBody[i][attr].type.toUpperCase() == "STRING".toUpperCase() || 
+                                                    dataBody[i][attr].type.toUpperCase() == "NUMBER".toUpperCase() || 
+                                                    dataBody[i][attr].type.toUpperCase() == "DATETIME".toUpperCase()) {
+                                                
+                                                    entityDataModel[dest_ocb_attrList[serviceIndex][typeIndex][k]].value = dataBody[i][attr].value
+            
+                                                } else if (dataBody[i][attr].type.toUpperCase() == "COORDS".toUpperCase() ||
+                                                            dataBody[i][attr].type.toUpperCase() == "POINT".toUpperCase()) {
+            
+                                                    entityDataModel[dest_ocb_attrList[serviceIndex][typeIndex][k]].value.coordinates = 
+                                                        [ parseFloat(dataBody[i][attr].value.split(",")[1]), parseFloat(dataBody[i][attr].value.split(",")[0]) ]
+                                                }
+                                            }
+
+                                            mappedAttr.push(attr)
+        
+                                            entityv2TV[dest_ocb_attrList[serviceIndex][typeIndex][k]] = dataBody[i][attr]
+
+       
+                                        } catch(e) {
+
+                                            console.log("Mapping NGSI-LD attribute - not found for '" + attr + "'")
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    var dataBodyLD
+
+                    if (isEntityDataModel == false) {
+                        //Obtain "@context"
+                        if (typeof dataBody[i]["@context"] !== 'undefined' && typeof entityv2TV["@context"] === "undefined") {
+                            entityv2TV["@context"] = dataBody[i]["@context"]
+                        }
+
+                        //Obtain "dateCreated"
+                        if (typeof dataBody[i].dateCreated !== 'undefined' && typeof entityv2TV.dateCreated === 'undefined') {
+                            entityv2TV.dateCreated = dataBody[i].dateCreated
+                        }
+
+                        //Obtain "dateModified"
+                        if (typeof dataBody[i].dateModified !== 'undefined' && typeof entityv2TV.dateModified === 'undefined') {
+                            entityv2TV.dateModified = dataBody[i].dateModified
+                        }
+
+                        //Obtain timestamp
+                        if (typeof dataBody[i].timestamp !== 'undefined' && typeof entityv2TV.timestamp === 'undefined') {
+                            entityv2TV.timestamp = dataBody[i].timestamp
+                        }
+
+                        //Obtain "location"
+                        if (typeof dataBody[i].location !== 'undefined' && typeof entityv2TV.location === 'undefined') {
+                            entityv2TV.location = dataBody[i].location
+                        }
+
+                        dataBodyLD = libfromNGSIv2.fromNGSIv2toNGSILD(entityv2TV,"")
+
+                    } else {
+                        //Additional information (config.js)
+                        if (typeResult.toUpperCase() == "parkingsite".toUpperCase()) {
+
+                            //Find "id" in "parkingsite_id"
+                            const idIndex = obtainArrayIndex(parkingsite_id,dataBody[i].id)
+
+                            //If it exists, it obtains the additional information only when it wasn't mapped previously (mappedAttr).
+                            if (idIndex!=-1) {
+
+                                const timestampIndex = obtainArrayIndex(mappedAttr,"timestamp")
+                                if (timestampIndex==-1) {
+                                    entityDataModel.timestamp.value = timestampValue
+                                }
+
+                                const disSpacePCCapacityIndex = obtainArrayIndex(mappedAttr,"disSpacePCCapacity")
+                                if (disSpacePCCapacityIndex==-1) {
+                                    entityDataModel.disSpacePCCapacity.value = parkingsite_disSpacePCCapacity[idIndex]
+                                }
+
+                                const maxHeightIndex = obtainArrayIndex(mappedAttr,"maxHeight")
+                                if (maxHeightIndex==-1) {
+                                    entityDataModel.maxHeight.value = parkingsite_maxHeight[idIndex]
+                                }
+
+                                const carWashIndex = obtainArrayIndex(mappedAttr,"carWash")
+                                if (carWashIndex==-1) {
+                                    entityDataModel.carWash.value = parkingsite_carWash[idIndex]
+                                }
+
+                                const valetIndex = obtainArrayIndex(mappedAttr,"valet")
+                                if (valetIndex==-1) {
+                                    entityDataModel.valet.value = parkingsite_valet[idIndex]
+                                }
+
+                                const phoneNumberIndex = obtainArrayIndex(mappedAttr,"phoneNumber")
+                                if (phoneNumberIndex==-1) {
+                                    entityDataModel.phoneNumber.value = parkingsite_phoneNumber[idIndex]
+                                }
+
+                                const webSiteIndex = obtainArrayIndex(mappedAttr,"webSite")
+                                if (webSiteIndex==-1) {
+                                    entityDataModel.webSite.value = parkingsite_webSite[idIndex]
+                                }
+
+                                const mailIndex = obtainArrayIndex(mappedAttr,"mail")
+                                if (mailIndex==-1) {
+                                    entityDataModel.mail.value = parkingsite_mail[idIndex]
+                                }
+                                
+                                const addressIndex = obtainArrayIndex(mappedAttr,"address")
+                                if (addressIndex==-1) {
+                                    entityDataModel.address.value = parkingsite_address[idIndex]
+                                }
+
+                            }
+                        }
+
+                        dataBodyLD = libfromNGSIv2.fromNGSIv2toNGSILD(entityDataModel,"")
+
+                    }
+
+                    
+                    if (isAggregated) {
+                        const responseStoreData = await storeData(dataBody[i], dataBodyLD, service)
+                    } else {
+                        const responseSendDataMQTT = await sendDataMQTT(dataBody[i], dataBodyLD, service)
+                    }
                 }
             }
         }
         res.status(200).send({description: 'Operation has been completed successfully'})
     } catch(e) {
+        console.error(e)
         res.status(500).send({ error: e })
     }
 })
@@ -614,7 +915,7 @@ app.listen(notificacion_port_container,() => {
 
         //console.log("(1)Try to obtain mapped TV port: " + util.unixTime(Date.now()))
 
-        setTimeout(function() {  //PDTE_JUAN: TODO to obtain mapped port??? --> without decission about send a topic message or Query to Database System.
+        setTimeout(function() {
 
             console.log("")
             console.log(util.unixTime(Date.now()) + " - Try to obtain mapped TV port...")
@@ -698,135 +999,123 @@ async function initProcess() {
         //STEP 1: Obtain all Orion Context Broker entities, the request are limited by a register fixed number (100). This process store the
         //traceability between NGSI-v2 id and NGSI-LD id.
 
+        var keyVThingID = 0
+        var entityGroupCounter = 0
+
+        var numEntities = 0
+
         for(var h = 0; h < ocb_service.length;h++) {
-            var obtainMore = true
-            var offset = 100
-            var actualOffset = 0
-            var limit = 100
-            var numEntities = 0
 
-            var keyVThingID = 0
-            var entityGroupCounter = 0
+            for(var k = 0; k < ocb_type[h].length;k++) {
+                var obtainMore = true
+                var offset = 100
+                var actualOffset = 0
+                var limit = 100
 
-            while (obtainMore) {
+                while (obtainMore) {
 
-                var responseCBEntities
+                    var responseCBEntities
 
-                try {
-                    //Obtain actual entities in Context Broker
-                    if (isGreedy) {
-                        responseCBEntities = await orion.obtainALLCBEntities(actualOffset, limit, ocb_ip, ocb_port, ocb_service[h], ocb_servicePath)
-                    } else {
-                        //PDTE_JUAN:TODO aqui afectará en algo seguro porque la forma de seleccionar 
-                        //ya no es por service/servicepath/type sino que depende de los array configurados...
-                        //y de la potencia que estos ofrezcan...
-                        responseCBEntities = await orion.obtainALLCBEntitiesPerType(actualOffset, limit, ocb_ip, ocb_port, ocb_service[h], ocb_servicePath, ocb_type)    
+                    try {
+                        //Obtain actual entities in Context Broker
+                        if (isGreedy) {
+                            responseCBEntities = await orion.obtainALLCBEntities(actualOffset, limit, ocb_ip, ocb_port, ocb_service[h], ocb_servicePath)
+                        } else {
+                            responseCBEntities = await orion.obtainALLCBEntitiesPerType(actualOffset, limit, ocb_ip, ocb_port, ocb_service[h], ocb_servicePath, ocb_type[h][k])
+                        }
+
+                    } catch(e){
+                        console.error(e)
+                        if(e.message.indexOf("statusCode=404") <= -1) {
+                            obtainMore=false
+                            return false
+                        }
                     }
                     
-                } catch(e){
-                    console.error(e)
-                    if(e.message.indexOf("statusCode=404") <= -1) {
-                        obtainMore=false
-                        return false
-                    }
-                }
-                
-                if (obtainMore && responseCBEntities.length>0) {
-                    //Processing response, 
-                    for(var i = 0; i < responseCBEntities.length;i++) {
+                    if (obtainMore && responseCBEntities.length>0) {
+                        //Processing response,
+                        for(var i = 0; i < responseCBEntities.length;i++) {
 
-                        //const valuevThingLocalID = Date.now() + "-" + i
-                        var valuevThingLocalID
+                            //const valuevThingLocalID = Date.now() + "-" + i
+                            var valuevThingLocalID
 
-                        if (isGroupingByType) {
-                            //Find if entity service/servicepath/type is in the array to obtain the corresponding keyVThingID value.
+                            if (isGroupingByType) {
+                                //Find if entity service/servicepath/type is in the array to obtain the corresponding keyVThingID value.
 
-                            var element = ocb_service[h] + "_" + ocb_servicePath + "_" + responseCBEntities[i].type
-                            var valueIndex = obtainArrayIndex(typeServiceList,element)
+                                var element = ocb_service[h] + "_" + ocb_servicePath + "_" + responseCBEntities[i].type
+                                var valueIndex = obtainArrayIndex(typeServiceList,element)
 
-                            if (valueIndex!=-1) { //Found.
-                                keyVThingID = valueIndex
-                            } else { //Not Found.
-                                typeServiceList.push(element)
-                                keyVThingID = obtainArrayIndex(typeServiceList,element)
+                                if (valueIndex!=-1) { //Found.
+                                    keyVThingID = valueIndex
+                                } else { //Not Found.
+                                    typeServiceList.push(element)
+                                    keyVThingID = obtainArrayIndex(typeServiceList,element)
+                                }
+
+                            } else {
+                                if (entitiesPerVThingID != 0 && entityGroupCounter >= entitiesPerVThingID && isGreedy) {
+                                    //New vThingID
+                                    entityGroupCounter = 0
+                                    keyVThingID = keyVThingID + 1
+                                }
                             }
 
-                        } else {
-                            if (entitiesPerVThingID != 0 && entityGroupCounter >= entitiesPerVThingID && isGreedy) {
-                                //New vThingID
-                                entityGroupCounter = 0
-                                keyVThingID = keyVThingID + 1
+                            valuevThingLocalID = keyVThingID //+ "-" + entityGroupCounter
+
+                            if (isGreedy) {
+                                vThingList.push({
+                                    rThingID: responseCBEntities[i].id, //Used by "orionSubscription" function.
+                                    rThingType: responseCBEntities[i].type, //Used by "orionSubscription" function.
+                                    rThingService: ocb_service[h], //Used by "orionSubscription" function.
+                                    vThingLD: libWrapperUtils.format_uri(responseCBEntities[i].type,responseCBEntities[i].id),
+                                    vThingLocalID: valuevThingLocalID,
+                                    vThingID: thingVisorID + "/" + valuevThingLocalID,
+                                    data: libfromNGSIv2.fromNGSIv2toNGSILD(responseCBEntities[i],"") //Establishing data_context 
+                                })
+                            } else {
+                                //NGSI-LD type entity, changing to calculate vThingLD and data
+                                if(isAggregated){
+                                    valuevThingLocalID = vThingLocalIDAggregated
+                                } else {
+                                    valuevThingLocalID = dest_ocb_type[h][k]
+                                }
+
+                                vThingList.push({
+                                    rThingID: responseCBEntities[i].id,
+                                    rThingType: responseCBEntities[i].type,   //Real type entity
+                                    rThingService: ocb_service[h], //Used by "orionSubscription" function.
+                                    vThingLD: libWrapperUtils.format_uri(dest_ocb_type[h][k],responseCBEntities[i].id),
+                                    vThingLocalID: valuevThingLocalID,
+                                    vThingID: thingVisorID + "/" + valuevThingLocalID,
+                                    data: libfromNGSIv2.fromNGSIv2toNGSILD(responseCBEntities[i],"")
+                                })
                             }
+
+                            numEntities = numEntities + 1
+
+                            //if (entitiesPerVThingID != 0 && isGreedy) {
+                            entityGroupCounter = entityGroupCounter + 1
+                            //}
+
                         }
 
-                        valuevThingLocalID = keyVThingID //+ "-" + entityGroupCounter
-
-                        if (isGreedy) {
-                            vThingList.push({
-                                rThingID: responseCBEntities[i].id, //Used by "orionSubscription" function.
-                                rThingType: responseCBEntities[i].type, //Used by "orionSubscription" function.
-                                rThingService: ocb_service[h], //Used by "orionSubscription" function.
-                                vThingLD: libWrapperUtils.format_uri(responseCBEntities[i].type,responseCBEntities[i].id),
-                                vThingLocalID: valuevThingLocalID,
-                                vThingID: thingVisorID + "/" + valuevThingLocalID,
-                                data: libfromNGSIv2.fromNGSIv2toNGSILD(responseCBEntities[i],"") //Establishing data_context 
-                            })
+                        // responseCBEntities.length<limit --> No more entities in Orion Context Broker
+                        if (responseCBEntities.length<limit) {
+                            obtainMore=false
                         } else {
-                            
-                            //NGSI-LD type entity, changing to calculate vThingLD and data
-                            responseCBEntities[i].type = valuevThingTypeLD //NGSI-LD type entity, 
-
-                            vThingListInternalTV.push({
-                                rThingID: responseCBEntities[i].id,
-                                rThingType: responseCBEntities[i].type,   //Real type entity
-                                //rThingType: ocb_type,                   //Real type entity
-                                rThingService: ocb_service[h], //Used by "orionSubscription" function.
-                                vThingLD: libWrapperUtils.format_uri(responseCBEntities[i].type,responseCBEntities[i].id),
-                                data: libfromNGSIv2.fromNGSIv2toNGSILD(responseCBEntities[i],"")
-                            })
+                            actualOffset = actualOffset + offset
                         }
-
-                        numEntities = numEntities + 1
-
-                        //if (entitiesPerVThingID != 0 && isGreedy) {
-                        entityGroupCounter = entityGroupCounter + 1
-                        //}
-
-                    }
-
-                    // responseCBEntities.length<limit --> No more entities in Orion Context Broker
-                    if (responseCBEntities.length<limit) {
-                        obtainMore=false
                     } else {
-                        actualOffset = actualOffset + offset
+                        obtainMore=false
                     }
-                } else {
-                    obtainMore=false
-                }
-            }
-
-            console.log("Orion Context Broker entities number: " + numEntities)
-            
-            //Defining vThings for noGreedy Thingvisor
-            if (isGreedy == false) {
-
-                //PDTE_JUAN TODO...  Create a function to do it...
-                for(var i = 0; i < vThingListInternalTV.length;i++) {
-                    vThingList.push({
-                        rThingID: vThingListInternalTV[i].rThingID,         //Used by "orionSubscription" function.
-                        rThingType: vThingListInternalTV[i].rThingType,     //Used by "orionSubscription" function.
-                        rThingService: vThingListInternalTV[i].rThingService, //Used by "orionSubscription" function.
-                        vThingLD: vThingListInternalTV[i].vThingLD,
-                        vThingLocalID: valuevThingTypeLD,                  //In this case, valuevThingTypeLD is used to define vThingLocalID & vThingID
-                        vThingID: thingVisorID + "/" + valuevThingTypeLD,
-                        data: vThingListInternalTV[i].data                  //Establishing data_context 
-                    })
                 }
             }
         }
 
-//        console.log("vThing List after init process: ")
-//        console.log(vThingList)
+        console.log("Orion Context Broker entities number: " + numEntities)
+
+        //console.log("vThing List after init process: ")
+        //console.log(vThingList)
 
         //STEP 2: Establishing topic's subscriptions using vThingID of vThingList array.
         //STEP 3: Subscribe to Orion Context Broker.
@@ -989,6 +1278,8 @@ async function sendDataMQTT_AggregatedValue(){
         var maxObservedAt = ""
         var dateObserved
 
+        var testObservedAt = false
+
         var date = new Date();
 
         dateObserved = util.ISODateString(date)
@@ -1000,13 +1291,17 @@ async function sendDataMQTT_AggregatedValue(){
             }
 
             if (typeof vThingList[i].data.freeParkingSpaces.value !== 'undefined') {
-                totalFreeParkingSpaces = totalFreeParkingSpaces + vThingList[i].data.freeParkingSpaces.value
+                totalFreeParkingSpaces = totalFreeParkingSpaces + parseInt(vThingList[i].data.freeParkingSpaces.value)
             }
 
-            if (typeof vThingList[i].data.observedAt.value['@value'] !== 'undefined' && 
-                vThingList[i].data.observedAt.value['@value'] > maxObservedAt) {
-                
-                maxObservedAt = vThingList[i].data.observedAt.value['@value']
+            try {
+                if (typeof vThingList[i].data.observedAt.value['@value'] !== 'undefined' &&
+                    vThingList[i].data.observedAt.value['@value'] > maxObservedAt){
+                    testObservedAt = true
+                    maxObservedAt = vThingList[i].data.observedAt.value['@value']
+                }
+            } catch(e) {
+                maxObservedAt = maxObservedAt
             }
         }
 
@@ -1020,8 +1315,8 @@ async function sendDataMQTT_AggregatedValue(){
                     type: 'parkingsite',
                     totalFreeParkingSpaces: { type: 'Property', value: totalFreeParkingSpaces },
                     '@context': 
-                        [ 'http://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld',
-                          'https://odins.org/smartParkingOntology/parkingsite-context.jsonld' ],
+                        [ 'https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld',
+                          'https://odins.es/smartParkingOntology/parkingsite-context.jsonld' ],
                     observedAt: 
                         { type: 'Property',
                         value: { '@type': 'DateTime', '@value': maxObservedAt } },
@@ -1035,7 +1330,7 @@ async function sendDataMQTT_AggregatedValue(){
         }
        
         //It sent to MQTT data broker when change.
-        if (globalTotalFreeParkingSpaces != totalFreeParkingSpaces || globalMaxObservedAt != maxObservedAt) {
+        if (globalTotalFreeParkingSpaces != totalFreeParkingSpaces || (globalMaxObservedAt != maxObservedAt && testObservedAt)) {
 
             globalTotalFreeParkingSpaces = totalFreeParkingSpaces 
             globalMaxObservedAt = maxObservedAt
@@ -1198,11 +1493,7 @@ async function orionSubscription() {
         console.log("orionSubscription")
         var vThingListCopy
 
-        if (isGreedy) {
-            vThingListCopy = vThingList
-        } else {
-            vThingListCopy = vThingListInternalTV
-        }
+        vThingListCopy = vThingList
 
         for(var h = 0; h < ocb_service.length;h++) {
 
@@ -1378,11 +1669,7 @@ async function orionSubscriptionByType() {
         console.log("orionSubscriptionByType")
         var vThingListCopy
 
-        if (isGreedy) {
-            vThingListCopy = vThingList
-        } else {
-            vThingListCopy = vThingListInternalTV
-        }
+        vThingListCopy = vThingList
 
         var arrayTextServiceTypes = []
         var arrayObjectServiceTypes = []
@@ -1635,14 +1922,14 @@ async function sendCreateVThingMessages() {
 
 
 
-async function sendDataMQTT(dataBody, dataBodyLD) {
+async function sendDataMQTT(dataBody, dataBodyLD, service) {
     try {
         //Obtain vThingID
         //Find in the vThingList array an element with the same type and id as notification entity ones.
         //dataBody.type
         //dataBody.id
 
-        var vThingIDValue = await storeData(dataBody, dataBodyLD)
+        var vThingIDValue = await storeData(dataBody, dataBodyLD, service)
 
         //for(var k = 0; k < vThingList.length;k++) {
         //    if (dataBody.type==vThingList[k].rThingType && dataBody.id==vThingList[k].rThingID) {
@@ -1685,7 +1972,7 @@ async function sendDataMQTT(dataBody, dataBodyLD) {
 }
 
 
-async function storeData(dataBody, dataBodyLD) {
+async function storeData(dataBody, dataBodyLD, service) {
     try {
         //Obtain vThingID
         //Find in the vThingList array an element with the same type and id as notification entity ones.
@@ -1695,7 +1982,9 @@ async function storeData(dataBody, dataBodyLD) {
         var vThingIDValue = ""
 
         for(var k = 0; k < vThingList.length;k++) {
-            if (dataBody.type==vThingList[k].rThingType && dataBody.id==vThingList[k].rThingID) {
+            if (service==vThingList[k].rThingService && dataBody.type==vThingList[k].rThingType && 
+                dataBody.id==vThingList[k].rThingID) {
+                    
                 vThingIDValue = vThingList[k].vThingID
                 vThingList[k].data = dataBodyLD //Updating data_context
                 break;
@@ -1920,7 +2209,6 @@ async function shutdown(param) {
 
         if (response_sendDeleteMessages) {
             //Emptly vThingList
-            vThingListInternalTV = []
             vThingList = []
             vThingListAggValueContext = []
         }
@@ -1985,8 +2273,6 @@ capt_signals.forEach(signal => {
 	process.on(signal, sd_gen(signal))
 	}
 );
-
-
 
 // PERIODIC PROCESS - NO GREEDY.
 setInterval(async  function() {

@@ -1,3 +1,131 @@
+# Installation / Execution - ThingVisor.
+The first step is to obtain ThingVisorimages. To do this, you have to look for them on the docker hub. In case of not have them, you have to build local ones, thus:
+
+- To build necessary ThingVisor images:
+
+```sh
+./build-All-images.sh
+```
+
+The build-All-images.sh file contains the next sentences, which build 5 different images of ThingVisors for Fed4IoT-Fiware:
+
+```sh
+cd buildImages/AggrValue-TV; ./build.sh; cd ../../
+cd buildImages/ParkingSite-TV; ./build.sh; cd ../../
+cd buildImages/RPZ-TV; ./build.sh; cd ../../
+cd buildImages/greedy-TV; ./build.sh; cd ../../
+cd buildImages/GenericNoGreedy-TV; ./build.sh; cd ../../
+```
+
+NOTE: You can build only one image if you access to a specific folder in buildImages folder and launch the specific build.sh file.
+
+
+To launch ThingVisor images, we use the Master-Controller API. For instance, the following these steps:
+
+- Add ThingVisor container (Greedy).
+```sh
+curl -X POST \
+  http://127.0.0.1:8090/addThingVisor \
+  -H 'Accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+	"imageName": "fed4iot/fiware-greedy-tv",
+	"thingVisorID": "thingVisorID_Greedy",
+	"params": "{\"ocb_service\":[\"bicis\",\"aparcamiento\",\"ora\"], \"ocb_ip\":\"<OCB-IP>\", \"ocb_port\":\"1026\", \"notificacion_protocol\":\"http\", \"notify_ip\":\"<ThingVisor-IP>\"}",
+	"description": "thingVisorID_Greedy_description",
+	"debug_mode": false
+}'
+
+```
+Show ThingVisor container logs (Greedy).
+```sh
+docker logs -f thingVisorID_Greedy
+```
+
+- Add ThingVisor container (ParkingSite).
+```sh
+curl -X POST \
+  http://127.0.0.1:8090/addThingVisor \
+  -H 'Accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -H 'cache-control: no-cache' \
+  -d '{
+	"imageName": "fed4iot/fiware-parkingsite-tv",
+	"thingVisorID": "thingVisorID_ParkingSite",
+	"params": "{\"ocb_ip\":\"<OCB-IP>\", \"ocb_port\":\"1026\", \"notificacion_protocol\":\"http\", \"notify_ip\":\"<ThingVisor-IP>\"}",
+	"description": "thingVisorID_ParkingSite_description",
+	"debug_mode": false
+}'
+```
+Show ThingVisor container logs (Greedy).
+```sh
+docker logs -f thingVisorID_ParkingSite
+```
+
+- Add ThingVisor container (RPZ).
+```sh
+curl -X POST \
+  http://127.0.0.1:8090/addThingVisor \
+  -H 'Accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -H 'cache-control: no-cache' \
+  -d '{
+	"imageName": "fed4iot/fiware-rpz-tv",
+	"thingVisorID": "thingVisorID_RPZ",
+	"params": "{\"ocb_ip\":\"<OCB-IP>\", \"ocb_port\":\"1026\", \"notificacion_protocol\":\"http\", \"notify_ip\":\"<ThingVisor-IP>\"}",
+	"description": "thingVisorID_RPZ",
+	"debug_mode": false
+}'
+```
+Show ThingVisor container logs (RPZ).
+```sh
+docker logs -f thingVisorID_RPZ
+```
+
+- Add ThingVisor container (Aggregated value).
+```sh
+curl -X POST \
+  http://127.0.0.1:8090/addThingVisor \
+  -H 'Accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -H 'cache-control: no-cache' \
+  -d '{
+	"imageName": "fed4iot/fiware-aggrvalue-tv",
+	"thingVisorID": "thingVisorID_AggrValue",
+	"params": "{\"ocb_ip\":\"<OCB-IP>\", \"ocb_port\":\"1026\", \"notificacion_protocol\":\"http\", \"notify_ip\":\"<ThingVisor-IP>\"}",
+	"description": "thingVisorID_AggrValue_description",
+	"debug_mode": false
+}'
+```
+Show ThingVisor container logs (Aggregated value).
+```sh
+docker logs -f thingVisorID_AggrValue
+```
+
+- Add ThingVisor container (Generic/template for specific thingvisors).
+```sh
+curl -X POST \
+  http://127.0.0.1:8090/addThingVisor \
+  -H 'Accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -H 'cache-control: no-cache' \
+  -d '{
+	"imageName": "fed4iot/fiware-nogreedy-tv",
+	"thingVisorID": "thingVisorID_nogreedy",
+	"params": "{\"ocb_ip\":\"<OCB-IP>\", \"ocb_port\":\"1026\", \"notificacion_protocol\":\"http\", \"notify_ip\":\"<ThingVisor-IP>\"}",
+	"description": "thingVisorID_nogreedy",
+	"debug_mode": false
+}'
+```
+Show ThingVisor container logs (Generic/template for specific thingvisors).
+```sh
+docker logs -f thingVisorID_nogreedy
+```
+
+
+*********************************
+
+
 f4i CLI command
 
 

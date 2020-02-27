@@ -47,10 +47,6 @@ import data.settings as settings
 import db_setup
 import kubernetes_functions as k8s
 
-if settings.master_controller_in_container:
-    config.load_incluster_config()
-else:
-    config.load_kube_config()
 
 # public IP address through the which it is possible to access thingvisors, database, vSilos, etc.
 default_gateway_IP = settings.default_gateway_IP
@@ -76,7 +72,6 @@ in_control_suffix = "c_in"
 out_control_suffix = "c_out"
 
 # Mongo settings
-mongo_IP = settings.mongo_IP
 mongo_port = settings.mongo_port
 db_name = "viriotDB"
 v_silo_collection = "vSiloC"
@@ -1561,6 +1556,12 @@ if __name__ == '__main__':
         mongo_client = MongoClient('mongodb://' + mongo_IP + ':' + str(mongo_port) + '/')
 
     elif container_manager == "KUBERNETES":
+        # Set Kubernetes configuration
+        if settings.master_controller_in_container:
+            config.load_incluster_config()
+        else:
+            config.load_kube_config()
+
         working_namespace = settings.working_namespace
 
         create_virtual_silo = create_virtual_silo_on_kubernetes
@@ -1587,7 +1588,7 @@ if __name__ == '__main__':
                 sys.exit(0)
             mongo_client = MongoClient('mongodb://' + "localhost" + ':' + str(mongo_port_local) + '/')
         else:
-            mongo_client = MongoClient('mongodb://' + mongo_IP + ':' + str(mongo_port) + '/')
+            mongo_client = MongoClient('mongodb://' + settings.mongo_IP + ':' + str(mongo_port) + '/')
 
 
     else:

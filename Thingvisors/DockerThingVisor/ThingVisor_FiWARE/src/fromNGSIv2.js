@@ -2,7 +2,7 @@
 
 var libWrapperUtils = require("./wrapperUtils");
 
-var urlNGSILDOntology = "http://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld";
+var urlNGSILDOntology = "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld";
 
 //body --> Only One Orion Context Entity (NGSI v2)
 //return --> Only One Orion Context Entity (NGSI-LD)
@@ -142,9 +142,10 @@ function match_keyNGSIv2(key, attribute, paramIn, paramOut, ldReversedContext) {
             declType.toUpperCase() == "MultiPolygon".toUpperCase() ||    // {type: , coordinates:}
             key == "location") {
 */
-        //Only consider NGSI-v2 geo:json type attribute as a NGSI-LD GeoProperty.
-        //consider NGSI-v2 coords type attribute as a NGSI-LD GeoProperty geo:json point type.
-        if (declType == "geo:json" || declType == "coords") {
+        //Version 0: Only consider NGSI-v2 geo:json type attribute as a NGSI-LD GeoProperty.
+        //Version 1: consider NGSI-v2 coords type attribute as a NGSI-LD GeoProperty geo:json point type.
+        //Version 2: consider NGSI-v2 geo:point type attribute as a NGSI-LD GeoProperty geo:json point type.
+        if (declType == "geo:json" || declType == "coords" || declType == "geo:point") {
           attrObject["type"] = "GeoProperty";
         } else {
           attrObject["type"] = "Property";
@@ -162,8 +163,9 @@ function match_keyNGSIv2(key, attribute, paramIn, paramOut, ldReversedContext) {
           valueAttr = attribute
         }
 
-        //consider NGSI-v2 coords type attribute as a NGSI-LD GeoProperty geo:json point type.
-        if (declType == "coords") {
+        //Version 1: consider NGSI-v2 coords type attribute as a NGSI-LD GeoProperty geo:json point type.
+        //Version 2: consider NGSI-v2 geo:point type attribute as a NGSI-LD GeoProperty geo:json point type.
+        if (declType == "coords" || declType == "geo:point") {
           valueAttr = {type: "Point", 
                       coordinates:[ parseFloat(attribute.value.split(",")[1]), parseFloat(attribute.value.split(",")[0]) ]
                       }

@@ -131,9 +131,10 @@ function match_keyNGSIv1(key, attribute, paramIn, paramOut, ldReversedContext) {
             declType.toUpperCase() == "MultiPolygon".toUpperCase() ||    // {type: , coordinates:}
             key == "location") {
 */
-        //Only consider NGSI-v2 geo:json type attribute as a NGSI-LD GeoProperty.
-        if (declType == "geo:json") {
-
+        //Version 0: Only consider NGSI-v2 geo:json type attribute as a NGSI-LD GeoProperty.
+        //Version 1: consider NGSI-v2 coords type attribute as a NGSI-LD GeoProperty geo:json point type.
+        //Version 2: consider NGSI-v2 geo:point type attribute as a NGSI-LD GeoProperty geo:json point type.
+        if (declType == "geo:json" || declType == "coords" || declType == "geo:point") {
           attrObject["type"] = "GeoProperty";
         } else {
           attrObject["type"] = "Property";
@@ -149,6 +150,14 @@ function match_keyNGSIv1(key, attribute, paramIn, paramOut, ldReversedContext) {
 
         if (typeof valueAttr == "undefined") {
           valueAttr = attribute
+        }
+
+        //Version 1: consider NGSI-v2 coords type attribute as a NGSI-LD GeoProperty geo:json point type.
+        //Version 2: consider NGSI-v2 geo:point type attribute as a NGSI-LD GeoProperty geo:json point type.
+        if (declType == "coords" || declType == "geo:point") {
+          valueAttr = {type: "Point", 
+                      coordinates:[ parseFloat(attribute.value.split(",")[1]), parseFloat(attribute.value.split(",")[0]) ]
+                      }
         }
 
         attrObject["value"] = libWrapperUtils.format_value(attrObject["type"], valueAttr, "",  valueType)

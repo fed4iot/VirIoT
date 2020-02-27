@@ -5,7 +5,7 @@ version: '3.1'
 
 services:
   thingvisor:
-    image: fed4iot/fiware-greedy-tv
+    image: fed4iot/fiware-nogreedy-tv
 ##    depends_on:
 ##        - mongodb_mqtt
 ##    expose:
@@ -22,17 +22,21 @@ services:
 #        - HYPERVISOR_IP=155.54.99.118    # Not allowed: localhost, 127.0.0.1
 #        - HYPERVISOR_PORT=1030  # Must be the same as hypervisor.expose and hypervisor.ports
 
-         - MQTTDataBrokerIP=155.54.99.118
-         - MQTTDataBrokerPort=1884
+        - MQTTDataBrokerIP=155.54.99.118
+        - MQTTDataBrokerPort=1883
 
-         - MQTTControlBrokerIP=155.54.99.118
-         - MQTTControlBrokerPort=1884
+        - MQTTControlBrokerIP=155.54.99.118
+        - MQTTControlBrokerPort=1883
 
-         - thingVisorID=thingVisorID_Greedy
-         
+        - thingVisorID=thingVisorID_NOGreedy1toAll
+
+        - systemDatabaseIP=155.54.99.118
+        - systemDatabasePort=27017
+
 #         - params={"ocb_service":"parking", "ocb_servicePath":"/murcia", "ocb_ip":"155.54.99.118", "ocb_port":"1026", "MQTTbrokerUsername":"IoTPlatformMQTTUser", "MQTTbrokerPassword":"1234MQTT", "isGreedy":true, "notificacion_protocol":"http", "notify_ip":"155.54.99.118", "entitiesPerVThingID":"2"}
 #         - params={"ocb_service":"parking", "ocb_servicePath":"/murcia", "ocb_ip":"155.54.99.118", "ocb_port":"1026", "MQTTbrokerUsername":"IoTPlatformMQTTUser", "MQTTbrokerPassword":"1234MQTT", "notificacion_protocol":"http", "notify_ip":"155.54.99.118"}
-         - params={"ocb_service":["bicis","aparcamiento"],"ocb_ip":"fiware-dev.inf.um.es", "ocb_port":"1026", "notificacion_protocol":"http", "notify_ip":"155.54.99.118"},
+#         - params={"ocb_service":["bicis","aparcamiento"],"ocb_ip":"fiware-dev.inf.um.es", "ocb_port":"1026", "notificacion_protocol":"http", "notify_ip":"155.54.99.118"},
+        - params={"ocb_ip":"155.54.99.118", "ocb_port":"1026", "notificacion_protocol":"http", "notify_ip":"155.54.99.118"}
 
 #         - vThingID_1=virtualThing1
 #         - vThingID_2=virtualThing2

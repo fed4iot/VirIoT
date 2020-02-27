@@ -17,8 +17,8 @@
 import sys 
 import os
 
-# lets import the common functionality from the parent folder
-sys.path.append(os.path.abspath(".."))
+# lets import the common functionality from the parent (..) or current (.) folder
+sys.path.append(os.path.abspath("."))
 import common_vsilo_functionality as common
 
 import traceback
@@ -117,7 +117,10 @@ def add_entity_under_vThing_on_Broker(v_thing_id, entity):
 
 # Lets tell the common module who we are, so that it can import us,
 # and programmatically bind the above functions, specifically implemented
-# with the same signature by each silo controller
-common.start_silo_controller("scorpio-flavour.scorpio_silo_controller")
+# with the same signature by each silo controller.
+# Use the following dot notation if we are in a different folder than the common_vsilo_functionality
+#common.start_silo_controller("scorpio-flavour.scorpio_silo_controller")
+# Otherwise just give our name
+common.start_silo_controller("scorpio_silo_controller")
 
 

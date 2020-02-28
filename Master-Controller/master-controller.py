@@ -274,7 +274,7 @@ def create_thing_visor_on_docker(tv_img_name, debug_mode, tv_id, tv_params, tv_d
         exposed_ports = {}
         if not debug_mode:
             # new entry: start thingVisor container and insert in system database
-            docker_client.containers.run(tv_img_name, name=tv_id, tty=True, detach=True, # remove=True,
+            docker_client.containers.run(tv_img_name, name=tv_id, tty=True, detach=True, remove=True,
                                          environment=env, publish_all_ports=True)
             time.sleep(1)  # need new get because network is assigned a bit later
 

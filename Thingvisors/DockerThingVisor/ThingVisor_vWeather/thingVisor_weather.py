@@ -40,7 +40,8 @@ class FetcherThread(Thread):
                 data_type = v_thing["dataType"]  # e.g. "temperature"
                 thing_name = v_thing["thing"]  # e.g. "thermometer"
 
-                ngsi_ld_entity1 = {"id": "urn:ngsi-ld:" + city + ":" + sens_type,
+                ngsi_ld_entity1 = {"@context":["https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"],
+                                   "id": "urn:ngsi-ld:" + city + ":" + sens_type,
                                    "type": data_type,
                                    thing_name: {"type": "Property", "value": str(data)}}
                 # set initial context
@@ -67,7 +68,8 @@ class FetcherThread(Thread):
                     data_type = v_thing["dataType"]             # e.g. "temperature"
                     thing_name = v_thing["thing"]               # e.g. "thermometer"
 
-                    ngsi_ld_entity1 = {"id": "urn:ngsi-ld:" + city + ":" + sens_type,
+                    ngsi_ld_entity1 = {"@context":["https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"],
+                                       "id": "urn:ngsi-ld:" + city + ":" + sens_type,
                                        "type": data_type,
                                        thing_name: {"type": "Property", "value": str(data)}}
 

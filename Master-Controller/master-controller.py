@@ -72,6 +72,7 @@ in_control_suffix = "c_in"
 out_control_suffix = "c_out"
 
 # Mongo settings
+mongo_IP = settings.mongo_IP
 mongo_port = settings.mongo_port
 db_name = "viriotDB"
 v_silo_collection = "vSiloC"
@@ -1588,7 +1589,7 @@ if __name__ == '__main__':
                 sys.exit(0)
             mongo_client = MongoClient('mongodb://' + "localhost" + ':' + str(mongo_port_local) + '/')
         else:
-            mongo_client = MongoClient('mongodb://' + settings.mongo_IP + ':' + str(mongo_port) + '/')
+            mongo_client = MongoClient('mongodb://' + mongo_IP + ':' + str(mongo_port) + '/')
 
 
     else:

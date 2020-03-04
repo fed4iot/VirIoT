@@ -9,6 +9,8 @@ MQTT_control_broker_port = 1883
 
 # Mongo settings
 # mongoDb port
+# mongo_IP is required but can be empty !!
+mongo_IP = ""
 mongo_port = 27017
 
 container_manager = "DOCKER"

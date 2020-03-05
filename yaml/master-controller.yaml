@@ -29,7 +29,7 @@ spec:
         - mountPath: /app/data/settings.py
           name: config-volume
           subPath: settings.py
-      imagePullPolicy: Always
+        imagePullPolicy: Always
       volumes:
       - name: config-volume
         configMap:

@@ -13,6 +13,7 @@ import f4i_add_vthing
 import f4i_delete_vthing
 import f4i_inspect_tenant
 import f4i_inspect_thingvisor
+import f4i_inspect_flavour
 import f4i_inspect_vsilo
 import f4i_list_flavours
 import f4i_list_thingvisors
@@ -83,6 +84,10 @@ if __name__ == '__main__':
     # inspect thingvisor
     parser_it = subparsers.add_parser('inspect-thingvisor', help='dump thingvisor properties')
     f4i_inspect_thingvisor.init_args(parser_it)
+
+    # inspect flavour
+    parser_it = subparsers.add_parser('inspect-flavour', help='dump flavour properties')
+    f4i_inspect_flavour.init_args(parser_it)
 
     # inspect vsilo
     parser_it = subparsers.add_parser('inspect-vsilo', help='dump vsilo properties')

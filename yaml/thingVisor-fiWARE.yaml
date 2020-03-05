@@ -3,7 +3,6 @@ kind: Deployment
 metadata:
   name: f4i-tv-fiware
 spec:
-  serviceName: f4i-tv-svc-fiware
   selector:
     matchLabels:
       app: f4i-fiware

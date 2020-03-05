@@ -167,7 +167,6 @@ def create_virtual_silo_on_kubernetes(v_silo_id, v_silo_name, tenant_id, flavour
             for yaml in yamls_file:
                 if yaml["kind"] == "Deployment":
                     print("Deployment Creation")
-                    service_name = yaml["spec"]["serviceName"] + str("-%s-%s") % (tenant_id.lower(), v_silo_name.lower())
                     yaml["spec"]["selector"]["matchLabels"]["siloID"] = label_app
                     yaml["spec"]["template"]["metadata"]["labels"]["siloID"] = label_app
                     yaml["spec"]["template"]["spec"]["containers"][0]["env"] = k8s.convert_env(env)
@@ -179,7 +178,6 @@ def create_virtual_silo_on_kubernetes(v_silo_id, v_silo_name, tenant_id, flavour
                         # composed of the node without label "zone"
                         yaml["spec"]["template"]["spec"]["affinity"] = k8s.zone_affinity
                         gateway_IP = default_gateway_IP
-                    yaml["spec"]["serviceName"] = service_name
                     deployment_name = yaml["metadata"]["name"] + str("-%s-%s") % (tenant_id.lower(), v_silo_name.lower())
                     yaml["metadata"]["name"] = deployment_name
                     # print(yaml)
@@ -350,14 +348,12 @@ def create_thing_visor_on_kubernetes(tv_img_name, debug_mode, tv_id, tv_params, 
                         yaml["spec"]["template"]["spec"]["affinity"] = k8s.zone_affinity
                         gateway_IP = default_gateway_IP
                     deployment_name = yaml["metadata"]["name"]
-                    service_name = yaml["spec"]["serviceName"]
-                    if service_name is not None:
-                        service_name += tv_id.lower().replace("_", "-")
                     api_response_deployment = k8s.create_deployment_from_yaml(namespace="default", body=yaml)
                     # print(api_response_deployment)
 
                 elif yaml["kind"] == "Service":
                     print("Service Creation")
+                    service_name = yaml["metadata"]["name"] + tv_id.lower().replace("_", "-")
                     yaml["metadata"]["name"] = service_name
                     api_response_service = k8s.create_service_from_yaml(namespace="default", body=yaml)
                     # print(api_response_service)
@@ -1453,8 +1449,6 @@ def db_tv_check_on_kubernetes():
             # print("Exception when calling AppsV1Api->read_namespaced_deployment: %s\n" % e)
             api_response = err
 
-        print("----> api_response (db_tv_check_on_kubernetes) ------", api_response)
-
         if api_response.status == 404:
             db[thing_visor_collection].delete_many({"deploymentName": deployment_name})
             print("removed thing Visor with id " + tv_id + " from system database")
@@ -1488,8 +1482,6 @@ def db_silo_check_on_kubernetes():
         except ApiException as err:
             # print("Exception when calling AppsV1Api->read_namespaced_deployment: %s\n" % e)
             api_response = err
-
-        print("----> api_response (db_silo_check_on_kubernetes) ------", api_response)
 
         if api_response.status == 404:
             db[v_silo_collection].delete_many({"deploymentName": deployment_name})

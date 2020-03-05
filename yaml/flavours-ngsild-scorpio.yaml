@@ -3,7 +3,6 @@ kind: Deployment
 metadata:
   name: f4i-ngsild-scorpio-f
 spec:
-  serviceName: f4i-ngsild-scorpio-svc
   replicas: 1
   selector:
     matchLabels:
@@ -12,14 +11,12 @@ spec:
     metadata:
       labels:
         app: f4i-ngsild-scorpio
-        selector: f4i-ngsild-scorpio-f
     spec:
       containers:
       - name: f4i-ngsild-scorpio-f
         image: fed4iot/ngsild-scorpio-f:2.2
         ports:
         - containerPort: 9090
-        
 ---
 apiVersion: v1
 kind: Service

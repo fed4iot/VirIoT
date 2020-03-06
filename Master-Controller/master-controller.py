@@ -46,6 +46,7 @@ from kubernetes.client.rest import ApiException
 import data.settings as settings
 import db_setup
 import kubernetes_functions as k8s
+import requests
 
 
 # public IP address through the which it is possible to access thingvisors, database, vSilos, etc.
@@ -72,6 +73,7 @@ in_control_suffix = "c_in"
 out_control_suffix = "c_out"
 
 # Mongo settings
+mongo_IP = settings.mongo_IP
 mongo_port = settings.mongo_port
 db_name = "viriotDB"
 v_silo_collection = "vSiloC"
@@ -90,6 +92,7 @@ STATUS_STOPPED = "stopped"
 STATUS_SHUTTING_DOWN = "shutting_down"
 STATUS_TERMINATED = "terminated"
 STATUS_READY = "ready"
+STATUS_ERROR = "error"
 
 container_manager = settings.container_manager
 
@@ -166,7 +169,6 @@ def create_virtual_silo_on_kubernetes(v_silo_id, v_silo_name, tenant_id, flavour
             for yaml in yamls_file:
                 if yaml["kind"] == "Deployment":
                     print("Deployment Creation")
-                    service_name = yaml["spec"]["serviceName"] + str("-%s-%s") % (tenant_id.lower(), v_silo_name.lower())
                     yaml["spec"]["selector"]["matchLabels"]["siloID"] = label_app
                     yaml["spec"]["template"]["metadata"]["labels"]["siloID"] = label_app
                     yaml["spec"]["template"]["spec"]["containers"][0]["env"] = k8s.convert_env(env)
@@ -178,7 +180,6 @@ def create_virtual_silo_on_kubernetes(v_silo_id, v_silo_name, tenant_id, flavour
                         # composed of the node without label "zone"
                         yaml["spec"]["template"]["spec"]["affinity"] = k8s.zone_affinity
                         gateway_IP = default_gateway_IP
-                    yaml["spec"]["serviceName"] = service_name
                     deployment_name = yaml["metadata"]["name"] + str("-%s-%s") % (tenant_id.lower(), v_silo_name.lower())
                     yaml["metadata"]["name"] = deployment_name
                     # print(yaml)
@@ -274,7 +275,7 @@ def create_thing_visor_on_docker(tv_img_name, debug_mode, tv_id, tv_params, tv_d
         exposed_ports = {}
         if not debug_mode:
             # new entry: start thingVisor container and insert in system database
-            docker_client.containers.run(tv_img_name, name=tv_id, tty=True, detach=True, # remove=True,
+            docker_client.containers.run(tv_img_name, name=tv_id, tty=True, detach=True, remove=True,
                                          environment=env, publish_all_ports=True)
             time.sleep(1)  # need new get because network is assigned a bit later
 
@@ -307,8 +308,10 @@ def create_thing_visor_on_docker(tv_img_name, debug_mode, tv_id, tv_params, tv_d
         print("insert thingVisorID into DB")
 
     except Exception as ex:
-        db[thing_visor_collection].delete_one({"thingVisorID": tv_id})
-        print(traceback.format_exc())
+        # db[thing_visor_collection].delete_one({"thingVisorID": tv_id})
+        db[thing_visor_collection].update_one({"thingVisorID": tv_id}, {"$set": {"status": STATUS_ERROR,
+                                                                                 "error": "%s" % ex}})
+        # print(traceback.format_exc())
 
 
 def create_thing_visor_on_kubernetes(tv_img_name, debug_mode, tv_id, tv_params, tv_description, yamls_file, deploy_zone):
@@ -339,6 +342,14 @@ def create_thing_visor_on_kubernetes(tv_img_name, debug_mode, tv_id, tv_params, 
                     print("Deployment Creation")
                     yaml["metadata"]["name"] += "-" + tv_id.lower().replace("_", "-")
                     yaml["spec"]["template"]["spec"]["containers"][0]["env"] = k8s.convert_env(env)
+                    tv_img_name = yaml["spec"]["template"]["spec"]["containers"][0]["image"]
+
+                    url = "https://hub.docker.com/v2/repositories/%s" % tv_img_name.split(":")[0]
+                    print("Request_url", url)
+                    response = requests.head(url, allow_redirects=True)
+                    if not response.status_code == 200:
+                        raise docker.errors.ImageNotFound("ImageNotFound")
+
                     if deploy_zone is not None and deploy_zone:
 
                         yaml["spec"]["template"]["spec"]["nodeSelector"] = {"zone": deploy_zone["zone"]}
@@ -349,14 +360,12 @@ def create_thing_visor_on_kubernetes(tv_img_name, debug_mode, tv_id, tv_params, 
                         yaml["spec"]["template"]["spec"]["affinity"] = k8s.zone_affinity
                         gateway_IP = default_gateway_IP
                     deployment_name = yaml["metadata"]["name"]
-                    service_name = yaml["spec"]["serviceName"]
-                    if service_name is not None:
-                        service_name += tv_id.lower().replace("_", "-")
                     api_response_deployment = k8s.create_deployment_from_yaml(namespace="default", body=yaml)
                     # print(api_response_deployment)
 
                 elif yaml["kind"] == "Service":
                     print("Service Creation")
+                    service_name = yaml["metadata"]["name"] + tv_id.lower().replace("_", "-")
                     yaml["metadata"]["name"] = service_name
                     api_response_service = k8s.create_service_from_yaml(namespace="default", body=yaml)
                     # print(api_response_service)
@@ -395,8 +404,10 @@ def create_thing_visor_on_kubernetes(tv_img_name, debug_mode, tv_id, tv_params, 
         print("insert thingVisorID into DB")
 
     except Exception as ex:
-        db[thing_visor_collection].delete_one({"thingVisorID": tv_id})
-        print(traceback.format_exc())
+        # db[thing_visor_collection].delete_one({"thingVisorID": tv_id})
+        db[thing_visor_collection].update_one({"thingVisorID": tv_id}, {"$set": {"status": STATUS_ERROR,
+                                                                                 "error": "%s" % ex}})
+        # print(traceback.format_exc())
 
 def delete_thing_visor_on_docker(tv_entry):
     container_id = tv_entry["containerID"]
@@ -437,7 +448,7 @@ def add_flavour_on_docker(image_name, flavour_id, flavour_params, flavour_descri
 
         if not dockerImageExist(image_name):
             docker_client.images.pull(image_name)
-        # dockerClient.images.get(imageName)  # raise an an exception if images does not exist
+        # docker_client.images.get(image_name)  # raise an an exception if images does not exist
 
         db[flavour_collection].update_one({"flavourID": flavour_id},
                                           {"$set": {"flavourParams": flavour_params, "imageName": image_name,
@@ -446,22 +457,50 @@ def add_flavour_on_docker(image_name, flavour_id, flavour_params, flavour_descri
                                                     "status": STATUS_READY}})
         print("Flavour " + flavour_id + " added")
         return
-    except docker.errors.ImageNotFound:
-        db[flavour_collection].delete_one({"flavourID": flavour_id})
+
+    except docker.errors.ImageNotFound as err:
+        # db[flavour_collection].delete_one({"flavourID": flavour_id})
+        db[flavour_collection].update_one({"flavourID": flavour_id},
+                                          {"$set": {"flavourParams": flavour_params, "imageName": image_name,
+                                                    "flavourDescription": flavour_description,
+                                                    "creationTime": datetime.datetime.now().isoformat(),
+                                                    "status": STATUS_ERROR,
+                                                    "error": "%s" % err}})
         print('Add fails - Could not find the Docker image of the flavour')
         return  # 'Add fails - Could not find the Docker image of the flavour', 409
-    except docker.errors.APIError:
-        db[flavour_collection].delete_one({"flavourID": flavour_id})
+    except docker.errors.APIError as err:
+        # db[flavour_collection].delete_one({"flavourID": flavour_id})
+        db[flavour_collection].update_one({"flavourID": flavour_id},
+                                          {"$set": {"flavourParams": flavour_params, "imageName": image_name,
+                                                    "flavourDescription": flavour_description,
+                                                    "creationTime": datetime.datetime.now().isoformat(),
+                                                    "status": STATUS_ERROR,
+                                                    "error": "%s" % err}})
         print('Add fails - Could not find the Docker image of the flavour')
         return  # 'Add fails - Could not find the Docker image of the flavour', 409
     except Exception:
         print(traceback.format_exc())
-        db[flavour_collection].delete_one({"flavourID": flavour_id})
+        # db[flavour_collection].delete_one({"flavourID": flavour_id})
+        db[flavour_collection].update_one({"flavourID": flavour_id},
+                                          {"$set": {"flavourParams": flavour_params, "imageName": image_name,
+                                                    "flavourDescription": flavour_description,
+                                                    "creationTime": datetime.datetime.now().isoformat(),
+                                                    "status": STATUS_ERROR}})
         return  # 'Add fails', 401
 
 
 def add_flavour_on_kubernetes(image_name, flavour_id, flavour_params, flavour_description, yamls_file):
     try:
+
+        for yaml in yamls_file:
+            if yaml["kind"] == "Deployment":
+                image_name = yaml["spec"]["template"]["spec"]["containers"][0]["image"]
+                break
+
+        url = "https://hub.docker.com/v2/repositories/%s" % image_name.split(":")[0]
+        response = requests.head(url, allow_redirects=True)
+        if not response.status_code == 200:
+            raise docker.errors.ImageNotFound("ImageNotFound")
 
         print("Creation of Flavour on k8s")
         db[flavour_collection].update_one({"flavourID": flavour_id},
@@ -473,17 +512,43 @@ def add_flavour_on_kubernetes(image_name, flavour_id, flavour_params, flavour_de
                                                     "yamlsFile": yamls_file}})
         print("Flavour " + flavour_id + " added")
         return
-    except docker.errors.ImageNotFound:
-        db[flavour_collection].delete_one({"flavourID": flavour_id})
+
+
+    except docker.errors.ImageNotFound as err:
+        # db[flavour_collection].delete_one({"flavourID": flavour_id})
+        db[flavour_collection].update_one({"flavourID": flavour_id},
+                                          {"$set": {"flavourParams": flavour_params,
+                                                    "imageName": image_name,
+                                                    "flavourDescription": flavour_description,
+                                                    "creationTime": datetime.datetime.now().isoformat(),
+                                                    "status": STATUS_ERROR,
+                                                    "error": "%s" % err,
+                                                    "yamlsFile": yamls_file}})
         print('Add fails - Could not find the Docker image of the flavour')
         return  # 'Add fails - Could not find the Docker image of the flavour', 409
-    except docker.errors.APIError:
-        db[flavour_collection].delete_one({"flavourID": flavour_id})
+    except docker.errors.APIError as err:
+        print("%s" % err)
+        # db[flavour_collection].delete_one({"flavourID": flavour_id})
+        db[flavour_collection].update_one({"flavourID": flavour_id},
+                                          {"$set": {"flavourParams": flavour_params,
+                                                    "imageName": image_name,
+                                                    "flavourDescription": flavour_description,
+                                                    "creationTime": datetime.datetime.now().isoformat(),
+                                                    "status": STATUS_ERROR,
+                                                    "error": "%s" % err,
+                                                    "yamlsFile": yamls_file}})
         print('Add fails - Could not find the Docker image of the flavour')
         return  # 'Add fails - Could not find the Docker image of the flavour', 409
     except Exception:
         print(traceback.format_exc())
-        db[flavour_collection].delete_one({"flavourID": flavour_id})
+        # db[flavour_collection].delete_one({"flavourID": flavour_id})
+        db[flavour_collection].update_one({"flavourID": flavour_id},
+                                          {"$set": {"flavourParams": flavour_params,
+                                                    "imageName": image_name,
+                                                    "flavourDescription": flavour_description,
+                                                    "creationTime": datetime.datetime.now().isoformat(),
+                                                    "status": STATUS_ERROR,
+                                                    "yamlsFile": yamls_file}})
         return  # 'Add fails', 401
 
 
@@ -684,6 +749,9 @@ class httpThread(Thread):
             flavour_entry = db[flavour_collection].find_one({"flavourID": flavour_id})
             flavour_image_name = flavour_entry["imageName"]
             flavour_params = flavour_entry["flavourParams"]
+            # Check if the falour is not in errore state
+            if flavour_entry["status"] == STATUS_ERROR:
+                return json.dumps({"message": 'Create fails - Requested flavour status is: %s' % STATUS_ERROR}), 409
 
             yamls_file = ""
             if "yamlsFile" in flavour_entry:
@@ -1430,37 +1498,50 @@ def dockerImageExist(name):
 def db_tv_check_on_docker():
     try:
         for thing_visor in db[thing_visor_collection].find({}, {"_id": 0}):
-            container_id = thing_visor["containerID"]
             tv_id = thing_visor["thingVisorID"]
+            if "containerID" in thing_visor.keys():
+                container_id = thing_visor["containerID"]
+            else:
+                db[thing_visor_collection].delete_many({"thingVisorID": tv_id})
+                continue
+
+            print("tv_id", tv_id)
             # Check if thingVisor's docker container is running
             if docker_client.containers.get(container_id).status != "running":
                 db[thing_visor_collection].delete_many({"containerID": container_id})
                 print("removed thing Visor with id " + tv_id + " from system database")
     except docker.errors.NotFound:
-        db[thing_visor_collection].delete_many({"containerID": container_id})
+        db[thing_visor_collection].delete_many({"thingVisorID": tv_id})
         print("removed thing Visor with id " + tv_id + " from system database")
+    # except Exception as err:
+    #     db[thing_visor_collection].delete_many({"thingVisorID": tv_id})
+    #     print("ERROR", err)
+    #     print("removed thing Visor with id " + tv_id + " from system database")
 
 
 def db_tv_check_on_kubernetes():
     api_instance = kubernetes.client.AppsV1Api()
-    for thing_visor in db[thing_visor_collection].find({}, {"_id": 0}):
-        tv_id = thing_visor["thingVisorID"]
-        deployment_name = thing_visor["deploymentName"]
-        try:
+    try:
+        for thing_visor in db[thing_visor_collection].find({}, {"_id": 0}):
+            tv_id = thing_visor["thingVisorID"]
+            deployment_name = thing_visor["deploymentName"]
             api_response = api_instance.read_namespaced_deployment(deployment_name, working_namespace)
-        except ApiException as err:
-            # print("Exception when calling AppsV1Api->read_namespaced_deployment: %s\n" % e)
-            api_response = err
 
-        print("----> api_response (db_tv_check_on_kubernetes) ------", api_response)
-
-        if api_response.status == 404:
-            db[thing_visor_collection].delete_many({"deploymentName": deployment_name})
-            print("removed thing Visor with id " + tv_id + " from system database")
-        else:
-            if api_response.status.available_replicas is None or api_response.status.available_replicas < 1:
-                db[thing_visor_collection].delete_many({"containerID": deployment_name})
+            if api_response.status == 404:
+                db[thing_visor_collection].delete_many({"thingVisorID": tv_id})
                 print("removed thing Visor with id " + tv_id + " from system database")
+            else:
+                if api_response.status.available_replicas is None or api_response.status.available_replicas < 1:
+                    db[thing_visor_collection].delete_many({"thingVisorID": tv_id})
+                    print("removed thing Visor with id " + tv_id + " from system database")
+
+    except ApiException as err:
+        # print("Exception when calling AppsV1Api->read_namespaced_deployment: %s\n" % e)
+        api_response = err
+        db[thing_visor_collection].delete_many({"thingVisorID": tv_id})
+    except Exception as err:
+        print("Error:", err)
+        db[thing_visor_collection].delete_many({"thingVisorID": tv_id})
 
 
 def db_silo_check_on_docker():
@@ -1473,7 +1554,7 @@ def db_silo_check_on_docker():
                 db[v_silo_collection].delete_many({"containerID": container_id})
                 print("removed virtual Silo with id " + v_silo_id + " from system database")
     except docker.errors.NotFound:
-        db[v_silo_collection].delete_many({"containerID": container_id})
+        db[v_silo_collection].delete_many({"vSiloID": v_silo_id})
         print("removed virtual Silo with id " + v_silo_id + " from system database")
 
 
@@ -1488,26 +1569,34 @@ def db_silo_check_on_kubernetes():
             # print("Exception when calling AppsV1Api->read_namespaced_deployment: %s\n" % e)
             api_response = err
 
-        print("----> api_response (db_silo_check_on_kubernetes) ------", api_response)
-
         if api_response.status == 404:
-            db[v_silo_collection].delete_many({"deploymentName": deployment_name})
+            db[v_silo_collection].delete_many({"vSiloID": v_silo_id})
             print("removed virtual Silo with id " + v_silo_id + " from system database")
         else:
             if api_response.status.available_replicas is None or api_response.status.available_replicas < 1:
-                db[v_silo_collection].delete_many({"containerID": deployment_name})
+                db[v_silo_collection].delete_many({"v_silo_id": v_silo_id})
                 print("removed virtual Silo with id " + v_silo_id + " from system database")
 
+def db_flavour_check():
+    try:
+        for flavour in db[flavour_collection].find({}, {"_id": 0}):
+            flavour_id = flavour["flavourID"]
+            if flavour["status"] == STATUS_ERROR or flavour["status"] == STATUS_PENDING:
+                db[flavour_collection].delete_many({"flavourID": flavour_id})
+    except Exception as err:
+        print("Error", err)
+        db[flavour_collection].delete_many({"flavourID": flavour_id})
 
 def database_integrity_check_on_docker():
     db_tv_check_on_docker()
     db_silo_check_on_docker()
+    db_flavour_check()
 
 
 def database_integrity_check_on_kubernetes():
     db_tv_check_on_kubernetes()
     db_silo_check_on_kubernetes()
-
+    db_flavour_check()
 
 def mqtt_broker_connection_on_docker():
     mqttc.connect(MQTT_control_broker_IP, MQTT_control_broker_port, 30)
@@ -1588,7 +1677,7 @@ if __name__ == '__main__':
                 sys.exit(0)
             mongo_client = MongoClient('mongodb://' + "localhost" + ':' + str(mongo_port_local) + '/')
         else:
-            mongo_client = MongoClient('mongodb://' + settings.mongo_IP + ':' + str(mongo_port) + '/')
+            mongo_client = MongoClient('mongodb://' + mongo_IP + ':' + str(mongo_port) + '/')
 
 
     else:

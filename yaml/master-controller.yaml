@@ -29,6 +29,7 @@ spec:
         - mountPath: /app/data/settings.py
           name: config-volume
           subPath: settings.py
+        imagePullPolicy: Always
       volumes:
       - name: config-volume
         configMap:
@@ -48,14 +49,13 @@ spec:
     nodePort:
   selector:
     app: f4i-master-controller
-
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: viriot-cluster-role
 rules:
-- apiGroups: [""]
+- apiGroups: ["", "apps"]
   resources: ["deployments", "services", "nodes", "pods"]
   verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 ---

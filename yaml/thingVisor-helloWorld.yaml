@@ -3,18 +3,17 @@ kind: Deployment
 metadata:
   name: f4i-tv-helloworld
 spec:
-  serviceName: f4i-thingvisor-svc
   selector:
     matchLabels:
-      app: f4i-helloWorld
+      app: f4i-helloworld
   replicas: 1
   template:
     metadata:
       labels:
-        app: f4i-helloWorld
+        app: f4i-helloworld
     spec:
       containers:
-      - name: f4i-helloWorld
+      - name: f4i-helloworld
         image: fed4iot/helloworld-tv:2.2
         ports:
         - containerPort: 80 

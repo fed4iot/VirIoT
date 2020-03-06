@@ -370,13 +370,28 @@ def fetch_last_context_for_vthing(v_thing_id):
 
 
 def restore_virtual_things():
-    # Retrieve from system db the list of virtual things in use and restore them
-    # needed in case of silo controller restart.
-    # TODO In case i am a System vSilo, i should scan all vThings of all vSilos....
+    # Retrieve from system db the list of virtual things in use and restore them.
+    # This is needed in case of silo controller crashing and then restarting.
+    # In case i am a System vSilo, i should scan all vThings of all ThungVisors, regardless
+    # wether the vThings have actually been added to any vSilo. So we have to
+    # fetch them from the ThingVisors directly (because if the System vSilo starts
+    # AFTER the ThingVisor, it would not capture the create_vthing message from the TV
     db_client = MongoClient('mongodb://' + db_IP + ':' + str(db_port) + '/')
     db = db_client[db_name]
-    connected_v_things = json.loads(
-        dumps(db[v_thing_collection].find({"vSiloID": v_silo_id}, {"vThingID": 1, "_id": 0})))
+
+    if is_this_vsilo_systemvsilo == False:
+        connected_v_things = json.loads(dumps(db[v_thing_collection].find({"vSiloID": v_silo_id}, {"vThingID": 1, "_id": 0})))
+    else:
+        connected_v_things = []
+        v_things_entries = db[thing_visor_collection].find({}, {"_id": 0, "vThings": 1})
+        for vThingEntry in v_things_entries:
+            for vThing in vThingEntry["vThings"]:
+                # now in vThing i have a description of a vThing as seen from the ThingVisor, that
+                # is made of "id", "label" and "description". I only extract "id" and rename it "vThingID"
+                # and create a simple object that i append to the resulting array
+                simple_vthing = {'vThingID':vThing['id']}
+                connected_v_things.append(simple_vthing)
+
     if len(connected_v_things) > 0:
         for vThing in connected_v_things:
             if "vThingID" in vThing:
@@ -496,6 +511,7 @@ def start_silo_controller(broker_specific_module_name):
   global db_port
   global db_name
   global v_thing_collection
+  global thing_visor_collection
   global v_silo_id
   global brokerspecific
   global tenant_id
@@ -576,6 +592,7 @@ def start_silo_controller(broker_specific_module_name):
   # Mongodb settings
   db_name = "viriotDB"  # name of system database
   v_thing_collection = "vThingC"
+  thing_visor_collection = "thingVisorC"
 
   # initialize whatever broker we have, before receiving messages!
   brokerspecific.init_Broker()

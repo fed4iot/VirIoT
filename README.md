@@ -1,7 +1,8 @@
   
 # README  
-
-Setup of a demo configuration tested on Ubuntu 18.04.  
+This is the instructions to quickly setup an instance of the VirIoT platform being developed
+by the [Fed4IoT](https://fed4iot.org) EU-Japan project.
+Setup of this demo configuration was tested on Ubuntu 18.04.  
   
 
 Activate python3 and bash autocomplete:  
@@ -233,32 +234,47 @@ python3 f4i.py register -c http://[master_controller_ip]:[master_controller_port
   
 
 ### Add Flavour  
+There are already several vSilo Flavours available.
 
-Add a vSilo flavour for Mobius  
-
-#### MOBIUS  
+#### MOBIUS (for developers that want to use the oneM2M IoT standard)
+Add a vSilo flavour for [Mobius](https://github.com/IoTKETI/Mobius).
+Mobius is a [oneM2M](http://www.onem2m.org) server implementation.
+It got the oneM2M certification and it is designated as one of the golden samples.
 
 ```bash  
 python3 f4i.py add-flavour -c http://[master_controller_ip]:[master_controller_port] -f Mobius-base-f -s Mobius -i fed4iot/mobius-base-f:2.2 -d "silo with a oneM2M Mobius broker"  
 # Kubernetes: add the flavour yaml argument using -y   
 python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -f Mobius-base-f -s Mobius -d "silo with a oneM2M Mobius broker" -y "yaml/flavours-mobius-base.yaml"   
 ```  
-  
 
-Add a vSilo flavour for Orion  
 
-#### FIWARE  
+#### ORION (for developers that want to use the FIWARE NGSIv2 IoT standard)
+Add a vSilo flavour for [Orion](https://fiware-orion.readthedocs.io/en/master/).
+Orion is a C++ implementation of the [NGSIv2](https://fiware.github.io/specifications/ngsiv2/stable/) REST API
+binding developed as a part of the FIWARE platform.
 
 ```bash  
 python3 f4i.py add-flavour -c http://[master_controller_ip]:[master_controller_port] -f orion-f -i fed4iot/orion-f:2.2 -d "silo with a FIWARE Orion broker" -s ""  
 # Kubernetes: add the flavour yaml argument using -y   
 python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -f orion-f -d "silo with a FIWARE Orion broker" -s "" -y "yaml/flavours-orion.yaml"  
 ```  
-  
 
-Add a vSilo flavour for raw MQTT  
+#### SCORPIO (for developers that want to use the ETSI NGSI-LD standard for IoT and context data)
+Add a vSilo flavour for [Scorpio](https://github.com/ScorpioBroker/ScorpioBroker).
+Scorpio is an [NGSI-LD](https://www.etsi.org/deliver/etsi_gs/CIM/001_099/009/01.02.02_60/gs_CIM009v010202p.pdf)
+compliant context broker developed by NEC Laboratories Europe and NEC Technologies India.
+NGSI-LD is an open API and Datamodel specification for context management published by ETSI.
+Scorpio is developed in Java using the SpringCloud microservices framework.
 
-#### RAW MQTT  
+```bash  
+python3 f4i.py add-flavour -c http://[master_controller_ip]:[master_controller_port] -f ngsild-scorpio-f -i fed4iot/ngsild-scorpio-f:2.2 -d "silo with a Scorpio NGSI-LD broker" -s ""  
+# Kubernetes: add the flavour yaml argument using -y   
+python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -f ngsild-scorpio-f -d "silo with a Scorpio NGSI-LD broker" -s "" -y "yaml/flavours-ngsild-scorpio.yaml"  
+```  
+
+
+#### RAW MQTT
+Add a vSilo flavour for exporting your raw IoT data to MQTT topics.
 
 ```bash  
 python3 f4i.py add-flavour -c http://[master_controller_ip]:[master_controller_port] -f mqtt-f -i fed4iot/raw-mqtt-f:2.2 -d "silo with a Mosquitto broker" -s ""  

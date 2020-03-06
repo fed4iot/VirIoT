@@ -17,7 +17,12 @@ spec:
       - name: mongodb
         image: mongo:4.2.2
         ports:
-        - containerPort: 27017  
+        - containerPort: 27017
+#        env:
+#          - name: MONGO_INITDB_ROOT_USERNAME
+#            value: admin
+#          - name: MONGO_INITDB_ROOT_PASSWORD
+#            value: passw0rd
 ---
 apiVersion: v1
 kind: Service

@@ -3,7 +3,6 @@ kind: Deployment
 metadata:
   name: f4i-tv-onem2m
 spec:
-  serviceName: f4i-tv-svc-onem2m
   selector:
     matchLabels:
       app: f4i-onem2m

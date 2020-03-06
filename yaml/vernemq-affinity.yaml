@@ -39,6 +39,8 @@ spec:
           name: epmd
         - containerPort: 44053
           name: vmq
+        - containerPort: 8888
+          name: vernemq-ext
         - containerPort: 9100
         - containerPort: 9101
         - containerPort: 9102

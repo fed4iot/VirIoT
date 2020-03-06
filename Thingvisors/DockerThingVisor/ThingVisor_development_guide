@@ -126,3 +126,31 @@ E.g
     'thingVisorID': 'vWeather'
 }
 destroyTVAck control message is published on topic TV/<thingVisorID>/c-out
+
+
+Context.
+The topic vThing/<thingVisorID>/<vThingLID>/c_in is used to send commands concerning specific vThings
+to the corresponding ThingVisor.
+
+The most important command is a getContextRequest, to which the ThingVisor must answer with a
+getContextResponse message.
+
+Suppose to have a vThing that indicates the numbers of cars that are in a parking lot.
+The virtual thing sends an update every time a car enters or leaves the parking lot.
+A Tenant's vSilo that is just starting up does not have any information about the number
+of the cars in the parking lot, until a car either enters or leaves the parking lot.
+
+To avoid this, ThingVisors must hold/cache a Context for each vThing, i.e. the last status of a virtual thing.
+
+Every time a Tenant adds a virtual thing to her vSilo, the silo controller publishes a
+getContextRequest in the topic vThing/<thingVisorID>/<vThingLID>/c_in.
+
+The ThingVisor responsible for that virtual thing then publishes a getContextResponse to
+the topic vSilo/[vSiloID]/c_in, containing the initial context of the virtual thing.
+
+
+
+
+
+
+

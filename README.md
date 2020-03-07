@@ -1,3 +1,5 @@
+![k8s CI](https://github.com/fed4iot/VirIoT/workflows/k8s%20CI/badge.svg)
+![docker CI](https://github.com/fed4iot/VirIoT/workflows/docker%20CI/badge.svg)
   
 # README  
 This is the instructions to quickly setup an instance of the VirIoT platform being developed

@@ -1,0 +1,63 @@
+name: "docker CI"
+on: [pull_request, push]
+
+jobs:
+  tv-helloworld:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        runtime: [""]
+    steps:
+    - uses: actions/checkout@master
+    - name: pkg install
+      run: |
+        sudo apt-get install -y python3-setuptools mosquitto-clients
+        sudo pip3 install PyYAML argcomplete
+        cd Master-Controller/
+        sudo pip3 install -r requirements.txt
+        cd ..
+    - name: thingvisor setup
+      run: |
+        # mongo instance
+        docker run -d --rm --name mongo-container -p 32768:27017 mongo:3.4.18
+        # mosquitto instance
+        git clone https://github.com/eclipse/mosquitto
+        echo "persistence true" >> mosquitto/mosquitto.conf
+        echo "persistence_location /mosquitto/data/" >> mosquitto/mosquitto.conf
+        echo "log_dest file /mosquitto/log/mosquitto.log" >> mosquitto/mosquitto.conf
+        docker run -d --rm -it --name mosquitto -v `pwd`/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf -p 1883:1883 -p 9001:9001 eclipse-mosquitto:latest
+        # master controller
+        mkdir -p logs
+        cd Master-Controller/
+        mkdir -p data
+        cp settings-docker-template.py data/settings.py
+        python3 master-controller.py &
+        cd ..
+        # add thing visor
+        sleep 50
+        cd CLI
+        ./f4i.py login -u admin -p passw0rd
+        ./f4i.py add-thingvisor -i fed4iot/helloworld-tv:2.2 -n f4i-tv-helloworld${{ matrix.runtime }} -d "hello thingVisor"
+        sleep 15
+        ./f4i.py list-thingvisors
+        ./f4i.py inspect-thingvisor
+        cd ..
+    - name: thingvisor test
+      run: |
+        mosquitto_sub -C 3 -v -h 172.17.0.1 -p 1883 -t 'vThing/f4i-tv-helloworld${{ matrix.runtime }}/hello/data_out'
+    - name: collect logs
+      if: always()
+      continue-on-error: true
+      run: |
+        docker ps -a |& tee log.txt
+        docker logs mongo-container > logs/k8s-mongo.txt
+        sudo journalctl -xe -u docker > logs/journalctl.txt
+        docker logs f4i-tv-helloworld${{ matrix.runtime }} |& tee
+        sudo netstat -anp |grep tcp > logs/netstat.txt
+        ip route |& tee logs/iproute.txt
+        ip addr |& tee logs/ipaddr.txt
+    - uses: actions/upload-artifact@v1
+      if: always()
+      with:
+        name: Docker-log
+        path: logs

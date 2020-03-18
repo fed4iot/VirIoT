@@ -163,13 +163,13 @@ kubectl get pods -o wide
 
 ### VirIoT Master-Controller execution as Pod from k8s master node:  
 
-The Master-Controller is deployed as a StatefulSet inside the cluster default zone. Edit the Master-Controller configuration in `$HOME/VirIoT/Master-Controller/yaml/viriot-configmap-setup.yaml` and create the ConfigMap resource, as well as the Master-Controller.
+The Master-Controller is deployed as a StatefulSet inside the cluster default zone. Edit the Master-Controller configuration in `$HOME/VirIoT/yaml/viriot-configmap-setup.yaml` and create the ConfigMap resource, as well as the Master-Controller.
 
 ```bash    
 # edit Master-Controller configuration
-vim $HOME/VirIoT/Master-Controller/yaml/viriot-configmap-setup.yaml
+vim $HOME/VirIoT/yaml/viriot-configmap-setup.yaml
 # apply ConfigMap resource
-kubectl apply -f $HOME/VirIoT/Master-Controller/yaml/viriot-configmap-setup.yaml 
+kubectl apply -f $HOME/VirIoT/yaml/viriot-configmap-setup.yaml 
 # deploy the Master-Controller applying the yaml
 kubectl apply -f $HOME/VirIoT/yaml/master-controller.yaml  
 # to get the currently deployed pods  

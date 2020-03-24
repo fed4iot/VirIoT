@@ -12,7 +12,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-# Fed4IoT virtual Silo controller for NGSI-LD brokers (specifically Scorpio Broker from NEC)
+# Fed4IoT virtual Silo controller for NGSI-LD brokers
 
 import sys 
 import os
@@ -28,18 +28,18 @@ import F4Ingsild
 
 
 
-############# BEGIN Scorpio Functions ############
+############# BEGIN NGSI-LD Functions ############
 
 def init_Broker():
     # Try to keep confined to the broker-specific module the info to contact the specific broker
     global brokerurl
-    SCORPIO_IP = "127.0.0.1"
-    SCORPIO_PORT = 9090
-    # Scorpio settings
+    NGSILD_IP = "127.0.0.1"
+    NGSILD_PORT = 9090
+    # NGSI-LD settings
     ngsildversion = "v1"
     ngsildbase = "ngsi-ld"
-    brokerurl = "http://" + SCORPIO_IP + ":"+str(SCORPIO_PORT) + "/" + ngsildbase + "/" + ngsildversion
-    print("Scorpio Broker initialized at " + brokerurl)
+    brokerurl = "http://" + NGSILD_IP + ":"+str(NGSILD_PORT) + "/" + ngsildbase + "/" + ngsildversion
+    print("NGSI-LD Broker initialized at " + brokerurl)
 
 
 # This creates an empty vThing given a v_thing_id
@@ -49,7 +49,7 @@ def create_vThing_on_Broker(v_thing_id):
     # For instance in case of oneM2M, this function creates the "mother" ApplicationEntity
     # in the Mobius broker, and creates a default access control policy for it and
     # binds the policy with the new AE
-    print("    on Broker Scorpio vthing CREATE is dummy for vThing ID " + v_thing_id)
+    print("    on Broker NGSI-LD vthing CREATE is dummy for vThing ID " + v_thing_id)
     return True
 
 
@@ -59,7 +59,7 @@ def remove_vThing_from_Broker(v_thing_id):
     # We do not create any data structure in the NGSI-LD broker to capture the vThing.
     # For instance in case of oneM2M, this function removes the "mother" ApplicationEntity
     # in the Mobius broker
-    print("    on Broker Scorpio vthing REMOVE is dummy for vThing ID " + v_thing_id)
+    print("    on Broker NGSI-LD vthing REMOVE is dummy for vThing ID " + v_thing_id)
     return True
 
 
@@ -80,8 +80,8 @@ def delete_entity_under_vThing_on_Broker(v_thing_id, entity_id):
 def add_entity_under_vThing_on_Broker(v_thing_id, entity):
     # lets add the vThingID as a property into each entity
     #entity['vthingid'] = {'type':'Property','value':v_thing_id}
-    ### NOT NEEDED ANYMORE, SCORPIO HAS BEEN FIXED ###
-    # in order to adapt to a Scorpio mis-behaving, we have
+    ### NOT NEEDED ANYMORE, NGSI-LD HAS BEEN FIXED ###
+    # in order to adapt to a NGSI-LD mis-behaving, we have
     # to change the value of the entity's GeoProperties into a string,
     # hence we need to escape the quote and make it a string
     for attribute_name, attribute_value in entity.items():
@@ -112,15 +112,15 @@ def add_entity_under_vThing_on_Broker(v_thing_id, entity):
     
     return False
 
-############# END Scorpio Functions ############
+############# END NGSI-LD Functions ############
 
 
 # Lets tell the common module who we are, so that it can import us,
 # and programmatically bind the above functions, specifically implemented
 # with the same signature by each silo controller.
 # Use the following dot notation if we are in a different folder than the common_vsilo_functionality
-#common.start_silo_controller("scorpio-flavour.scorpio_silo_controller")
+#common.start_silo_controller("ngsild-flavour.ngsild_silo_controller")
 # Otherwise just give our name
-common.start_silo_controller("scorpio_silo_controller")
+common.start_silo_controller("ngsild_silo_controller")
 
 

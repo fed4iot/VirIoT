@@ -8,6 +8,9 @@ RESOURCE_METHODS = ['GET', 'POST', 'DELETE']
 ITEM_METHODS = ['GET', 'PATCH', 'PUT', 'DELETE']
 
 
+DEBUG=True
+
+
 schema_for_entities = {
     # Schema definition, based on Cerberus grammar. Check the Cerberus project
     # (https://github.com/pyeve/cerberus) for details.

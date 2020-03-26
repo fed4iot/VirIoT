@@ -39,6 +39,9 @@ entities_via_attrs_endpoint = {
     'url': 'entities/<regex("[-a-z0-9:A-Z]{1,100}"):id>/attrs',
     'datasource': {
       'source': 'entities',
+    },
+    'mongo_indexes': {
+      'autoexpiryatsomepoint': ([('_created', 1)], { 'expireAfterSeconds': 120}),
     }
 }
 

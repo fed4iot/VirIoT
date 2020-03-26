@@ -35,7 +35,8 @@ entities_via_attrs_endpoint = {
     'resource_methods': ['POST'],
     'allow_unknown': True,
     'schema': schema_without_unicity_restraint,
-    'url': 'entities/<regex("[a-z0-9:]{1,100}"):id>/attrs',
+    # ids can be composed of "minus" "column" and chars/digits
+    'url': 'entities/<regex("[-a-z0-9:A-Z]{1,100}"):id>/attrs',
     'datasource': {
       'source': 'entities',
     }
@@ -47,7 +48,7 @@ entities_endpoint = {
     'item_lookup': True,
     'item_methods': ['GET', 'DELETE'],
     'item_lookup_field': 'id',
-    'item_url': 'regex("[a-z0-9:]{1,100}")',
+    'item_url': 'regex("[-a-z0-9:A-Z]{1,100}")',
     'allow_unknown': True,
     'schema': schema_for_entities,
     'url': "entities",

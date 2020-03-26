@@ -1,18 +1,18 @@
+
+import copy
+
 DEBUG = True
 
-ITEM_URL = 'regex("[\x00-\x7F]+")'
 ITEM_LOOKUP = False
 
 URL_PREFIX = 'ngsi-ld'
 API_VERSION = 'v1'
 
-CACHE_CONTROL = 'max-age=10,must-revalidate',
-############# BUG
-#CACHE_EXPIRES = '10', 
+CACHE_CONTROL = 'max-age=10,must-revalidate'
+
+JSON_REQUEST_CONTENT_TYPES = ['application/json', 'application/ld+json']
 
 schema_for_entities = {
-    # Schema definition, based on Cerberus grammar. Check the Cerberus project
-    # (https://github.com/pyeve/cerberus) for details.
     'id': {
         'type': 'string',
         'required': True,
@@ -24,30 +24,39 @@ schema_for_entities = {
     },
 }
 
+schema_without_unicity_restraint = copy.deepcopy(schema_for_entities)
+schema_without_unicity_restraint['id'].pop('unique')
+
+entities_via_attrs_endpoint = {
+    # since we are using a regexp in the url, leaving the title = url gives some
+    # XML printing issues of the regexp characters of the url. Hence we redefine it.
+    'resource_title': 'entity',
+    'cache_expires': 10,
+    'resource_methods': ['POST'],
+    'allow_unknown': True,
+    'schema': schema_without_unicity_restraint,
+    'url': 'entities/<regex("[a-z0-9:]{1,100}"):id>/attrs',
+    'datasource': {
+      'source': 'entities',
+    }
+}
+
 entities_endpoint = {
-    # We choose to override global cache-control directives for this resource.
-    'cache_control': 'max-age=10,must-revalidate',
     'cache_expires': 10,
     'resource_methods': ['GET', 'POST'],
-    # 'title' tag used in item links. Defaults to the resource title minus
-    # the final, plural 's' (works fine in most cases but not for 'entities' would be entitie)
-    'item_title': 'entity',
     'item_lookup': True,
-    'item_lookup_field': 'id',
     'item_methods': ['GET', 'DELETE'],
+    'item_lookup_field': 'id',
+    'item_url': 'regex("[a-z0-9:]{1,100}")',
     'allow_unknown': True,
     'schema': schema_for_entities,
+    'url': "entities",
+    'datasource': {
+      'source': 'entities',
+    }
 }
-
-#attrs_endpoint = {
-#    'resource_methods': ['GET', 'POST'],
-#    'url': 'entities/<regex("[\x00-\x7F]+"):id>/attrs',
-#    'item_title': 'attribute',
-#    'item_lookup': False,
-#    'allow_unknown': True,
-#}
 
 DOMAIN = {
-    'entities': entities_endpoint,
+    'dummy1': entities_via_attrs_endpoint,
+    'dummy2': entities_endpoint,
 }
-

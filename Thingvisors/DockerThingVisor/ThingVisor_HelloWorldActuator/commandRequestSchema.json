@@ -1,5 +1,5 @@
 {
-  "$id": "https://fed4iot.orf/commandRequestSchema.json",
+  "$id": "https://fed4iot.org/commandRequestSchema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Schema of commandRequest VirIoT internal message",
   "description": "Schema of commandRequest VirIoT internal message",

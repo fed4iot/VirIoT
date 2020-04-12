@@ -44,6 +44,19 @@ def cse_inspect(origin, CSEurl):
     response = requests.request("GET", url, headers=headers, params=querystring)
     return response.text
 
+#Get entity
+def entity_get(entity_uri,origin,CSEurl):
+    url = CSEurl+"/"+entity_uri
+    headers = {
+        'accept': "application/json",
+        'x-m2m-ri': "12345",    #not necessary
+        'x-m2m-origin': origin,
+        'cache-control': "no-cache",
+    }
+    response=requests.request("GET", url, headers=headers)
+    #print(response.json())
+    entity=response.json()
+    return(response.status_code,entity)
 
 # Create AE
 def ae_create(ae_rn, origin, api, rr, poa, lbl, CSEurl):

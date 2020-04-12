@@ -1,0 +1,13 @@
+{
+	"id": "urn:ngsi-ld:helloWorldActuator:Lamp01:cmd:1234567890",
+	"type": "Lamp",
+	"commandRequest" : { 
+		"type": "Property", 
+		"value": {
+			"commandType":"set-color", 
+			"commandValue":"green",
+			"commandID":"1234567890"
+			}
+	}
+}
+	

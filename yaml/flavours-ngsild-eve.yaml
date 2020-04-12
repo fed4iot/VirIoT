@@ -13,26 +13,23 @@ spec:
         app: f4i-ngsild-eve
     spec:
       containers:
-      - name: ngsildsilocontroller
-        image: ngsild-silocontroller
-        imagePullPolicy: IfNotPresent
-      - name: backend
-        image: ngsildevebackend
-        imagePullPolicy: IfNotPresent
+      - name: ngsild-silocontroller
+        image: fed4iot/ngsild-silocontroller:3.0
+        imagePullPolicy: Always
+      - name: ngsild-eve-backend
+        image: fed4iot/ngsild-evebackend:3.0
+        imagePullPolicy: Always
         ports:
         - containerPort: 9090
-      - name: mongodbforeve
+      - name: ngsild-eve-mongodb
         image: mongo
-        imagePullPolicy: IfNotPresent
-        ports:
-        - containerPort: 27017
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: f4i-ngsild-eve-svc
   labels:
-    app: f4i-ngsi-ld-eve
+    app: f4i-ngsild-eve
 spec:
   type: NodePort
   selector:

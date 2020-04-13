@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
       - name: wheater
-        image: fed4iot/v-weather-tv:2.2
+        image: fed4iot/v-weather-tv:2.3
         ports:
         - containerPort: 8089 

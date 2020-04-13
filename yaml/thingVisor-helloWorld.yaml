@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
       - name: f4i-helloworld
-        image: fed4iot/helloworld-tv:2.2
+        image: fed4iot/helloworld-tv:2.3
         ports:
         - containerPort: 80 

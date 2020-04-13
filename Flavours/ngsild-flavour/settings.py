@@ -87,15 +87,17 @@ entities_endpoint = {
 
 
 types_datasource_properties = {
-  # specify the mongodb collection that the endpoint will target.
-  # We pput it here so all endpoints can target the same collection
+  # all endpoints can target the same collection
   'source': 'entities',
   # we group by "type", it has to be assigned to the _id of the item.
   # we add a count to occurrences of each type.
-  # and its umbrella vthingid??
+  # and its umbrella vthingid. BTW if type is the same, then vthingid is the same.
   'aggregation' : {
     'pipeline': [
-      {"$group" : {"_id":"$type", "vthingid":{"$last":"$vthingid"}, "count":{"$sum" : 1}}}
+      {"$group" : {"_id":"$type", "vthingid":{"$last":"$vthingid"}, "count":{"$sum" : 1}}},
+      # rename the _id newly aggregated, which is the type, into "type"
+      {"$set" : { "type":"$_id" } },
+      {"$unset" : [ "_created", "_updated", "_etag", "_id", "@context" ] }
     ]
   }
 }
@@ -108,8 +110,36 @@ types_endpoint = {
 }
 
 
+latestentities_datasource_properties = {
+  # all endpoints can target the same collection
+  'source': 'entities',
+  # we group by NGSI-LD "id", it has to be assigned to the _id of the item.
+  # we add a count to occurrences of each type.
+  # and its umbrella vthingid. BTW if NGSI-LD id is the same, then vthingid is the same.
+  # $$ROOT to keep the whole document per each name followed by $replaceRoot to promote the document to the top.
+  # https://stackoverflow.com/questions/52566913/how-to-group-in-mongodb-and-return-all-fields-in-result
+  'aggregation' : {
+    'pipeline': [
+      # oldest first, normal direction sorting
+      {"$sort" : {"_created":1}},
+      {"$group" : {"_id":"$id", "vthingid":{"$last":"$vthingid"},"doc":{"$last":"$$ROOT"}}}, #pick fields from last
+      {"$replaceRoot":{"newRoot":"$doc"}},
+      {"$unset" : [ "_created", "_updated", "_etag", "_id", "@context" ] }
+    ]
+  }
+}
+
+latestentities_endpoint = {
+  'url': "latestentities",
+  'resource_title': 'lastentity',
+  'resource_methods': ['GET'],
+  'datasource': latestentities_datasource_properties,
+}
+
+
 DOMAIN = {
     'dummy1': entities_via_attrs_endpoint,
     'dummy2': entities_endpoint,
     'dummy3': types_endpoint,
+    'dummy4': latestentities_endpoint,
 }

@@ -94,7 +94,7 @@ types_datasource_properties = {
   # and its umbrella vthingid. BTW if type is the same, then vthingid is the same.
   'aggregation' : {
     'pipeline': [
-      {"$group" : {"_id":"$type", "vthingid":{"$last":"$vthingid"}, "count":{"$sum" : 1}}},
+      {"$group" : {"_id":"$type", "vthingids":{"$addToSet":{"vthingid":"$vthingid.value"}}, "count":{"$sum" : 1}}},
       # rename the _id newly aggregated, which is the type, into "type"
       {"$set" : { "type":"$_id" } },
       {"$unset" : [ "_created", "_updated", "_etag", "_id", "@context" ] }

@@ -43,7 +43,7 @@ class FetcherThread(Thread):
                 ngsi_ld_entity1 = {"@context":["https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"],
                                    "id": "urn:ngsi-ld:" + city + ":" + sens_type,
                                    "type": data_type,
-                                   thing_name: {"type": "Property", "value": str(data)}}
+                                   thing_name: {"type": "Property", "value": data}}
                 # set initial context
                 contexts[v_thing_id].set_all([ngsi_ld_entity1])
 
@@ -71,7 +71,7 @@ class FetcherThread(Thread):
                     ngsi_ld_entity1 = {"@context":["https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"],
                                        "id": "urn:ngsi-ld:" + city + ":" + sens_type,
                                        "type": data_type,
-                                       thing_name: {"type": "Property", "value": str(data)}}
+                                       thing_name: {"type": "Property", "value": data}}
 
                     contexts[v_thing_id].update([ngsi_ld_entity1])
                     message = {"data": [ngsi_ld_entity1], "meta": {"vThingID": v_thing_id}}

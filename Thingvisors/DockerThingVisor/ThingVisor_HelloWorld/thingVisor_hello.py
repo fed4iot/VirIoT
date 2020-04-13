@@ -36,11 +36,11 @@ class FetcherThread(Thread):
         # Create initial status
         ngsiLdEntity1 = {"id": "urn:ngsi-ld:HelloSensor1",
                          "type": "my-counter",
-                         "counter": {"type": "Property", "value": str(self.c)}}
+                         "counter": {"type": "Property", "value": self.c}}
 
         ngsiLdEntity2 = {"id": "urn:ngsi-ld:HelloSensor2",
                          "type": "my-double-counter",
-                         "double-counter": {"type": "Property", "value": str(2 * self.c)}}
+                         "double-counter": {"type": "Property", "value": 2 * self.c}}
 
         data = [ngsiLdEntity1, ngsiLdEntity2]
         # set initial context for hello virtual thing
@@ -55,11 +55,11 @@ class FetcherThread(Thread):
 
             ngsiLdEntity1 = {"id": "urn:ngsi-ld:HelloSensor1",
                              "type": "my-counter",
-                             "counter": {"type": "Property", "value": str(self.c)}}
+                             "counter": {"type": "Property", "value": self.c}}
 
             ngsiLdEntity2 = {"id": "urn:ngsi-ld:HelloSensor2",
                              "type": "my-double-counter",
-                             "double-counter": {"type": "Property", "value": str(2*self.c)}}
+                             "double-counter": {"type": "Property", "value": 2*self.c}}
 
             # update context status for virtual thing hello
             context_hello.update([ngsiLdEntity1, ngsiLdEntity2])

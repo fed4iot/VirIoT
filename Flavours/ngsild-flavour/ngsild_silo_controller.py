@@ -79,8 +79,9 @@ def delete_entity_under_vThing_on_Broker(v_thing_id, entity_id):
 # Here we receive a data item, which is composed of "data" and "meta" fields
 def add_entity_under_vThing_on_Broker(v_thing_id, entity):
     # lets add the vThingID as a property into each entity
-    #entity['vthingid'] = {'type':'Property','value':v_thing_id}
-    ### NOT NEEDED ANYMORE, NGSI-LD HAS BEEN FIXED ###
+    entity['vthingid'] = {'type':'Property','value':v_thing_id}
+    
+    ### HOPE THE FOLLOWING WILL NOT NEEDED ANYMORE, NGSI-LD HAS BEEN FIXED? ###
     # in order to adapt to a NGSI-LD mis-behaving, we have
     # to change the value of the entity's GeoProperties into a string,
     # hence we need to escape the quote and make it a string

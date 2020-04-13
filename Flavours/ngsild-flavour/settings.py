@@ -124,7 +124,7 @@ latestentities_datasource_properties = {
       {"$sort" : {"_created":1}},
       {"$group" : {"_id":"$id", "vthingid":{"$last":"$vthingid"},"doc":{"$last":"$$ROOT"}}}, #pick fields from last
       {"$replaceRoot":{"newRoot":"$doc"}},
-      {"$unset" : [ "_created", "_updated", "_etag", "_id", "@context" ] }
+      {"$unset" : [ "_updated", "_etag", "_id", "@context" ] }
     ]
   }
 }

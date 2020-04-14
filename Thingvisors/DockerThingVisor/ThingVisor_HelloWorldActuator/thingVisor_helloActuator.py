@@ -40,7 +40,7 @@ class LampActuatorThread(Thread):
 
     def send_commandResult(self, cmd_name, cmd_info, id_LD, result_code):
         pname = cmd_name+"-result"
-        pvalue = cmd_info
+        pvalue = cmd_info.copy()
         pvalue['cmd-result'] = result_code
         ngsiLdEntityResult = {"id": id_LD,
                                 "type": v_thing_type_attr,
@@ -62,15 +62,14 @@ class LampActuatorThread(Thread):
 
     def send_commandStatus(self, cmd_name, cmd_info, id_LD, status_code):
         pname = cmd_name+"-status"
-        pvalue = cmd_info
+        pvalue = cmd_info.copy()
         pvalue['cmd-status'] = status_code
         ngsiLdEntityStatus = {"id": id_LD,
                                 "type": v_thing_type_attr,
                                 pname: {"type": "Property", "value": pvalue}
                                 }
         data = [ngsiLdEntityStatus]
-        # LampActuatorContext.update(data)
-        
+                
         message = {"data": data, "meta": {
             "vThingID": v_thing_ID}}  # neutral-format message
         if "cmd-nuri" in cmd_info:
@@ -92,10 +91,12 @@ class LampActuatorThread(Thread):
                     fname = cmd_name.replace('-','_')
                     fname = "on_"+fname
                     f=getattr(self,fname)
-                    future = executor.submit(f, cmd_name, cmd_info, id_LD, self)
                     if "cmd-qos" in cmd_info:
                         if int(cmd_info['cmd-qos']) == 2:
                             self.send_commandStatus(cmd_name, cmd_info, id_LD, "PENDING")
+                    future = executor.submit(f, cmd_name, cmd_info, id_LD, self)
+                    
+
         #except jsonschema.exceptions.ValidationError as e:
             #print("received commandRequest got a schema validation error: ", e)
         #except jsonschema.exceptions.SchemaError as e:
@@ -374,6 +375,7 @@ if __name__ == '__main__':
 
     # threadPoolExecutor of size one to handle one command at a time in a fifo order
     executor = ThreadPoolExecutor(1)
+    
     # Class used to handle data and commands of the actuator
     data_thread = LampActuatorThread()
     data_thread.start()

@@ -1,0 +1,20 @@
+{"m2m:rqp":
+    {
+        "fr": "S",
+        "to": "Mobius/helloWorldActuator:Lamp01/helloWorldActuator:Lamp01:cmd/commandResult",
+        "op": 1,
+        "rqi": "000",
+        "ty": 23,
+        "pc": {
+            "m2m:sub" : {
+                "rn": "sub_monitor03",
+                "enc": {
+                    "net": [3]
+                },
+                "nu" : ["mqtt:///oneM2M/resp/helloWorldActuator:Lamp01/Mobius"],
+                "exc": 10
+            }
+        }   
+    }      
+}
+ 

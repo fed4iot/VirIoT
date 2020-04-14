@@ -82,13 +82,13 @@ class LampActuatorThread(Thread):
         else:
             self.publish(message)
 
-    def receive_commandRequest(self, data):
-        try:
+    def receive_commandRequest(self, cmd_entity):
+        try:  
             #jsonschema.validate(data, commandRequestSchema)
-            id_LD = data["id"]
+            id_LD = cmd_entity["id"]
             for cmd_name in commands:
-                if cmd_name in data:
-                    cmd_info = data[cmd_name]['value']
+                if cmd_name in cmd_entity:
+                    cmd_info = cmd_entity[cmd_name]['value']
                     fname = cmd_name.replace('-','_')
                     fname = "on_"+fname
                     f=getattr(self,fname)
@@ -162,15 +162,15 @@ class LampActuatorThread(Thread):
         jres = json.loads(payload.replace("\'", "\""))
         try:
             data = jres["data"]
-            id_LD = data["id"]
-            if id_LD != v_thing_ID_LD:
-                print("Entity not handled by the Thingvisor, message dropped")
-                return
-            for cmd in commands:
-                if cmd in data:
-                    self.receive_commandRequest(data)
-                    return
-            print("Command not found, message dropped")
+            for entity in data:
+                id_LD = entity["id"]
+                if id_LD != v_thing_ID_LD:
+                    print("Entity not handled by the Thingvisor, message dropped")
+                    continue
+                for cmd in commands:
+                    if cmd in entity:
+                        self.receive_commandRequest(entity)
+                        continue
             return
         except Exception as ex:
             traceback.print_exc()
@@ -193,17 +193,9 @@ class LampActuatorThread(Thread):
                         "status": {"type": "Property", "value": "off"},
                         "color": {"type": "Property", "value": "white"},
                         "luminosity": {"type": "Property", "value": "white"},
-                        "commands": {"type": "Property", "value": ["set-color","set-luminosity","set-status"]},
-                        "set-color": {"type": "Property", "value": ""},
-                        "set-color-status": {"type": "Property", "value": ""},
-                        "set-color-result": {"type": "Property", "value": ""},
-                        "set-luminosity": {"type": "Property", "value": ""},
-                        "set-luminosity-status": {"type": "Property", "value": ""},
-                        "set-luminosity-result": {"type": "Property", "value": ""},
-                        "set-status": {"type": "Property", "value": ""},
-                        "set-status-status": {"type": "Property", "value": ""},
-                        "set-status-result": {"type": "Property", "value": ""}
-                        }
+                        "commands": {"type": "Property", "value": ["set-color","set-luminosity","set-status"]}
+        }
+
         data = [ngsiLdEntity]
         LampActuatorContext.set_all(data)
 

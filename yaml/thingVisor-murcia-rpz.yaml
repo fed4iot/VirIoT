@@ -1,0 +1,34 @@
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: f4i-tv-murcia-rpz
+spec:
+  selector:
+    matchLabels:
+      app: f4i-murcia-rpz
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: f4i-murcia-rpz
+    spec:
+      containers:
+      - name: f4i-murcia-rpz
+        image: fed4iot/fiware-rpz-tv:2.3
+        ports:
+        - containerPort: 1030
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: f4i-tv-svc-murcia-rpz
+  labels:
+    app: f4i-murcia-rpz
+spec:
+  type: NodePort
+  ports:
+  - port: 1030
+    targetPort:
+    nodePort:
+  selector:
+    app: f4i-murcia-rpz

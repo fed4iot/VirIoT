@@ -665,17 +665,227 @@ function obtainEntityDM(param) // min and max included
 
 }
 
+function isEmpty(obj) {
+    for(var key in obj) {
+        if(obj.hasOwnProperty(key))
+            return false;
+    }
+    return true;
+}
+
+function obtainNGSILDPayload(service,dataBody){
+    try  {
+
+        var entityv2TV = {}
+
+        entityv2TV.id = dataBody.id
+
+        var date = new Date();
+
+        const timestampValue = util.ISODateString(date)
+
+        //Changing entity type.
+        //1) Obtain service element index in ocb_service array
+        var serviceIndex
+        var typeIndex
+        var typeResult
+
+        serviceIndex = obtainArrayIndex(ocb_service,service)
+
+        if (serviceIndex!=-1) { //Found.
+            var typeIndex = obtainArrayIndex(ocb_type[serviceIndex],dataBody.type)
+            //2) Obtain type element index in ocb_type
+            if (typeIndex!=-1) {
+                //3) Assing new type from dest_ocb_type
+                entityv2TV.type = dest_ocb_type[serviceIndex][typeIndex]
+                typeResult = dest_ocb_type[serviceIndex][typeIndex]
+            }
+        }
+
+        if(typeof entityv2TV.type === 'undefined' || typeof typeResult === 'undefined'){
+            console.error('Notification error: Building type... not found.')
+            return {}
+        } else {
+
+            var entity_template
+
+            var entityDataModel = {}
+
+            var mappedAttr = []
+
+            var isEntityDataModel = false
+
+            //isAggregated == false condition is needed because, if we use a type defined in entities.js in dest_ocb_type array, 
+            //it fails when aggregated data model entities are different than the entities.js one. 
+            //If we won't this condition, we need to be careful. We must define types, in dest_ocb_type, 
+            //are not included in entities.js file.
+            if((typeResult == 'parkingsite' || typeResult == 'parkingmeter') && isAggregated == false){
+            //if(typeResult == 'parkingsite' || typeResult == 'parkingmeter'){
+                entity_template = obtainEntityDM(typeResult)
+                entityDataModel = JSON.parse(JSON.stringify(entity_template));
+                entityDataModel.id = entityDataModel.id.replace("---",dataBody.id)
+                isEntityDataModel = true
+
+            }
+
+            for(let attr in dataBody){
+                if ( attr != "id" && attr != "type"){
+                    //Can recover all attributes
+                    if (ocb_attrList[serviceIndex][typeIndex].length == 0 && isEntityDataModel == false) {
+                        entityv2TV[attr] = dataBody[attr]
+                    } else {
+
+                        //Recover only attributes was defined.
+                        for(var k = 0; k < ocb_attrList[serviceIndex][typeIndex].length; k++) {
+                            if (ocb_attrList[serviceIndex][typeIndex][k] == attr) {
+                                try {
+
+                                    if (isEntityDataModel) {
+                                        if ( dataBody[attr].type.toUpperCase() == "TEXT".toUpperCase() || 
+                                            dataBody[attr].type.toUpperCase() == "STRING".toUpperCase() || 
+                                            dataBody[attr].type.toUpperCase() == "NUMBER".toUpperCase() || 
+                                            dataBody[attr].type.toUpperCase() == "DATETIME".toUpperCase()) {
+                                                
+                                            entityDataModel[dest_ocb_attrList[serviceIndex][typeIndex][k]].value = dataBody[attr].value
+            
+                                        } else if (dataBody[attr].type.toUpperCase() == "COORDS".toUpperCase() ||
+                                                    dataBody[attr].type.toUpperCase() == "POINT".toUpperCase()) {
+            
+                                            entityDataModel[dest_ocb_attrList[serviceIndex][typeIndex][k]].value.coordinates = 
+                                                [ parseFloat(dataBody[attr].value.split(",")[1]), parseFloat(dataBody[attr].value.split(",")[0]) ]
+                                        }
+                                    }
+
+                                    mappedAttr.push(attr)
+        
+                                    entityv2TV[dest_ocb_attrList[serviceIndex][typeIndex][k]] = dataBody[attr]
+
+                                } catch(e) {
+
+                                    console.log("Mapping NGSI-LD attribute - not found for '" + attr + "'")
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            var dataBodyLD
+
+            if (isEntityDataModel == false) {
+                //Obtain "@context"
+                if (typeof dataBody["@context"] !== 'undefined' && typeof entityv2TV["@context"] === "undefined") {
+                    entityv2TV["@context"] = dataBody["@context"]
+                }
+
+                //Obtain "dateCreated"
+                if (typeof dataBody.dateCreated !== 'undefined' && typeof entityv2TV.dateCreated === 'undefined') {
+                    entityv2TV.dateCreated = dataBody.dateCreated
+                }
+
+                //Obtain "dateModified"
+                if (typeof dataBody.dateModified !== 'undefined' && typeof entityv2TV.dateModified === 'undefined') {
+                    entityv2TV.dateModified = dataBody.dateModified
+                }
+
+                //Obtain timestamp
+                if (typeof dataBody.timestamp !== 'undefined' && typeof entityv2TV.timestamp === 'undefined') {
+                    entityv2TV.timestamp = dataBody.timestamp
+                }
+
+                //Obtain "location"
+                if (typeof dataBody.location !== 'undefined' && typeof entityv2TV.location === 'undefined') {
+                    entityv2TV.location = dataBody.location
+                }
+
+                dataBodyLD = libfromNGSIv2.fromNGSIv2toNGSILD(entityv2TV,"")
+
+            } else {
+                //Additional information (config.js)
+                if (typeResult.toUpperCase() == "parkingsite".toUpperCase()) {
+
+                    //Find "id" in "parkingsite_id"
+                    const idIndex = obtainArrayIndex(parkingsite_id,dataBody.id)
+
+                    //If it exists, it obtains the additional information only when it wasn't mapped previously (mappedAttr).
+                    if (idIndex!=-1) {
+
+                        const timestampIndex = obtainArrayIndex(mappedAttr,"timestamp")
+                        if (timestampIndex==-1) {
+                            entityDataModel.timestamp.value = timestampValue
+                        }
+
+                        const disSpacePCCapacityIndex = obtainArrayIndex(mappedAttr,"disSpacePCCapacity")
+                        if (disSpacePCCapacityIndex==-1) {
+                            entityDataModel.disSpacePCCapacity.value = parkingsite_disSpacePCCapacity[idIndex]
+                        }
+
+                        const maxHeightIndex = obtainArrayIndex(mappedAttr,"maxHeight")
+                        if (maxHeightIndex==-1) {
+                            entityDataModel.maxHeight.value = parkingsite_maxHeight[idIndex]
+                        }
+
+                        const carWashIndex = obtainArrayIndex(mappedAttr,"carWash")
+                        if (carWashIndex==-1) {
+                            entityDataModel.carWash.value = parkingsite_carWash[idIndex]
+                        }
+
+                        const valetIndex = obtainArrayIndex(mappedAttr,"valet")
+                        if (valetIndex==-1) {
+                            entityDataModel.valet.value = parkingsite_valet[idIndex]
+                        }
+
+                        const phoneNumberIndex = obtainArrayIndex(mappedAttr,"phoneNumber")
+                        if (phoneNumberIndex==-1) {
+                            entityDataModel.phoneNumber.value = parkingsite_phoneNumber[idIndex]
+                        }
+
+                        const webSiteIndex = obtainArrayIndex(mappedAttr,"webSite")
+                        if (webSiteIndex==-1) {
+                            entityDataModel.webSite.value = parkingsite_webSite[idIndex]
+                        }
+
+                        const mailIndex = obtainArrayIndex(mappedAttr,"mail")
+                        if (mailIndex==-1) {
+                            entityDataModel.mail.value = parkingsite_mail[idIndex]
+                        }
+                                
+                        const addressIndex = obtainArrayIndex(mappedAttr,"address")
+                        if (addressIndex==-1) {
+                            entityDataModel.address.value = parkingsite_address[idIndex]
+                        }
+
+                    }
+                }
+
+                dataBodyLD = libfromNGSIv2.fromNGSIv2toNGSILD(entityDataModel,"")
+
+            }
+
+            return dataBodyLD
+
+        }
+
+    } catch(e) {
+            console.error("obtainNGSILDPayload: " + e.toString())
+            return {}
+    }        
+}
+
 //Consume Orion Context Broker notifications..
 app.post(config.pathNotification, async function(req,res) {
     try {
         console.log("")
         console.log(util.unixTime(Date.now()) + " - POST /notification")
     
-        var date = new Date();
+        //var date = new Date();
 
-        const timestampValue = util.ISODateString(date)
+        //const timestampValue = util.ISODateString(date)
 
         const dataBody = req.body.data
+
+        //console.log(dataBody[i])
 
         var service=req.headers['fiware-service'] || ""
 
@@ -694,6 +904,7 @@ app.post(config.pathNotification, async function(req,res) {
 
             for(var i = 0; i < dataBody.length; i++) {
 
+/*
                 var entityv2TV = {}
 
                 entityv2TV.id = dataBody[i].id
@@ -747,20 +958,20 @@ app.post(config.pathNotification, async function(req,res) {
                             if (ocb_attrList[serviceIndex][typeIndex].length == 0 && isEntityDataModel == false) {
                                 entityv2TV[attr] = dataBody[i][attr]
                             } else {
-                                /*
-                                //Recover only attributes was defined.
-                                for(var k = 0; k < ocb_attrList[serviceIndex][typeIndex].length; k++) {
-                                    if (ocb_attrList[serviceIndex][typeIndex][k] == attr) {
-                                        try {
-                                            entityv2TV[dest_ocb_attrList[serviceIndex][typeIndex][k]] = dataBody[i][attr]
-                                        } catch(e) {
-                                            console.log("Mapping NGSI-LD attribute - not found for '" + attr + "'")
-                                        }
-                                        break;
-                                    }
-                                }
-                            }
-                                */
+                                
+                            //    //Recover only attributes was defined.
+                            //    for(var k = 0; k < ocb_attrList[serviceIndex][typeIndex].length; k++) {
+                            //        if (ocb_attrList[serviceIndex][typeIndex][k] == attr) {
+                            //            try {
+                            //                entityv2TV[dest_ocb_attrList[serviceIndex][typeIndex][k]] = dataBody[i][attr]
+                            //            } catch(e) {
+                            //                console.log("Mapping NGSI-LD attribute - not found for '" + attr + "'")
+                            //            }
+                            //            break;
+                            //        }
+                            //    }
+                            //}
+
                                 //Recover only attributes was defined.
                                 for(var k = 0; k < ocb_attrList[serviceIndex][typeIndex].length; k++) {
                                     if (ocb_attrList[serviceIndex][typeIndex][k] == attr) {
@@ -890,13 +1101,20 @@ app.post(config.pathNotification, async function(req,res) {
 
                     }
 
-                    
-                    if (isAggregated) {
-                        const responseStoreData = await storeData(dataBody[i], dataBodyLD, service)
-                    } else {
-                        const responseSendDataMQTT = await sendDataMQTT(dataBody[i], dataBodyLD, service)
+*/                    
+                    const dataBodyLD = obtainNGSILDPayload(service,dataBody[i])
+
+                    //console.log("dataBodyLD")
+                    //console.log(dataBodyLD)
+
+                    if (isEmpty(dataBodyLD) == false){
+                        if (isAggregated) {
+                            const responseStoreData = await storeData(dataBody[i], dataBodyLD, service)
+                        } else {
+                            const responseSendDataMQTT = await sendDataMQTT(dataBody[i], dataBodyLD, service)
+                        }
                     }
-                }
+//                }
             }
         }
         res.status(200).send({description: 'Operation has been completed successfully'})
@@ -1062,16 +1280,24 @@ async function initProcess() {
 
                             valuevThingLocalID = keyVThingID //+ "-" + entityGroupCounter
 
+                            var dataBodyLD
+
                             if (isGreedy) {
-                                vThingList.push({
-                                    rThingID: responseCBEntities[i].id, //Used by "orionSubscription" function.
-                                    rThingType: responseCBEntities[i].type, //Used by "orionSubscription" function.
-                                    rThingService: ocb_service[h], //Used by "orionSubscription" function.
-                                    vThingLD: libWrapperUtils.format_uri(responseCBEntities[i].type,responseCBEntities[i].id),
-                                    vThingLocalID: valuevThingLocalID,
-                                    vThingID: thingVisorID + "/" + valuevThingLocalID,
-                                    data: libfromNGSIv2.fromNGSIv2toNGSILD(responseCBEntities[i],"") //Establishing data_context 
-                                })
+
+                                dataBodyLD = libfromNGSIv2.fromNGSIv2toNGSILD(responseCBEntities[i],"")
+
+                                if (isEmpty(dataBodyLD) == false) {
+                                    vThingList.push({
+                                        rThingID: responseCBEntities[i].id, //Used by "orionSubscription" function.
+                                        rThingType: responseCBEntities[i].type, //Used by "orionSubscription" function.
+                                        rThingService: ocb_service[h], //Used by "orionSubscription" function.
+                                        vThingLD: libWrapperUtils.format_uri(responseCBEntities[i].type,responseCBEntities[i].id),
+                                        vThingLocalID: valuevThingLocalID,
+                                        vThingID: thingVisorID + "/" + valuevThingLocalID,
+                                        data: dataBodyLD //Establishing data_context 
+                                    })
+                                }
+
                             } else {
                                 //NGSI-LD type entity, changing to calculate vThingLD and data
                                 if(isAggregated){
@@ -1079,23 +1305,34 @@ async function initProcess() {
                                 } else {
                                     valuevThingLocalID = dest_ocb_type[h][k]
                                 }
+                                
+                                if(isAggregated){
+                                    dataBodyLD = libfromNGSIv2.fromNGSIv2toNGSILD(responseCBEntities[i],"")
+                                } else {
+                                    //Create valid payload before notification
+                                    dataBodyLD = obtainNGSILDPayload(ocb_service[h],responseCBEntities[i])
+                                }
 
-                                vThingList.push({
-                                    rThingID: responseCBEntities[i].id,
-                                    rThingType: responseCBEntities[i].type,   //Real type entity
-                                    rThingService: ocb_service[h], //Used by "orionSubscription" function.
-                                    vThingLD: libWrapperUtils.format_uri(dest_ocb_type[h][k],responseCBEntities[i].id),
-                                    vThingLocalID: valuevThingLocalID,
-                                    vThingID: thingVisorID + "/" + valuevThingLocalID,
-                                    data: libfromNGSIv2.fromNGSIv2toNGSILD(responseCBEntities[i],"")
-                                })
+                                if (isEmpty(dataBodyLD) == false) {
+                                    vThingList.push({
+                                        rThingID: responseCBEntities[i].id,
+                                        rThingType: responseCBEntities[i].type,   //Real type entity
+                                        rThingService: ocb_service[h], //Used by "orionSubscription" function.
+                                        vThingLD: libWrapperUtils.format_uri(dest_ocb_type[h][k],responseCBEntities[i].id),
+                                        vThingLocalID: valuevThingLocalID,
+                                        vThingID: thingVisorID + "/" + valuevThingLocalID,
+                                        data: dataBodyLD  //Establishing data_context 
+                                    })
+                                }
                             }
 
-                            numEntities = numEntities + 1
+                            if (isEmpty(dataBodyLD) == false) {
+                                numEntities = numEntities + 1
 
-                            //if (entitiesPerVThingID != 0 && isGreedy) {
-                            entityGroupCounter = entityGroupCounter + 1
-                            //}
+                                //if (entitiesPerVThingID != 0 && isGreedy) {
+                                entityGroupCounter = entityGroupCounter + 1
+                                //}
+                            }
 
                         }
 
@@ -1311,21 +1548,24 @@ async function sendDataMQTT_AggregatedValue(){
 
         if (vThingListAggValueContext.length == 0) {
             vThingListAggValueContext.push(
-                {   
-                    type: 'parkingsite',
-                    totalFreeParkingSpaces: { type: 'Property', value: totalFreeParkingSpaces },
-                    '@context': 
-                        [ 'https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld',
-                          'https://odins.es/smartParkingOntology/parkingsite-context.jsonld' ],
-                    observedAt: 
-                        { type: 'Property',
-                        value: { '@type': 'DateTime', '@value': maxObservedAt } },
-                    id: 'urn:ngsi-ld:parkingsite:vThingParkingSite' 
-                } 
+                {
+                    vThingID: thingVisorID + "/" + vThingLocalIDAggregated,
+                    data: {   
+                            type: 'parkingsite',
+                            totalFreeParkingSpaces: { type: 'Property', value: totalFreeParkingSpaces },
+                            '@context': 
+                                [ 'https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld',
+                                  'https://odins.es/smartParkingOntology/parkingsite-context.jsonld' ],
+                            observedAt: 
+                                { type: 'Property',
+                                value: { '@type': 'DateTime', '@value': maxObservedAt } },
+                            id: 'urn:ngsi-ld:parkingsite:vThingParkingSite' 
+                        }
+                }
             )
         } else {
-            vThingListAggValueContext[0].totalFreeParkingSpaces.value = totalFreeParkingSpaces
-            vThingListAggValueContext[0].observedAt.value['@value'] = maxObservedAt
+            vThingListAggValueContext[0].data.totalFreeParkingSpaces.value = totalFreeParkingSpaces
+            vThingListAggValueContext[0].data.observedAt.value['@value'] = maxObservedAt
 
         }
        
@@ -1343,7 +1583,7 @@ async function sendDataMQTT_AggregatedValue(){
                 const topic = MQTTbrokerApiKeyvThing + "/" + vThingIDValue + "/" + MQTTbrokerTopicDataOut;
                     
                 //const topicMessage = {"data": [dataBodyLD], "meta": {"vThingID": vThingIDValue}}
-                const topicMessage = {"data": vThingListAggValueContext, "meta": {"vThingID": vThingIDValue}}
+                const topicMessage = {"data": [vThingListAggValueContext[0].data], "meta": {"vThingID": vThingIDValue}}
 
                 console.log("Sending message... " + topic + " " + JSON.stringify(topicMessage));
 

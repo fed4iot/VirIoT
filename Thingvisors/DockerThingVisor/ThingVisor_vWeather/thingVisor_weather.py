@@ -36,14 +36,14 @@ class FetcherThread(Thread):
                     continue
                 v_thing_id = v_thing["vThing"]["id"]  # e.g. "vWeather/rome_temp"
                 sens_type = v_thing["type"]  # key to search into response json, e.g. "temp"
-                data = "ND"  # e.g. the temperature value
+                data = 0.0  # e.g. the temperature value
                 data_type = v_thing["dataType"]  # e.g. "temperature"
                 thing_name = v_thing["thing"]  # e.g. "thermometer"
 
                 ngsi_ld_entity1 = {"@context":["https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"],
                                    "id": "urn:ngsi-ld:" + city + ":" + sens_type,
                                    "type": data_type,
-                                   thing_name: {"type": "Property", "value": str(data)}}
+                                   thing_name: {"type": "Property", "value": data}}
                 # set initial context
                 contexts[v_thing_id].set_all([ngsi_ld_entity1])
 
@@ -64,14 +64,14 @@ class FetcherThread(Thread):
                         continue
                     v_thing_id = v_thing["vThing"]["id"]        # e.g. "vWeather/rome_temp"
                     sens_type = v_thing["type"]                 # key to search into response json, e.g. "temp"
-                    data = str(r.json()["main"][sens_type])     # e.g. the temperature value
+                    data = r.json()["main"][sens_type]     # e.g. the temperature value (A NUMBER)
                     data_type = v_thing["dataType"]             # e.g. "temperature"
                     thing_name = v_thing["thing"]               # e.g. "thermometer"
 
                     ngsi_ld_entity1 = {"@context":["https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"],
                                        "id": "urn:ngsi-ld:" + city + ":" + sens_type,
                                        "type": data_type,
-                                       thing_name: {"type": "Property", "value": str(data)}}
+                                       thing_name: {"type": "Property", "value": data}}
 
                     contexts[v_thing_id].update([ngsi_ld_entity1])
                     message = {"data": [ngsi_ld_entity1], "meta": {"vThingID": v_thing_id}}

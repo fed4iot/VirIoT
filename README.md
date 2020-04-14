@@ -163,7 +163,7 @@ kubectl get pods -o wide
 
 ### VirIoT Master-Controller execution as Pod from k8s master node:  
 
-The Master-Controller is deployed as a StatefulSet inside the cluster default zone. Edit the Master-Controller configuration in `$HOME/VirIoT/yaml/viriot-configmap-setup.yaml` and create the ConfigMap resource, as well as the Master-Controller.
+The Master-Controller is deployed as a StatefulSet inside the cluster default zone. Edit the Master-Controller configuration in `$HOME/VirIoT/yaml/viriot-configmap-setup.yaml` modifying the IP addresses and ports according to your infrastructure (usually you would only need to change the default_gateway_IP = "" variable to the public IP of the node hosting the Master-Controller. Then create the ConfigMap resource, as well as the Master-Controller.
 
 ```bash    
 # edit Master-Controller configuration
@@ -179,7 +179,7 @@ kubectl get service f4i-master-controller-svc
   
 
 ### VirIoT Master-Controller execution locally on kubernetes master node:  
-Copy and rename the settings template file `$HOME/VirIoT/Master-Controller/settings-kubernetes-template.py` in  `$HOME/VirIoT/Master-Controller/data/settings.py`.
+Copy and rename the settings template file `$HOME/VirIoT/Master-Controller/settings-kubernetes-template.py` in `$HOME/VirIoT/Master-Controller/data/settings.py`.
 Then edit the new `settings.py` file modifying the IP addresses and ports according with your configurations.  
   
 ```bash    
@@ -198,9 +198,9 @@ pip3 install PyYAML
 ```
 Now you can use `python3 f4i.py` and press tab for autocomplete, for help you can use `python3 f4i.py -h`.  Furthermore, you can use for example  `python3 f4i.py create-vsilo -h` for sub-help.  
   
-When using **Kubernetes** the commands are the same as the ones used with Docker except  the ip address.  
+When using **Kubernetes-based deployment** the f4i.py CLI commands are the same as the ones used with **Docker-based deployment** except the ip address.  
 ```bash  
-# to know the ClusterIP related to the Master-Controller service:  
+# to know the ClusterIP and NodePort related to the Master-Controller service:  
 kubectl get svc f4i-master-controller-svc 
 ```  
 You can use different options:  

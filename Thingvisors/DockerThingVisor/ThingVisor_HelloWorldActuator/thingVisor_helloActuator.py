@@ -36,123 +36,115 @@ class LampActuatorThread(Thread):
     # Class used to:
     # 1) handle actuation command workflow
     # 2) publish actuator status when it changes
-    global mqtt_data_client, LampActuatorContext, executor
+    global mqtt_data_client, LampActuatorContext, executor, commands
 
-    def send_commandResult(self, cmd_id, cmd_value, cmd_nuri):
-        # send command result to the notification uri (only "viriot:/topic_name" supported)
-        # if cmd_nuri is void, send result on vThing data_out, i.e. to every vSilo connected to the vThing
-        value = {"commandResultType": "",
-                 "commandResultValue": cmd_value, "commandID": cmd_id}
-        ngsiLdEntityResponse = {"id": v_thing_ID_LD_CMD_PREFIX + ":" + cmd_id,
+    def send_commandResult(self, cmd_name, cmd_info, id_LD, result_code):
+        pname = cmd_name+"-result"
+        pvalue = cmd_info
+        pvalue['cmd-result'] = result_code
+        ngsiLdEntityResult = {"id": id_LD,
                                 "type": v_thing_type_attr,
-                                "commandResult": {"type": "Property", "value": value}
+                                pname: {"type": "Property", "value": pvalue}
                                 }
-        data = [ngsiLdEntityResponse]
+        data = [ngsiLdEntityResult]
+        # LampActuatorContext.update(data)
+        
         message = {"data": data, "meta": {
-            "vThingID": v_thing_ID}}  # neutral-format
-        if cmd_nuri.startswith("viriot:/"):
-            topic = cmd_nuri[len("viriot:/"):]
-            self.publish(message, topic)
+            "vThingID": v_thing_ID}}  # neutral-format message
+        if "cmd-nuri" in cmd_info:
+            if cmd_info['cmd-nuri'].startswith("viriot:/"):
+                topic = cmd_info['cmd-nuri'][len("viriot:/"):]
+                self.publish(message, topic)
+            else:
+                self.publish(message)
         else:
             self.publish(message)
 
-    def send_commandStatus(self, cmd_id, cmd_value, cmd_nuri):
-        # send command status to the notification uri (only "viriot:/topic_name" supported)
-        # if cmd_nuri is void, send result on vThing data_out, i.e. to every vSilo connected to the vThing
-        value = {"commandStatusType": "",
-                 "commandStatusValue": cmd_value, "commandID": cmd_id}
-        ngsiLdEntityResponse = {"id": v_thing_ID_LD_CMD_PREFIX + ":" + cmd_id,
+    def send_commandStatus(self, cmd_name, cmd_info, id_LD, status_code):
+        pname = cmd_name+"-status"
+        pvalue = cmd_info
+        pvalue['cmd-status'] = status_code
+        ngsiLdEntityStatus = {"id": id_LD,
                                 "type": v_thing_type_attr,
-                                "commandStatus": {"type": "Property", "value": value}
+                                pname: {"type": "Property", "value": pvalue}
                                 }
-        data = [ngsiLdEntityResponse]
+        data = [ngsiLdEntityStatus]
+        # LampActuatorContext.update(data)
+        
         message = {"data": data, "meta": {
-            "vThingID": v_thing_ID}}  # neutral-format
-        if cmd_nuri.startswith("viriot:/"):
-            topic = cmd_nuri[len("viriot:/"):]
-            self.publish(message, topic)
+            "vThingID": v_thing_ID}}  # neutral-format message
+        if "cmd-nuri" in cmd_info:
+            if cmd_info['cmd-nuri'].startswith("viriot:/"):
+                topic = cmd_info['cmd-nuri'][len("viriot:/"):]
+                self.publish(message, topic)
+            else:
+                self.publish(message)
         else:
             self.publish(message)
 
     def receive_commandRequest(self, data):
         try:
-            jsonschema.validate(data, commandRequestSchema)
+            #jsonschema.validate(data, commandRequestSchema)
             id_LD = data["id"]
-            # command id without the command prefix
-            cmd_id = id_LD[len(v_thing_ID_LD_CMD_PREFIX)+1:]
-            cmd_request_value = data['commandRequest']['value']
-            cmd_type = cmd_request_value['commandType']
-            cmd_value = cmd_request_value['commandValue']
-            if cmd_request_value['commandID'] != cmd_id:
-                # received command has a wrong inner ID
-                print("Received command has a wrong inner commandID, it is " +
-                      cmd_request_value['commandID']+", it should be "+cmd_id+"\n")
-                return
-
-            # nuri is the notification URI callback
-            if "nuri" in cmd_request_value:
-                cmd_nuri = cmd_request_value['nuri']
-            else:
-                cmd_nuri = ""
-
-            if cmd_type == "set-color":
-                future = executor.submit(
-                    self.on_set_color, cmd_id, cmd_value, cmd_nuri, self)
-                self.send_commandStatus(cmd_id, "set-color PENDING", cmd_nuri)
-                return
-            if cmd_type == "set-status":
-                future = executor.submit(
-                    self.on_set_status, cmd_id, cmd_value, cmd_nuri, self)
-                self.send_commandStatus(cmd_id, "set-status PENDING", cmd_nuri)
-                return
-            print("Command "+cmd_type+" not supported by the actuator"+"\n")
-
-        except jsonschema.exceptions.ValidationError as e:
-            print("received commandRequest got a schema validation error: ", e)
-        except jsonschema.exceptions.SchemaError as e:
-            print("commandRequest schema not valid:", e)
+            for cmd_name in commands:
+                if cmd_name in data:
+                    cmd_info = data[cmd_name]['value']
+                    fname = cmd_name.replace('-','_')
+                    fname = "on_"+fname
+                    f=getattr(self,fname)
+                    future = executor.submit(f, cmd_name, cmd_info, id_LD, self)
+                    if "cmd-qos" in cmd_info:
+                        if int(cmd_info['cmd-qos']) == 2:
+                            self.send_commandStatus(cmd_name, cmd_info, id_LD, "PENDING")
+        #except jsonschema.exceptions.ValidationError as e:
+            #print("received commandRequest got a schema validation error: ", e)
+        #except jsonschema.exceptions.SchemaError as e:
+            #print("commandRequest schema not valid:", e)
         except Exception as ex:
             traceback.print_exc()
         return
 
-    def on_set_color(self, cmd_id, cmd_value, cmd_nuri, actuatorThread):
+    def on_set_color(self, cmd_name, cmd_info, id_LD, actuatorThread):
         global LampActuatorContext
-        # function to change the color of the lamp should be written here
-        # update of the ActuatorContext and publish new actuator status on data_out
-        ngsiLdEntity = {"id": v_thing_ID_LD,
+        # function to change the color of the Lamp should be written here
+        # update the Context, publish new actuator status on data_out, send result
+        ngsiLdEntity = {"id": id_LD,
                         "type": v_thing_type_attr,
-                        "color": {"type": "Property", "value": cmd_value}
+                        "color": {"type": "Property", "value": cmd_info['cmd-value']}
                         }
         data = [ngsiLdEntity]
         LampActuatorContext.update(data)
+        
         # publish changed status
         message = {"data": data, "meta": {
             "vThingID": v_thing_ID}}  # neutral-format
         self.publish(message)
 
         # publish command result
-        actuatorThread.send_commandResult(cmd_id, "set-color OK", cmd_nuri)
+        if "cmd-qos" in cmd_info:
+            if int(cmd_info['cmd-qos']) > 0:
+                self.send_commandResult(cmd_name, cmd_info, id_LD, "OK")
 
-        return
-
-    def on_set_status(self, cmd_id, cmd_value, nuri, actuatorThread):
+    def on_set_status(self, cmd_name, cmd_info, id_LD, actuatorThread):
         global LampActuatorContext
-        # function to change the status of the lamp should be written here
-        # update of the ActuatorContext and publish new status
-        ngsiLdEntity = {"id": v_thing_ID_LD,
+        # function to change the status of the Lamp should be written here
+        # update the Context, publish new actuator status on data_out, send result
+        ngsiLdEntity = {"id": id_LD,
                         "type": v_thing_type_attr,
-                        "status": {"type": "Property", "value": cmd_value}
+                        "status": {"type": "Property", "value": cmd_info['cmd-value']}
                         }
         data = [ngsiLdEntity]
         LampActuatorContext.update(data)
+        
         # publish changed status
-        message = {"data": data, "meta": {"vThingID": v_thing_ID}}
-        actuatorThread.publish(message)
+        message = {"data": data, "meta": {
+            "vThingID": v_thing_ID}}  # neutral-format message
+        self.publish(message)
 
-        # send command result
         # publish command result
-        actuatorThread.send_commandResult(cmd_id, "set-status OK", cmd_nuri)
-        return
+        if "cmd-qos" in cmd_info:
+            if int(cmd_info['cmd-qos']) > 0:
+                self.send_commandResult(cmd_name, cmd_info, id_LD, "OK")
 
     def publish(self, message, topic=""):
         if topic == "":
@@ -161,7 +153,7 @@ class LampActuatorThread(Thread):
             out_topic = topic
         msg = str(message).replace("\'", "\"")
         print("Message sent on "+out_topic + "\n" + msg+"\n")
-        # publish data to data out topic
+        # publish data to out_topic
         mqtt_data_client.publish(out_topic, msg)
 
     def on_message_data_in_vThing(self, mosq, obj, msg):
@@ -171,27 +163,46 @@ class LampActuatorThread(Thread):
         try:
             data = jres["data"]
             id_LD = data["id"]
-            if id_LD.startswith(v_thing_ID_LD_CMD_PREFIX) == True:
-                # received command has a wrong command prefix
-                self.receive_commandRequest(data)
+            if id_LD != v_thing_ID_LD:
+                print("Entity not handled by the Thingvisor, message dropped")
                 return
+            for cmd in commands:
+                if cmd in data:
+                    self.receive_commandRequest(data)
+                    return
+            print("Command not found, message dropped")
+            return
         except Exception as ex:
             traceback.print_exc()
         return
 
     def __init__(self):
         Thread.__init__(self)
+        
 
     def run(self):
+        global commands
         # this method should fetch the status (context) from the real actuator,
         # represent it as ngsiLdEntity,
         # and finally store it in the HelloActuatorContext
 
         # Create initial status
+        commands = ["set-color","set-luminosity","set-status"]
         ngsiLdEntity = {"id": v_thing_ID_LD,
                         "type": v_thing_type_attr,
                         "status": {"type": "Property", "value": "off"},
-                        "color": {"type": "Property", "value": "white"}
+                        "color": {"type": "Property", "value": "white"},
+                        "luminosity": {"type": "Property", "value": "white"},
+                        "commands": {"type": "Property", "value": ["set-color","set-luminosity","set-status"]},
+                        "set-color": {"type": "Property", "value": ""},
+                        "set-color-status": {"type": "Property", "value": ""},
+                        "set-color-result": {"type": "Property", "value": ""},
+                        "set-luminosity": {"type": "Property", "value": ""},
+                        "set-luminosity-status": {"type": "Property", "value": ""},
+                        "set-luminosity-result": {"type": "Property", "value": ""},
+                        "set-status": {"type": "Property", "value": ""},
+                        "set-status-status": {"type": "Property", "value": ""},
+                        "set-status-result": {"type": "Property", "value": ""}
                         }
         data = [ngsiLdEntity]
         LampActuatorContext.set_all(data)
@@ -307,9 +318,7 @@ if __name__ == '__main__':
     v_thing_type_attr = "Lamp"
     v_thing_ID = thing_visor_ID + "/" + v_thing_name
     v_thing_ID_LD = "urn:ngsi-ld:"+thing_visor_ID+":" + \
-        v_thing_name  # ID used in id field od ngsi-ld for data
-    # prefix ID used in id field of ngsi-ld for commands
-    v_thing_ID_LD_CMD_PREFIX = v_thing_ID_LD + ":" + "cmd"
+    v_thing_name  # ID used in id field od ngsi-ld for data
     v_thing_label = "helloWorldActuator"
     v_thing_description = "hello world actuator simulating a colored lamp"
     v_thing = {"label": v_thing_label,
@@ -355,15 +364,16 @@ if __name__ == '__main__':
 
     # Instantiation of the Context object
     # Context object is a "map" of current virtual thing state, i.e. set of NGSI-LD properties
+    commands=[]
     LampActuatorContext = Context()
 
     # contexts is a map of Context, one per virtual things handled by the Thing Visor
     contexts = {v_thing_ID: LampActuatorContext}
 
     # JSON schemas for JSON validation
-    with open('commandRequestSchema.json', 'r') as f:
-        schema_data = f.read()
-    commandRequestSchema = json.loads(schema_data)
+    # with open('commandRequestSchema.json', 'r') as f:
+    #    schema_data = f.read()
+    # commandRequestSchema = json.loads(schema_data)
 
     # Finally run threads for control and data
 

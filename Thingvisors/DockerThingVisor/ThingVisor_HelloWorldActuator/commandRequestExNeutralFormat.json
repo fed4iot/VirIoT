@@ -1,7 +1,7 @@
 {"data": 
 	{	 
 		"id": "urn:ngsi-ld:helloWorldActuator:Lamp01:cmd:1234567890",
-		"type": "Lamp",
+		"type": "command",
 		"commandRequest" : { 
 			"type": "Property", 
 			"value": {

@@ -320,8 +320,7 @@ def on_vThing_data_Mobius(jmessage):
 
     for entity in data:
         id = entity['id']
-        label = [entity['type']]
-
+        
         # remove urn:ngls-ld for oneM2M readability
         if id.startswith("urn:ngsi-ld:"):
             main_container_rn = id[len("urn:ngsi-ld:"):]
@@ -329,16 +328,18 @@ def on_vThing_data_Mobius(jmessage):
             main_container_rn = id
         
         main_container_uri = ae_uri + "/" + main_container_rn
-
+        main_conainer_label = [entity['type']]
+        
         # map any ngsi-ld key different from id, type and annotations "@"
         # as sub-container (key name)
         # and content instance (key value)
         for key in entity:
             if (key not in ["id", "type", "commands"]) and (key.startswith("@") == False):
 
-                value = entity[key]  # value to be inserted as content instance
+                value = entity[key]['value']  # value to be inserted as content instance
                 sub_container_rn = key
                 sub_container_uri = main_container_uri + "/" + sub_container_rn
+                
 
                 if sub_container_uri in containers_uri_set:
                     # sub-container already there, insertion of content instance
@@ -348,13 +349,14 @@ def on_vThing_data_Mobius(jmessage):
                     if main_container_uri not in containers_uri_set:
                         # create main-container
                         status_mc, mc = F4Im2m.container_create(
-                            main_container_rn, origin, ae_uri, mni, label, CSEurl)
+                            main_container_rn, origin, ae_uri, mni, main_conainer_label, CSEurl)
                         containers_uri_set.add(main_container_uri)
                         id_LD_type_dict[id] = entity['type']
                         time.sleep(0.1)
                     # create sub-container
+                    sub_container_label = [entity[key]['type']]
                     status_mc, mc = F4Im2m.container_create(
-                        sub_container_rn, origin, main_container_uri, mni, label, CSEurl)
+                        sub_container_rn, origin, main_container_uri, mni, sub_container_label, CSEurl)
                     containers_uri_set.add(sub_container_uri)
                     time.sleep(0.1)
                     # content instance insertion
@@ -364,7 +366,7 @@ def on_vThing_data_Mobius(jmessage):
                 if main_container_uri not in containers_uri_set:
                     # create main-container
                     status_mc, mc = F4Im2m.container_create(
-                        main_container_rn, origin, ae_uri, mni, label, CSEurl)
+                        main_container_rn, origin, ae_uri, mni, main_conainer_label, CSEurl)
                     containers_uri_set.add(main_container_uri)
                     time.sleep(0.1)
                 # creates sub-containers for each command
@@ -376,7 +378,7 @@ def on_vThing_data_Mobius(jmessage):
                     sub_container_uri = main_container_uri + "/" + sub_container_rn
                     if sub_container_uri not in containers_uri_set:
                         status_mc, mc = F4Im2m.container_create(
-                            sub_container_rn, origin, main_container_uri, mni, [], CSEurl)
+                            sub_container_rn, origin, main_container_uri, mni, ["command"], CSEurl)
                         containers_uri_set.add(sub_container_uri)
                         # subscribe to this container to receive commands from the vsilo tenant
                         # notification topic actually is /oneM2M/req/Mobius/v_silo_id/json
@@ -389,7 +391,7 @@ def on_vThing_data_Mobius(jmessage):
                     sub_container_uri = main_container_uri + "/" + sub_container_rn
                     if sub_container_uri not in containers_uri_set:
                         status_mc, mc = F4Im2m.container_create(
-                            sub_container_rn, origin, main_container_uri, mni, [], CSEurl)
+                            sub_container_rn, origin, main_container_uri, mni, ["command-status"], CSEurl)
                         containers_uri_set.add(sub_container_uri)
 
                     # sub-container for the command result of the cmd_name
@@ -397,7 +399,7 @@ def on_vThing_data_Mobius(jmessage):
                     sub_container_uri = main_container_uri + "/" + sub_container_rn
                     if sub_container_uri not in containers_uri_set:
                         status_mc, mc = F4Im2m.container_create(
-                            sub_container_rn, origin, main_container_uri, mni, [], CSEurl)
+                            sub_container_rn, origin, main_container_uri, mni, ["command-result"], CSEurl)
                         containers_uri_set.add(sub_container_uri)
     return 'OK'
 

@@ -25,6 +25,7 @@ import paho.mqtt.client as mqtt
 import traceback
 import signal
 import time
+import random
 
 import os
 import sys
@@ -440,6 +441,15 @@ def on_commandRequest_Mobius(mosq, obj, msg):
             else:
                 cmd_LD_Type = ""
                 print("NGSI-LD type unknowk for command request of entity "+cmd_LD_ID)
+            
+            # cmd_value completition
+            if "cmd-id" not in cmd_value:
+                cmd_value['cmd-id'] = random.getrandbits(32)
+            if "cmd-qos" not in cmd_value:
+                cmd_value['cmd-nuri'] = [0] # best effort
+            
+            cmd_value['cmd-nuri'] = "viriot://vSilo/"+v_silo_id+"/data_in"  # only viriot uri supported
+
             send_command_out(cmd_LD_ID, cmd_LD_Type,
                              cmd_name, cmd_value, vThingID)
 

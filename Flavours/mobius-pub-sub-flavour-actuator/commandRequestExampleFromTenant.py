@@ -9,9 +9,9 @@ payload = {
     "m2m:cin": {
         "con": {
 				"cmd-value":"green",
-				"cmd-qos":"2",
-				"cmd-id":"123456",
-				"cmd-nuri":"viriot:/vSilo/tenant1_Silo1/data_in"
+				"cmd-qos":"2"
+				#"cmd-id":"123456",
+    
 				}
     }
 }

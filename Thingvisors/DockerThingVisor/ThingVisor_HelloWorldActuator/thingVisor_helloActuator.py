@@ -52,8 +52,8 @@ class LampActuatorThread(Thread):
         message = {"data": data, "meta": {
             "vThingID": v_thing_ID}}  # neutral-format message
         if "cmd-nuri" in cmd_info:
-            if cmd_info['cmd-nuri'].startswith("viriot:/"):
-                topic = cmd_info['cmd-nuri'][len("viriot:/"):]
+            if cmd_info['cmd-nuri'].startswith("viriot://"):
+                topic = cmd_info['cmd-nuri'][len("viriot://"):]
                 self.publish(message, topic)
             else:
                 self.publish(message)
@@ -73,8 +73,8 @@ class LampActuatorThread(Thread):
         message = {"data": data, "meta": {
             "vThingID": v_thing_ID}}  # neutral-format message
         if "cmd-nuri" in cmd_info:
-            if cmd_info['cmd-nuri'].startswith("viriot:/"):
-                topic = cmd_info['cmd-nuri'][len("viriot:/"):]
+            if cmd_info['cmd-nuri'].startswith("viriot://"):
+                topic = cmd_info['cmd-nuri'][len("viriot://"):]
                 self.publish(message, topic)
             else:
                 self.publish(message)
@@ -130,7 +130,7 @@ class LampActuatorThread(Thread):
         global LampActuatorContext
         # function to change the status of the Lamp should be written here
         # update the Context, publish new actuator status on data_out, send result
-        ngsiLdEntity = {"id": id_LD,
+        ngsiLdEntity = {"id": id_LD,   
                         "type": v_thing_type_attr,
                         "status": {"type": "Property", "value": cmd_info['cmd-value']}
                         }
@@ -193,7 +193,7 @@ class LampActuatorThread(Thread):
                         "type": v_thing_type_attr,
                         "status": {"type": "Property", "value": "off"},
                         "color": {"type": "Property", "value": "white"},
-                        "luminosity": {"type": "Property", "value": "white"},
+                        "luminosity": {"type": "Property", "value": "255"},
                         "commands": {"type": "Property", "value": ["set-color","set-luminosity","set-status"]}
         }
 

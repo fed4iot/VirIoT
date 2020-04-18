@@ -32,7 +32,7 @@ from concurrent.futures import ThreadPoolExecutor
 # -*- coding: utf-8 -*-
 
 
-class LampActuatorThread(Thread):
+class DataThread(Thread):
     # Class used to:
     # 1) handle actuation command workflow
     # 2) publish actuator status when it changes
@@ -149,7 +149,7 @@ class LampActuatorThread(Thread):
 
     def publish(self, message, topic=""):
         if topic == "":
-            out_topic = v_thing_topic + '/' + v_thing_data_out_suffix
+            out_topic = v_thing_topic + '/' + data_out_suffix
         else:
             out_topic = topic
         msg = str(message).replace("\'", "\"")
@@ -204,34 +204,34 @@ class LampActuatorThread(Thread):
         mqtt_data_client.connect(
             MQTT_data_broker_IP, MQTT_data_broker_port, 30)
         # define callback and subscriptions for data_in where to receive actuator commands
-        mqtt_data_client.message_callback_add(v_thing_topic + "/" + v_thing_data_in_suffix,
+        mqtt_data_client.message_callback_add(v_thing_topic + "/" + data_in_suffix,
                                               self.on_message_data_in_vThing)
         mqtt_data_client.subscribe(
-            v_thing_topic + "/" + v_thing_data_in_suffix)
+            v_thing_topic + "/" + data_in_suffix)
         mqtt_data_client.loop_forever()
         print("Thread '" + self.name + "' terminated")
 
 
-class MqttControlThread(Thread):
+class ControlThread(Thread):
 
     def on_message_get_thing_context(self, jres):
         silo_id = jres["vSiloID"]
         message = {"command": "getContextResponse", "data": LampActuatorContext.get_all(), "meta": {
             "vThingID": v_thing_ID}}
         mqtt_control_client.publish(v_silo_prefix + "/" + silo_id +
-                                    "/" + tv_control_in_suffix, str(message).replace("\'", "\""))
+                                    "/" + control_in_suffix, str(message).replace("\'", "\""))
 
     def send_destroy_v_thing_message(self):
         msg = {"command": "deleteVThing",
                "vThingID": v_thing_ID, "vSiloID": "ALL"}
         mqtt_control_client.publish(
-            v_thing_prefix + "/" + v_thing_ID + "/" + tv_control_out_suffix, str(msg).replace("\'", "\""))
+            v_thing_prefix + "/" + v_thing_ID + "/" + control_out_suffix, str(msg).replace("\'", "\""))
         return
 
     def send_destroy_thing_visor_ack_message(self):
         msg = {"command": "destroyTVAck", "thingVisorID": thing_visor_ID}
         mqtt_control_client.publish(
-            tv_prefix + "/" + thing_visor_ID + "/" + tv_control_out_suffix, str(msg).replace("\'", "\""))
+            tv_prefix + "/" + thing_visor_ID + "/" + control_out_suffix, str(msg).replace("\'", "\""))
         return
 
     def on_message_destroy_thing_visor(self, jres):
@@ -280,19 +280,19 @@ class MqttControlThread(Thread):
         v_thing_message = {"command": "createVThing",
                            "thingVisorID": thing_visor_ID,
                            "vThing": v_thing}
-        mqtt_control_client.publish(tv_prefix + "/" + thing_visor_ID + "/" + tv_control_out_suffix,
+        mqtt_control_client.publish(tv_prefix + "/" + thing_visor_ID + "/" + control_out_suffix,
                                     str(v_thing_message).replace("\'", "\""))
 
         # Add message callbacks that will only trigger on a specific subscription match
-        mqtt_control_client.message_callback_add(v_thing_topic + "/" + tv_control_in_suffix,
+        mqtt_control_client.message_callback_add(v_thing_topic + "/" + control_in_suffix,
                                                  self.on_message_control_in_vThing)
 
-        mqtt_control_client.message_callback_add(tv_prefix + "/" + thing_visor_ID + "/" + tv_control_in_suffix,
+        mqtt_control_client.message_callback_add(tv_prefix + "/" + thing_visor_ID + "/" + control_in_suffix,
                                                  self.on_message_control_in_TV)
         mqtt_control_client.subscribe(
-            v_thing_topic + '/' + tv_control_in_suffix)
+            v_thing_topic + '/' + control_in_suffix)
         mqtt_control_client.subscribe(
-            tv_prefix + "/" + thing_visor_ID + "/" + tv_control_in_suffix)
+            tv_prefix + "/" + thing_visor_ID + "/" + control_in_suffix)
         mqtt_control_client.loop_forever()
         print("Thread '" + self.name + "' terminated"+"\n")
 
@@ -326,10 +326,10 @@ if __name__ == '__main__':
 
     tv_prefix = "TV"  # prefix name for controller communication topic
     v_thing_prefix = "vThing"  # prefix name for virtual Thing data and control topics
-    v_thing_data_out_suffix = "data_out"
-    v_thing_data_in_suffix = "data_in"
-    tv_control_in_suffix = "c_in"
-    tv_control_out_suffix = "c_out"
+    data_out_suffix = "data_out"
+    data_in_suffix = "data_in"
+    control_in_suffix = "c_in"
+    control_out_suffix = "c_out"
     v_silo_prefix = "vSilo"
     v_thing_topic = v_thing_prefix + "/" + v_thing_ID
 
@@ -363,7 +363,7 @@ if __name__ == '__main__':
     # contexts is a map of Context, one per virtual things handled by the Thing Visor
     contexts = {v_thing_ID: LampActuatorContext}
 
-    # JSON schemas for JSON validation
+    # JSON schemas for JSON validation TODO
     # with open('commandRequestSchema.json', 'r') as f:
     #    schema_data = f.read()
     # commandRequestSchema = json.loads(schema_data)
@@ -376,12 +376,13 @@ if __name__ == '__main__':
     # threadPoolExecutor of size one to handle one command at a time in a fifo order
     executor = ThreadPoolExecutor(1)
     
-    # Class used to handle data and commands of the actuator
-    data_thread = LampActuatorThread()
+    # Class used to handle data and commands of the actuator on data (data_in/data_out) channels
+    data_thread = DataThread()
     data_thread.start()
 
-    mqtt_control_thread = MqttControlThread()  # mqtt control thread
-    mqtt_control_thread.start()
+    # Class used to handle control messages on conteol (c_in/c_out) channels
+    control_thread = ControlThread()  
+    control_thread.start()
 
     while True:
         try:

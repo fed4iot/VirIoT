@@ -1,5 +1,5 @@
 {"data": 
-	{	 
+	[{	 
 		"id": "urn:ngsi-ld:helloWorldActuator:Lamp01",
 		"type": "Lamp",
 		"set-color" : { 
@@ -11,6 +11,6 @@
 				"cmd-nuri":"viriot:/vSilo/tenant1_vSilo1/data_in"
 				}
 		}	
-	},
+	}],
 "meta": {}
 } 

@@ -25,7 +25,6 @@ import paho.mqtt.client as mqtt
 import traceback
 import signal
 import time
-import random
 
 import os
 import sys
@@ -41,8 +40,8 @@ import F4Im2m
 def on_in_control_msg(mosq, obj, msg):
     payload = msg.payload.decode("utf-8", "ignore")
     print("In control message received by vSilo "+payload)
-    jres = json.loads(payload.replace("\'", "\""))
     try:
+        jres = json.loads(payload.replace("\'", "\""))
         commandType = jres["command"]
         if commandType == "addVThing":
             on_message_add_vThing(jres)
@@ -55,7 +54,7 @@ def on_in_control_msg(mosq, obj, msg):
             return "destroying vSilo"
         elif commandType == "getContextResponse":
             del jres["command"]
-            on_vThing_data(mosq, obj, str(jres))
+            on_vThing_data(mosq, obj, json.dumps(jres))
             return "received context response"
         else:
             return "invalid command"
@@ -116,9 +115,7 @@ def on_vThing_data(mosq, obj, msg):
         else:
             payload = msg.payload.decode("utf-8", "ignore")
             jres = json.loads(payload.replace("\'", "\""))
-
         on_vThing_data_on_Broker(jres)
-
     except Exception as ex:
         traceback.print_exc()
         print('ERROR in on_vThing_data')
@@ -130,14 +127,19 @@ def on_vThing_data(mosq, obj, msg):
 def on_vThing_out_control(mosq, obj, msg):
     payload = msg.payload.decode("utf-8", "ignore")
     print("Out control message received by vThing "+payload)
-    jres = json.loads(payload.replace("\'", "\""))
-    if jres["command"] == "deleteVThing":
-        msg = {"vThingID": jres["vThingID"]}
-        on_message_delete_vThing(msg)
-    else:
-        # TODO manage others commands
-        return 'command not managed'
-    return 'OK'
+    try:
+        jres = json.loads(payload.replace("\'", "\""))
+        if jres["command"] == "deleteVThing":
+            msg = {"vThingID": jres["vThingID"]}
+            on_message_delete_vThing(msg)
+        else:
+            # TODO manage others commands
+            return 'command not managed'
+        return 'OK'
+    except Exception as ex:
+        traceback.print_exc()
+        print('ERROR in on_vThing_out_control')
+        return 'ERROR'
 
 
 def send_destroy_v_silo_ack_message():
@@ -164,24 +166,31 @@ def fetch_last_context(v_thing_id):
 def restore_virtual_things():
     # Retrieve from system db the list of virtual thing in use and restore them
     # needed in case of silo controller restart
-    db_client = MongoClient('mongodb://' + db_IP + ':' + str(db_port) + '/')
-    db = db_client[db_name]
-    connected_v_things = json.loads(
-        dumps(db[v_thing_collection].find({"vSiloID": v_silo_id}, {"vThingID": 1, "_id": 0})))
-    if len(connected_v_things) > 0:
-        for vThing in connected_v_things:
-            if "vThingID" in vThing:
-                print("Restoring virtual thing with ID: " + vThing['vThingID'])
-                # find vThing type, if any
-                v_thing_id = vThing['vThingID']
-                vthings_of_tv = db[thing_visor_collection].find_one(
-                    {"vThings.id": v_thing_id})['vThings']
-                vThing['vThingType'] = ""
-                for vt in vthings_of_tv:
-                    if vt['id'] == v_thing_id and 'type' in vt:
-                        vThing['vThingType'] = vt['type']
-                    break
-                on_message_add_vThing(vThing)
+    try:
+        db_client = MongoClient('mongodb://' + db_IP +
+                                ':' + str(db_port) + '/')
+        db = db_client[db_name]
+        connected_v_things = json.loads(
+            dumps(db[v_thing_collection].find({"vSiloID": v_silo_id}, {"vThingID": 1, "_id": 0})))
+        if len(connected_v_things) > 0:
+            for vThing in connected_v_things:
+                if "vThingID" in vThing:
+                    print("Restoring virtual thing with ID: " +
+                          vThing['vThingID'])
+                    # find vThing type, if any
+                    v_thing_id = vThing['vThingID']
+                    vthings_of_tv = db[thing_visor_collection].find_one(
+                        {"vThings.id": v_thing_id})['vThings']
+                    vThing['vThingType'] = ""
+                    for vt in vthings_of_tv:
+                        if vt['id'] == v_thing_id and 'type' in vt:
+                            vThing['vThingType'] = vt['type']
+                        break
+                    on_message_add_vThing(vThing)
+    except Exception as ex:
+        traceback.print_exc()
+        print('ERROR in restore_virtual_things')
+        return 'ERROR'
 
 
 def send_command_out(cmd_LD_ID, cmd_LD_Type, cmd_name, cmd_value, vThingID):
@@ -196,11 +205,13 @@ def send_command_out(cmd_LD_ID, cmd_LD_Type, cmd_name, cmd_value, vThingID):
     publish_on_virIoT(message, topic)
     return
 
+
 def publish_on_virIoT(message, out_topic):
     msg = str(message).replace("\'", "\"")
     print("Message sent on "+out_topic + "\n" + msg+"\n")
     # publish data to out_topic
     mqtt_virIoT_data_client.publish(out_topic, msg)
+
 
 def handler(signal, frame):
     sys.exit()
@@ -210,13 +221,13 @@ signal.signal(signal.SIGINT, handler)
 
 
 # ############ Mobius Functions ############
-# set used to store uri of container already created, 
-# it is necessary because content-instance are  inserted through MQTT without any exception 
+# set used to store uri of container already created,
+# it is necessary because content-instance are  inserted through MQTT without any exception
 containers_uri_set = set()
 
-# dictinary binding entity with type, 
-# it is useful to accelerate the NGSI-LD command building, otherwise a Mobius lookup is necessary 
-id_LD_type_dict = dict()  
+# dictinary binding entity with type,
+# it is useful to accelerate the NGSI-LD command building, otherwise a Mobius lookup is necessary
+id_LD_type_dict = dict()
 
 
 def init_Mobius():
@@ -286,28 +297,30 @@ def on_delete_vThing_Mobius(jres):
         if status == 200 or status == 201:
             # remove containers of the deleted vThing from the local container_uri local set
             # remove id from type map
-            
+
             # identification phase
             cnt_uri_to_remove_set = set()
             id_LD_to_remove_set = set()
             for cnt in containers_uri_set:
                 if str(cnt).startswith(usecsebase + "/" + ae_rn):
                     cnt_uri_to_remove_set.add(cnt)
-                    id_LD = str(cnt).split("/")[2] # cnt_uri Mobius/<vThingID>/<id_LD>/<Property_name>
+                    # cnt_uri Mobius/<vThingID>/<id_LD>/<Property_name>
+                    id_LD = str(cnt).split("/")[2]
                     id_LD_to_remove_set.add(id_LD)
-            
-            #cleaning phase
+
+            # cleaning phase
             containers_uri_set.difference_update(cnt_uri_to_remove_set)
             for id_LD in id_LD_to_remove_set:
                 if id_LD in id_LD_type_dict:
-                    del id_LD_type_dict[id_LD]  
-            
+                    del id_LD_type_dict[id_LD]
+
             return True
         else:
             return False
     except Exception as ex:
         traceback.print_exc()
         return False
+
 
 def on_vThing_data_Mobius(jmessage):
 
@@ -317,30 +330,29 @@ def on_vThing_data_Mobius(jmessage):
     ae_uri = usecsebase + "/" + ae_rn
     # Array of NGSI-LD entities contained in the neutral-format message
     data = jmessage['data']
-    mni = 10  # number of content instances in the oneM2M containers
 
     for entity in data:
         id = entity['id']
-        
+        label = [entity['type']]
+
         # remove urn:ngls-ld for oneM2M readability
         if id.startswith("urn:ngsi-ld:"):
             main_container_rn = id[len("urn:ngsi-ld:"):]
         else:
             main_container_rn = id
-        
+
         main_container_uri = ae_uri + "/" + main_container_rn
-        main_conainer_label = [entity['type']]
-        
+
         # map any ngsi-ld key different from id, type and annotations "@"
         # as sub-container (key name)
         # and content instance (key value)
         for key in entity:
             if (key not in ["id", "type", "commands"]) and (key.startswith("@") == False):
 
-                value = entity[key]['value']  # value to be inserted as content instance
+                mni = 1  # number of content instances in the oneM2M container for data
+                value = entity[key]  # value to be inserted as content instance
                 sub_container_rn = key
                 sub_container_uri = main_container_uri + "/" + sub_container_rn
-                
 
                 if sub_container_uri in containers_uri_set:
                     # sub-container already there, insertion of content instance
@@ -350,14 +362,13 @@ def on_vThing_data_Mobius(jmessage):
                     if main_container_uri not in containers_uri_set:
                         # create main-container
                         status_mc, mc = F4Im2m.container_create(
-                            main_container_rn, origin, ae_uri, mni, main_conainer_label, CSEurl)
+                            main_container_rn, origin, ae_uri, mni, label, CSEurl)
                         containers_uri_set.add(main_container_uri)
                         id_LD_type_dict[id] = entity['type']
                         time.sleep(0.1)
                     # create sub-container
-                    sub_container_label = [entity[key]['type']]
                     status_mc, mc = F4Im2m.container_create(
-                        sub_container_rn, origin, main_container_uri, mni, sub_container_label, CSEurl)
+                        sub_container_rn, origin, main_container_uri, mni, label, CSEurl)
                     containers_uri_set.add(sub_container_uri)
                     time.sleep(0.1)
                     # content instance insertion
@@ -366,8 +377,9 @@ def on_vThing_data_Mobius(jmessage):
             elif key == "commands":
                 if main_container_uri not in containers_uri_set:
                     # create main-container
+                    mni = 3  # number of content instances in the oneM2M container for command
                     status_mc, mc = F4Im2m.container_create(
-                        main_container_rn, origin, ae_uri, mni, main_conainer_label, CSEurl)
+                        main_container_rn, origin, ae_uri, mni, label, CSEurl)
                     containers_uri_set.add(main_container_uri)
                     time.sleep(0.1)
                 # creates sub-containers for each command
@@ -379,7 +391,7 @@ def on_vThing_data_Mobius(jmessage):
                     sub_container_uri = main_container_uri + "/" + sub_container_rn
                     if sub_container_uri not in containers_uri_set:
                         status_mc, mc = F4Im2m.container_create(
-                            sub_container_rn, origin, main_container_uri, mni, ["command"], CSEurl)
+                            sub_container_rn, origin, main_container_uri, mni, [], CSEurl)
                         containers_uri_set.add(sub_container_uri)
                         # subscribe to this container to receive commands from the vsilo tenant
                         # notification topic actually is /oneM2M/req/Mobius/v_silo_id/json
@@ -392,7 +404,7 @@ def on_vThing_data_Mobius(jmessage):
                     sub_container_uri = main_container_uri + "/" + sub_container_rn
                     if sub_container_uri not in containers_uri_set:
                         status_mc, mc = F4Im2m.container_create(
-                            sub_container_rn, origin, main_container_uri, mni, ["command-status"], CSEurl)
+                            sub_container_rn, origin, main_container_uri, mni, [], CSEurl)
                         containers_uri_set.add(sub_container_uri)
 
                     # sub-container for the command result of the cmd_name
@@ -400,7 +412,7 @@ def on_vThing_data_Mobius(jmessage):
                     sub_container_uri = main_container_uri + "/" + sub_container_rn
                     if sub_container_uri not in containers_uri_set:
                         status_mc, mc = F4Im2m.container_create(
-                            sub_container_rn, origin, main_container_uri, mni, ["command-result"], CSEurl)
+                            sub_container_rn, origin, main_container_uri, mni, [], CSEurl)
                         containers_uri_set.add(sub_container_uri)
     return 'OK'
 
@@ -424,12 +436,12 @@ def create_cin_mqtt(container_uri, origin, value, cse, ae):
 
 def on_commandRequest_Mobius(mosq, obj, msg):
     payload = msg.payload.decode("utf-8", "ignore")
-    jres = json.loads(payload)
     try:
+        jres = json.loads(payload)
         # e.g. sub_uri = "Mobius/helloWorldActuator:Lamp01/helloWorldActuator:Lamp01/set-luminosity/vSiloCommandSub"
         sub_uri = jres['pc']['m2m:sgn']['sur']
         if "nev" not in jres['pc']['m2m:sgn']:
-            return 'OK' 
+            return 'OK'
         if "m2m:cin" in jres['pc']['m2m:sgn']['nev']['rep']:
             cmd_value = jres['pc']['m2m:sgn']['nev']['rep']['m2m:cin']['con']
             sub_uri_split = sub_uri.split("/")
@@ -441,15 +453,6 @@ def on_commandRequest_Mobius(mosq, obj, msg):
             else:
                 cmd_LD_Type = ""
                 print("NGSI-LD type unknowk for command request of entity "+cmd_LD_ID)
-            
-            # cmd_value completition
-            if "cmd-id" not in cmd_value:
-                cmd_value['cmd-id'] = random.getrandbits(32)
-            if "cmd-qos" not in cmd_value:
-                cmd_value['cmd-nuri'] = [0] # best effort
-            
-            cmd_value['cmd-nuri'] = "viriot://vSilo/"+v_silo_id+"/data_in"  # only viriot uri supported
-
             send_command_out(cmd_LD_ID, cmd_LD_Type,
                              cmd_name, cmd_value, vThingID)
 

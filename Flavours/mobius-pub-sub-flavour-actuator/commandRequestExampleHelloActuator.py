@@ -8,7 +8,7 @@ url = "http://172.17.0.4:7579/Mobius/helloWorldActuator:Lamp01/helloWorldActuato
 payload = {
     "m2m:cin": {
         "con": {
-				"cmd-value":"green",
+				"cmd-value":"purple",
 				"cmd-qos":"2"
 				#"cmd-id":"123456",
     

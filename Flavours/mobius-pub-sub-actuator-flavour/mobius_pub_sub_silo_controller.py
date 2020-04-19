@@ -522,7 +522,7 @@ if __name__ == '__main__':
     on_delete_vThing_on_Broker = on_delete_vThing_Mobius
     on_add_vThing_on_Broker = on_add_vThing_Mobius
     on_vThing_data_on_Broker = on_vThing_data_Mobius
-    on_commandRequest_Mobius_on_Broker = on_commandRequest_Mobius
+    on_commandRequest_on_Broker = on_commandRequest_Mobius
 
     # Mongodb settings
     db_name = "viriotDB"  # name of system database
@@ -564,7 +564,7 @@ if __name__ == '__main__':
     mqtt_broker_client.connect(
         BROKER_IP, BROKER_MQTT_PORT, 10)
     mqtt_broker_client.message_callback_add(
-        BROKER_MQTT_TOPIC, on_commandRequest_Mobius_on_Broker)
+        BROKER_MQTT_TOPIC, on_commandRequest_on_Broker)
     mqtt_broker_client.subscribe(BROKER_MQTT_TOPIC)
     mqtt_broker_client.loop_start()
 

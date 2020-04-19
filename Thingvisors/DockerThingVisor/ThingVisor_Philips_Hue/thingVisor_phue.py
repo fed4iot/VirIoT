@@ -352,10 +352,17 @@ def randomString(stringLength=10):
 def initHue():
     global pbridge, v_things, lights, contexts
     # Connection with Hue Bridge
-    pbridge = Bridge(bridgeIP+":"+bridgePort, config_file_path=".huecfg")
-    # If the app is not registered and the button is not pressed, press the button and call connect() (this only needs to be run a single time)
     while True:
-        i = 1
+        try:
+            pbridge = Bridge(bridgeIP+":"+bridgePort, config_file_path=".huecfg")
+            break
+        except Exception as ex:
+            print(ex)
+            time.sleep(5)
+            continue
+    # If the app is not registered and the button is not pressed, press the button and call connect() (this only needs to be run a single time)
+    i = 1
+    while True: 
         print("Connection attempt with Hue bridge n."+str(i))
         try:
             print("Hue bridge connection attempt..."+str(i))
@@ -366,7 +373,8 @@ def initHue():
                 continue
             print("Hue bridge connected...")
             break
-        except Exception as identifier:
+        except Exception as ex:
+            print(ex)
             time.sleep(5)
             i += 1
             continue

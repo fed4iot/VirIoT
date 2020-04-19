@@ -3,8 +3,8 @@ service mysql start
 service mosquitto start
 
 # Debug
-service ssh start
-env >> /etc/environment
+# service ssh start
+# env >> /etc/environment
 # End debug
 
 if [ ! -f /app/mobiusdb ]

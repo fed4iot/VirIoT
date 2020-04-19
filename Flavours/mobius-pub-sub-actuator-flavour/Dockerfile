@@ -23,9 +23,9 @@ RUN [ "/bin/bash", "/app/mobius_setup.sh" ]
 RUN npm install
 
 # Debug
-RUN apt-get install -y --no-install-recommends openssh-server iproute2 vim pylint
-COPY id_rsa.pub /root/.ssh/authorized_keys
-EXPOSE 22
+# RUN apt-get install -y --no-install-recommends openssh-server iproute2 vim pylint
+# COPY id_rsa.pub /root/.ssh/authorized_keys
+# EXPOSE 22
 # End debug
 
 ENTRYPOINT []

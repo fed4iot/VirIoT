@@ -145,7 +145,7 @@ def on_vThing_out_control(mosq, obj, msg):
 def send_destroy_v_silo_ack_message():
     msg = {"command": "destroyVSiloAck", "vSiloID": v_silo_id}
     mqtt_virIoT_control_client.publish(
-        v_silo_prefix + "/" + v_silo_id + "/" + control_out_suffix, str(msg).replace("\'", "\""))
+        v_silo_prefix + "/" + v_silo_id + "/" + control_out_suffix, json.dumps(msg))
     return
 
 
@@ -160,7 +160,7 @@ def fetch_last_context(v_thing_id):
     message = {"command": "getContextRequest",
                "vSiloID": v_silo_id, "vThingID": v_thing_id}
     mqtt_virIoT_control_client.publish(v_thing_prefix + "/" + v_thing_id +
-                                       "/" + control_in_suffix, str(message).replace("\'", "\""))
+                                       "/" + control_in_suffix, json.dumps(message))
 
 
 def restore_virtual_things():
@@ -207,7 +207,7 @@ def send_command_out(cmd_LD_ID, cmd_LD_Type, cmd_name, cmd_value, vThingID):
 
 
 def publish_on_virIoT(message, out_topic):
-    msg = str(message).replace("\'", "\"")
+    msg = json.dumps(message)
     print("Message sent on "+out_topic + "\n" + msg+"\n")
     # publish data to out_topic
     mqtt_virIoT_data_client.publish(out_topic, msg)
@@ -375,9 +375,10 @@ def on_vThing_data_Mobius(jmessage):
                     create_cin_mqtt(sub_container_uri, origin,
                                     str(value), usecsebase, ae_rn)
             elif key == "commands":
+                mni = 3
                 if main_container_uri not in containers_uri_set:
                     # create main-container
-                    mni = 3  # number of content instances in the oneM2M container for command
+                      # number of content instances in the oneM2M container for command
                     status_mc, mc = F4Im2m.container_create(
                         main_container_rn, origin, ae_uri, mni, label, CSEurl)
                     containers_uri_set.add(main_container_uri)
@@ -436,8 +437,14 @@ def create_cin_mqtt(container_uri, origin, value, cse, ae):
 
 def on_commandRequest_Mobius(mosq, obj, msg):
     payload = msg.payload.decode("utf-8", "ignore")
+
     try:
         jres = json.loads(payload)
+        resp_topic = msg.topic.replace("oneM2M/req","oneM2M/resp")
+        ae_rn = resp_topic.split("/")[4]
+        rqi = jres['rqi']
+        response_mqtt_notify(resp_topic,2001, '', origin, rqi, '')  # send Mobius ACK otherwise subscription is deleted
+
         # e.g. sub_uri = "Mobius/helloWorldActuator:Lamp01/helloWorldActuator:Lamp01/set-luminosity/vSiloCommandSub"
         sub_uri = jres['pc']['m2m:sgn']['sur']
         if "nev" not in jres['pc']['m2m:sgn']:
@@ -460,6 +467,16 @@ def on_commandRequest_Mobius(mosq, obj, msg):
         traceback.print_exc()
     return 'OK'
 
+def response_mqtt_notify (rsp_topic, rsc, to, fr, rqi, inpc):
+    global mqtt_broker_client
+    rsp_message = {}
+    rsp_message['m2m:rsp'] = {}
+    rsp_message['m2m:rsp']['rsc'] = rsc
+    rsp_message['m2m:rsp']['to'] = rsp_topic
+    rsp_message['m2m:rsp']['fr'] = fr
+    rsp_message['m2m:rsp']['rqi'] = rqi
+    rsp_message['m2m:rsp']['pc'] = inpc
+    mqtt_broker_client.publish(topic=rsp_topic, payload=json.dumps(rsp_message),qos=0)
 
 def uri2vThingID(uri):
     # extract vThingID from oneM2M uri e.g. uri = "Mobius/helloWorldActuator:Lamp01/helloWorldActuator:Lamp01/set-color", vThingID "helloWorldActuator/Lamp01"

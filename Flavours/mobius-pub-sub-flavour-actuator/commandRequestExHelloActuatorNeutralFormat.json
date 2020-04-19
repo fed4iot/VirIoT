@@ -1,9 +1,0 @@
-{"commandRequest" : { 
-			"type": "Property", 
-			"value": {
-				"commandType":"set-color", 
-				"commandValue":"green",
-				"commandID":"1234567890"
-				}
-		}	
-}

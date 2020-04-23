@@ -1,0 +1,3 @@
+jsonmerge
+paho-mqtt
+pymongo

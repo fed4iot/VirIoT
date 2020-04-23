@@ -1,3 +1,5 @@
+import jsonmerge
+
 class Context:
     def __init__(self):
         self.contextMap = []
@@ -10,8 +12,10 @@ class Context:
             for old_entity in self.contextMap:
                 if old_entity["id"] == new_entity["id"]:
                     self.contextMap.remove(old_entity)
+                    self.contextMap.append(jsonmerge.merge(old_entity,new_entity))
                     break
-            self.contextMap.append(new_entity)
+                else:
+                    self.contextMap.append(new_entity)
 
     def set_all(self, entities):
         self.contextMap.clear()

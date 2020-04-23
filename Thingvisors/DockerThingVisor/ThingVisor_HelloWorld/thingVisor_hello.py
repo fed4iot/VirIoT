@@ -74,7 +74,7 @@ class FetcherThread(Thread):
     def publish(self, message):
         print("topic name: " + v_thing_topic + '/' + v_thing_data_suffix + " ,message: " + json.dumps(message))
         mqtt_data_client.publish(v_thing_topic + '/' + v_thing_data_suffix,
-                                 str(message).replace("\'", "\""))  # publish received data to data topic by using neutral format
+                                 json.dumps(message))  # publish received data to data topic by using neutral format
 
 
 class mqttDataThread(Thread):
@@ -95,16 +95,16 @@ class MqttControlThread(Thread):
     def on_message_get_thing_context(self, jres):
         silo_id = jres["vSiloID"]
         message = {"command": "getContextResponse", "data": context_hello.get_all(), "meta": {"vThingID": v_thing_ID}}
-        mqtt_control_client.publish(v_silo_prefix + "/" + silo_id + "/" + in_control_suffix, str(message).replace("\'", "\""))
+        mqtt_control_client.publish(v_silo_prefix + "/" + silo_id + "/" + in_control_suffix, json.dumps(message))
 
     def send_destroy_v_thing_message(self):
         msg = {"command": "deleteVThing", "vThingID": v_thing_ID, "vSiloID": "ALL"}
-        mqtt_control_client.publish(v_thing_prefix + "/" + v_thing_ID + "/" + out_control_suffix, str(msg).replace("\'", "\""))
+        mqtt_control_client.publish(v_thing_prefix + "/" + v_thing_ID + "/" + out_control_suffix, json.dumps(msg))
         return
 
     def send_destroy_thing_visor_ack_message(self):
         msg = {"command": "destroyTVAck", "thingVisorID": thing_visor_ID}
-        mqtt_control_client.publish(tv_control_prefix + "/" + thing_visor_ID + "/" + out_control_suffix, str(msg).replace("\'", "\""))
+        mqtt_control_client.publish(tv_control_prefix + "/" + thing_visor_ID + "/" + out_control_suffix, json.dumps(msg))
         return
 
     def on_message_destroy_thing_visor(self, jres):
@@ -152,7 +152,7 @@ class MqttControlThread(Thread):
                            "thingVisorID": thing_visor_ID,
                            "vThing": v_thing}
         mqtt_control_client.publish(tv_control_prefix + "/" + thing_visor_ID + "/" + out_control_suffix,
-                                    str(v_thing_message).replace("\'", "\""))
+                                    json.dumps(v_thing_message))
 
         # Add message callbacks that will only trigger on a specific subscription match
         mqtt_control_client.message_callback_add(v_thing_topic + "/" + in_control_suffix,

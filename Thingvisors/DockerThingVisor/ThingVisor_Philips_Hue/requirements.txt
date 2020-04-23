@@ -1,0 +1,10 @@
+attrs
+importlib-metadata
+jsonschema
+paho-mqtt
+pymongo
+pyrsistent
+six
+zipp
+jsonmerge
+phue

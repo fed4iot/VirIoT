@@ -833,8 +833,7 @@ class httpThread(Thread):
                 return json.dumps({"message": "operation not allowed"}), 401
 
             # check on system database if the virtual thing exists
-            vthing_entry = db[thing_visor_collection].find_one({"vThings.id": v_thing_id})
-
+             
             if db[thing_visor_collection].count({"vThings.id": v_thing_id}) == 0:
                 return json.dumps({"message": 'Add fails - virtual thing does not exist'}), 409
 
@@ -848,8 +847,6 @@ class httpThread(Thread):
                 httpThread.app.logger.error('virtual silo %s is not ready, add vThing fails', v_silo_id())
                 return json.dumps({"message": 'Add fails - virtual silo' + v_silo_id + ' is not ready'}), 409
 
-            mqtt_msg = {"command": "addVThing", "vSiloID": v_silo_id, "vThingID": v_thing_id}
-
             # check if the tenant is already using the virtual thing in the same virtual IoT system
             if db[v_thing_collection].count({"vThingID": v_thing_id,
                                              "tenantID": tenant_id,
@@ -857,6 +854,16 @@ class httpThread(Thread):
                 return json.dumps({"message": 'Add fails - Virtual thing \'' + v_thing_id +
                                               '\' already exists for tenantID "' + tenant_id + \
                                               '" and vSiloID "' + v_silo_id + '"'}), 409
+            # find vThing type, if any
+            vthings_of_tv = db[thing_visor_collection].find_one({"vThings.id": v_thing_id})['vThings']
+            v_thing_type=""
+            for vt in  vthings_of_tv:
+                if vt['id']==v_thing_id and 'type' in vt:
+                    v_thing_type=vt['type']
+                    break
+
+            mqtt_msg = {"command": "addVThing", "vSiloID": v_silo_id, "vThingID": v_thing_id,"vThingType": v_thing_type}
+
         except Exception:
             print(traceback.format_exc())
             return json.dumps({"message": 'Add fails'}), 401

@@ -1,0 +1,16 @@
+{"data": 
+	[{	 
+		"id": "urn:ngsi-ld:pHueActuator:light1",
+		"type": "Lamp",
+		"set-on" : { 
+			"type": "Property", 
+			"value": {
+				"cmd-value": true,
+				"cmd-qos":"2",
+				"cmd-id":"123456",
+				"cmd-nuri":"viriot:/vSilo/tenant1_vSilo1/data_in"
+				}
+		}	
+	}],
+"meta": {}
+} 

@@ -96,7 +96,7 @@ def on_in_control_msg(mosq, obj, msg):
             return "destroying vSilo"
         elif commandType == "getContextResponse":
             del jres["command"]
-            on_vThing_data(mosq, obj, str(jres))
+            on_vThing_data(mosq, obj, json.dumps(jres))
             return "received context response"
         else:
             return "invalid command"

@@ -19,6 +19,12 @@ app.on_fetched_resource += remove_secret_fields_in_list
 
 mongo = app.data.driver
 with app.app_context():
+
+    mongo.db.drop_collection("entities")
+    #mongo.db.create_collection("entities")
+    mongo.db.create_collection("entities", capped=True, size=5242880)
+    #mongo.db.command("convertToCapped", "entities", size=5242880)
+
     mongo.db.drop_collection("latestentities_view")
     mongo.db.create_collection(
         'latestentities_view',
@@ -35,6 +41,7 @@ with app.app_context():
         ]
     )
 
+
     # the available types view is constructed on top of the latestentities view,
     # so that if a novel entity has replaced an old instance of the same Entity
     # and the new one does not have a pecific Attribute, it will not show up in the types.
@@ -50,8 +57,8 @@ with app.app_context():
             {"$sort" : {"_created":1}},
             {"$group" : {
                 "_id":"$type",
-                # _id will be the _id of the newest entity
-                "tempid":{"$last":"$_id"},
+                #"tempid":{"$last":"$_id"}, # _id will be the _id of the newest entity
+                "tempid":{"$last":"$type"}, # this if we want _id=Vehicle
                 "_updated":{"$last":"$_updated"},
                 "_created":{"$first":"$_created"},
                 #"_etag":{"$last":"$_etag"}, # EVE takes care of this
@@ -79,44 +86,7 @@ with app.app_context():
         ]
     )
 
-    mongo.db.drop_collection("temporalentities_view")
-    mongo.db.create_collection(
-        'temporalentities_view',
-        viewOn='entities',
-        # we group by NGSI-LD "id", it has to be assigned to the _id pivot of the group.
-        pipeline=[
-            # group them based on the same NGSI-LD id, and keep id and type from the last.
-            {"$group" : {
-                "_id":"$id",
-                "id":{"$last":"$id"},
-                "type":{"$last":"$type"},
-                "temporalarray":{
-                    #push all fields (using $$ROOT), but exclude some
-                    "$push": {
-                        # (last stage of the push expression stages here we convert back the array to a document (i.e. to an object))
-                        "$arrayToObject": {
-                            # Rational is to apply a filter to the array obtained by converting the document to array of {"k","v"} pairs
-                            "$filter": {
-                                "input": { "$objectToArray": "$$ROOT" },
-                                "as": "field",
-                                # here we match the condition that a field's key must be NE (not equal) to all
-                                # all of unwanted fields, in order for the inclusion condition of the filter
-                                # to be true
-                                "cond": { "$and": [
-                                    { "$ne": [ "$$field.k", "id" ] },
-                                    { "$ne": [ "$$field.k", "_etag" ] },
-                                    { "$ne": [ "$$field.k", "@context" ] },
-                                    { "$ne": [ "$$field.k", "_updated" ] },
-                                    { "$ne": [ "$$field.k", "type" ] }
-                                ] }
-                            }
-                        }
-                    }
-                }
-            }
-            },
-        ]
-    )
+
 
     mongo.db.drop_collection("attributes_view")
     mongo.db.create_collection(
@@ -163,7 +133,8 @@ with app.app_context():
                 # groupby the attribute name, which is the .k key of each little unwinded
                 # document x, representing the attribute as a self-standing sub-object
                 "_id":"$x.k",
-                "tempid":{"$last":"$_id"},
+                #"tempid":{"$last":"$_id"}, # this if we want _id=ObjectID(BLABLA), but it creates duplicates
+                "tempid":{"$last":"$x.k"}, # this if we want _id=brandName
                 "_updated":{"$last":"$_updated"},
                 "_created":{"$first":"$_created"},
                 "tempReferencedByType":{"$addToSet":"$type"},
@@ -185,6 +156,48 @@ with app.app_context():
             {"$unset" : [ "tempReferencedByType", "tempReferencedByVthing" ] },
         ]
     )
+
+
+
+    mongo.db.drop_collection("temporalentities_view")
+    mongo.db.create_collection(
+        'temporalentities_view',
+        viewOn='entities',
+        # we group by NGSI-LD "id", it has to be assigned to the _id pivot of the group.
+        pipeline=[
+            # group them based on the same NGSI-LD id, and keep id and type from the last.
+            {"$group" : {
+                "_id":"$id",
+                "id":{"$last":"$id"},
+                "type":{"$last":"$type"},
+                "temporalarray":{
+                    #push all fields (using $$ROOT), but exclude some
+                    "$push": {
+                        # (last stage of the push expression stages here we convert back the array to a document (i.e. to an object))
+                        "$arrayToObject": {
+                            # Rational is to apply a filter to the array obtained by converting the document to array of {"k","v"} pairs
+                            "$filter": {
+                                "input": { "$objectToArray": "$$ROOT" },
+                                "as": "field",
+                                # here we match the condition that a field's key must be NE (not equal) to all
+                                # all of unwanted fields, in order for the inclusion condition of the filter
+                                # to be true
+                                "cond": { "$and": [
+                                    { "$ne": [ "$$field.k", "id" ] },
+                                    { "$ne": [ "$$field.k", "_etag" ] },
+                                    { "$ne": [ "$$field.k", "@context" ] },
+                                    { "$ne": [ "$$field.k", "_updated" ] },
+                                    { "$ne": [ "$$field.k", "type" ] }
+                                ] }
+                            }
+                        }
+                    }
+                }
+            }
+            },
+        ]
+    )
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=9090)

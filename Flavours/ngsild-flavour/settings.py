@@ -50,7 +50,6 @@ entities_POST_DELETE_datasource_filter = {
   # We pput it here so both endpoints can target the same collection
   'source': 'entities',
 }
-
 entities_via_attrs_endpoint = {
     # since we are using a regexp in the url, leaving the default resource_title = url gives some
     # XML printing issues of the regexp characters of the url. Hence we redefine it.
@@ -66,11 +65,12 @@ entities_via_attrs_endpoint = {
     # we use the sub-resources feature of EVE here
     'url': 'entities/<' + uri_regex + ':id>/attrs',
     'datasource': entities_POST_DELETE_datasource_filter,
-    'mongo_indexes': {
-      'autoexpiryatsomepoint': ([('_created', 1)], { 'expireAfterSeconds': 900}),
-    }
+    # dont need the following TTL expiry index anymore, converting entities collection to capped size
+    # at eve app initialization
+    #'mongo_indexes': {
+    #  'autoexpiryatsomepoint': ([('_created', 1)], { 'expireAfterSeconds': 900}),
+    #}
 }
-
 entities_POST_DELETE_endpoint = {
     'url': "entities",
     'resource_title': 'entity',
@@ -180,5 +180,5 @@ DOMAIN = {
     'dummy3': types_endpoint,
     'dummy4': entities_GET_endpoint,
     'dummy5': temporalentities_endpoint,
-    'dummy5': attributes_endpoint,
+    'dummy6': attributes_endpoint,
 }

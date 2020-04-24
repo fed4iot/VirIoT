@@ -1,6 +1,0 @@
-# This thing visor fetch  data from openweather and creates different vThings for different cities 
-# ADD thingVisor via CLI using the following command
-# other city names can be added following the openweather city name strings
-
-f4i.py add-thingvisor -c http://127.0.0.1:8090 -i fed4iot/v-weather-tv:2.2 -n WeatherTV -d "Weather ThingVisor fetching data from open weather" -p "{'cities':['Rome', 'Tokyo'], 'rate':'10'}"
- 

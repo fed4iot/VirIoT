@@ -5,12 +5,19 @@
 
 This ThingVisor controls the lights connected to a Philips Hue bridge. It works both with a real bridge and with the Hue emularor (<https://steveyo.github.io/Hue-Emulator)> in the Extra folder.
 
-# How To RUN (local Docker deployment)
+# How To RUN
+
+## Local Docker deployment
+
 Use the VirIoT CLI and run the follwiong command in case of a Hue Bridge whose IP address and port are 172.17.0.1:8080 (this is the case when using the emulator and a VirIoT Docker-base deployment)  
 
 ```bash  
-python3 f4i.py add-thingvisor -i fed4iot/phue-actuator -n pHueActuator -d "pHue actuator" -p "{'bridgeIP':'172.17.0.1', 'bridgePort':'8000'}"
+python3 f4i.py add-thingvisor -i fed4iot/phue-actuator-tv -n pHueActuator -d "pHue actuator" -p "{'bridgeIP':'172.17.0.1', 'bridgePort':'8000'}"
 ```
+
+## Kubernetes deployment
+
+TODO
 
 # NGSI-LD data model
 

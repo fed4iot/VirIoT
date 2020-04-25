@@ -105,7 +105,7 @@ The ThingVisor code is usually available on Fed4IoT DockerHub. To build it local
 To debug with Microsoft VS code through SSH uncomment Debug sections in Dockerfile and start.sh and add the public key id_rsa.pub to the directory.
 
 ```bash
-docker build -t fed4iot/phue-actuator .
+docker build -t fed4iot/phue-actuator-tv .
 ```
 
 ## Add the ThingVisor through the `f4i` Command Line Interface  
@@ -113,7 +113,7 @@ docker build -t fed4iot/phue-actuator .
 Use the terminal with the CLI and execute
   
 ```bash  
-python3 f4i.py add-thingvisor -i fed4iot/phue-actuator -n pHueActuator -d "pHue actuator" -p "{'bridgeIP':'172.17.0.1', 'bridgePort':'8000'}"
+python3 f4i.py add-thingvisor -i fed4iot/phue-actuator-tv -n pHueActuator -d "pHue actuator" -p "{'bridgeIP':'172.17.0.1', 'bridgePort':'8000'}"
 ```  
 
 JSON parameters are: `bridgeIP`, the IP address of the bridge (172.17.0.1 for Hue Emulator), and `bridgePort`, the port of the bridge (e.g. 5000 for the emulator, 80 for a real Hue bridge)
@@ -146,7 +146,7 @@ If ThingVisor is properly connected you should see `vThings` information in the 
         "containerID": "0c0209c37f775827f346b3cfa2c9b5181d905f28a04d7ed0444f90a8df799bb9",
         "creationTime": "2020-04-21T22:22:01.742340",
         "debug_mode": false,
-        "imageName": "fed4iot/phue-actuator",
+        "imageName": "fed4iot/phue-actuator-tv",
         "ipAddress": "172.17.0.3",
         "params": "{'bridgeIP':'172.17.0.1', 'bridgePort':'8000'}",
         "port": {},

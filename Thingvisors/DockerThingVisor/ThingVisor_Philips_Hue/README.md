@@ -4,6 +4,7 @@
 # Description
 
 This ThingVisor controls the lights connected to a Philips Hue bridge. It works both with a real bridge and with the Hue emularor (<https://steveyo.github.io/Hue-Emulator)> in the Extra folder.
+Te [Test.md](./Test.md) describe how to test the ThingVisor.
 
 # How To RUN
 

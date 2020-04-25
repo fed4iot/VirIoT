@@ -1,9 +1,8 @@
 ![k8s CI](https://github.com/fed4iot/VirIoT/workflows/k8s%20CI/badge.svg)
 ![docker CI](https://github.com/fed4iot/VirIoT/workflows/docker%20CI/badge.svg)
   
-# Description
-These are the instructions to test the ThingVisor a local Docker-based VirIoT system
-The setup has been tested on Ubuntu 18.04.  
+__These are the instructions to test the ThingVisor a local Docker-based VirIoT system
+The setup has been tested on Ubuntu 18.04.__
 
 # VirIoT platform setup (Docker)
 
@@ -226,7 +225,7 @@ vThing/pHueActuator/light1/data_out {"data": [{"id": "urn:ngsi-ld:pHueActuator:l
 ## End to end tests with a MQTT vSilo
 This test shows how to drive the pHue bridge through a MQTT Raw vSilo whose Docker image _fed4iot/mobius-pub-sub-flavour-actuator_ is assumed available. The same test can be repeated for other vSilo flavours
 
-### Add the vSilo flavours (e.g. oneM2M and MQTT Raw)
+### Add the vSilo flavours
 Move in a CLI terminal and execute
 
 ```bash  

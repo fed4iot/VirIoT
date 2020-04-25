@@ -3,42 +3,39 @@
   
 # Description
 
-This ThingVisor controls the lights connected to a Philips Hue bridge. It works both with a real bridge and with the Hue emularor (<https://steveyo.github.io/Hue-Emulator)> in the Extra folder.
+This ThingVisor is a dummy ThingVisor showing basic actuator functinality. It exports only a vThing named Lamp01.
 
 # How To RUN (local Docker deployment)
+
 Use the VirIoT CLI and run the follwiong command in case of a Hue Bridge whose IP address and port are 172.17.0.1:8080 (this is the case when using the emulator and a VirIoT Docker-base deployment)  
 
 ```bash  
-python3 f4i.py add-thingvisor -i fed4iot/phue-actuator -n pHueActuator -d "pHue actuator" -p "{'bridgeIP':'172.17.0.1', 'bridgePort':'8000'}"
+python3 f4i.py add-thingvisor -i fed4iot/helloworld_actuator_tv -n helloWorldTV -d "hello thingvisor"
 ```
 
 # NGSI-LD data model
 
-Each light connected to the Philips bridge is represented by a NGSI-LD entity as the following for light1:
+The NGSI-LD entity of Lamp01 is the following:
 
 ```json
 {
- "id": "urn:ngsi-ld:pHueActuator:light1",
- "type": "Extended color light",
- "brightness": {
+ "id": "urn:ngsi-ld:helloWorldTV:Lamp01",
+ "type": "Lamp",
+ "status": {
   "type": "Property",
-  "value": 254
+  "value": "off"
  },
- "saturation": {
+ "color": {
   "type": "Property",
-  "value": 254
+  "value": "white"
  },
- "hue": {
+ "luminosity": {
   "type": "Property",
-  "value": 4444
- },
- "on": {
-  "type": "Property",
-  "value": true
+  "value": "255"
  },
  "commands": {
   "type": "Property",
-  "value": ["set-brightness", "set-saturation", "set-hue", "set-on", "raw-command"]
+  "value": ["set-color", "set-luminosity", "set-status"]
  }
 }
 ```

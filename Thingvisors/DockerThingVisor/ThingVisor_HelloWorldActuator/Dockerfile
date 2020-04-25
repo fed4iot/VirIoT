@@ -10,10 +10,10 @@ WORKDIR /app
 
 
 # Debug
-RUN apt -y install openssh-server iproute2 vim curl tar
-RUN pip3 install pylint
-COPY id_rsa.pub /root/.ssh/authorized_keys
-EXPOSE 22
+# RUN apt -y install openssh-server iproute2 vim curl tar
+# RUN pip3 install pylint
+# COPY id_rsa.pub /root/.ssh/authorized_keys
+# EXPOSE 22
 # End debug
 
 RUN pip3 install -r requirements.txt

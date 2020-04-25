@@ -17,6 +17,14 @@ JSON_REQUEST_CONTENT_TYPES = ['application/json', 'application/ld+json']
 HATEOAS = False
 
 
+# to match NGSI-LD spec for query keyword
+QUERY_WHERE = 'q'
+
+
+# my custom regex for URIs:
+# ids can be composed of "minus" "column" and chars/digits
+# max len = 100
+uri_regex = 'regex("[-a-z0-9:A-Z]{1,100}")'
 
 
 schema_for_entities = {
@@ -42,7 +50,6 @@ entities_POST_DELETE_datasource_filter = {
   # We pput it here so both endpoints can target the same collection
   'source': 'entities',
 }
-
 entities_via_attrs_endpoint = {
     # since we are using a regexp in the url, leaving the default resource_title = url gives some
     # XML printing issues of the regexp characters of the url. Hence we redefine it.
@@ -55,14 +62,15 @@ entities_via_attrs_endpoint = {
     # in entities this is important for the NGSI-LD Attributes
     'allow_unknown': True,
     'schema': schema_for_entities_without_unicity_restraint,
-    # ids can be composed of "minus" "column" and chars/digits
-    'url': 'entities/<regex("[-a-z0-9:A-Z]{1,100}"):id>/attrs',
+    # we use the sub-resources feature of EVE here
+    'url': 'entities/<' + uri_regex + ':id>/attrs',
     'datasource': entities_POST_DELETE_datasource_filter,
-    'mongo_indexes': {
-      'autoexpiryatsomepoint': ([('_created', 1)], { 'expireAfterSeconds': 900}),
-    }
+    # dont need the following TTL expiry index anymore, converting entities collection to capped size
+    # at eve app initialization
+    #'mongo_indexes': {
+    #  'autoexpiryatsomepoint': ([('_created', 1)], { 'expireAfterSeconds': 900}),
+    #}
 }
-
 entities_POST_DELETE_endpoint = {
     'url': "entities",
     'resource_title': 'entity',
@@ -74,7 +82,7 @@ entities_POST_DELETE_endpoint = {
     #/entities/eid DELETE is used for Delete Entity 6.5.3.2 -> 5.6.6 (returns 404 Not Found)
     'item_methods': ['DELETE'],
     'item_lookup_field': 'id',
-    'item_url': 'regex("[-a-z0-9:A-Z]{1,100}")',
+    'item_url': uri_regex,
     'allow_unknown': True,
     'schema': schema_for_entities,
     'datasource': entities_POST_DELETE_datasource_filter,
@@ -97,7 +105,7 @@ entities_GET_endpoint = {
   #                  (&attrs can be used to retrieve some Attributes only)
   'item_methods': ['GET'],
   'item_lookup_field': 'id',
-  'item_url': 'regex("[-a-z0-9:A-Z]{1,100}")',
+  'item_url': uri_regex,
   'allow_unknown': True,
   'schema': schema_for_entities_without_unicity_restraint,
   'datasource': entities_GET_datasource_filter,
@@ -114,9 +122,33 @@ types_endpoint = {
   'url': "types",
   'resource_title': 'type',
   'resource_methods': ['GET'],
+  'item_lookup': True,
+  'item_methods': ['GET'],
+  'item_lookup_field': 'id',
+  'item_url': uri_regex,
   'allow_unknown': True,
   'schema': schema_for_entities_without_unicity_restraint,
   'datasource': types_datasource_filter,
+}
+
+
+
+
+attributes_datasource_filter = {
+  # this endpoint targets a mongodb view (created outside of settings, at initialization of EVE app)
+  'source': 'attributes_view',
+}
+attributes_endpoint = {
+  'url': "attributes",
+  'resource_title': 'attribute',
+  'resource_methods': ['GET'],
+  'item_lookup': True,
+  'item_methods': ['GET'],
+  'item_lookup_field': 'id',
+  'item_url': uri_regex,
+  'allow_unknown': True,
+  'schema': schema_for_entities_without_unicity_restraint,
+  'datasource': attributes_datasource_filter,
 }
 
 
@@ -130,6 +162,10 @@ temporalentities_endpoint = {
   'url': "temporal/entities",
   'resource_title': 'entity',
   'resource_methods': ['GET'],
+  'item_lookup': True,
+  'item_methods': ['GET'],
+  'item_lookup_field': 'id',
+  'item_url': uri_regex,
   'allow_unknown': True,
   'schema': schema_for_entities_without_unicity_restraint,
   'datasource': temporalentities_datasource_filter,
@@ -144,4 +180,5 @@ DOMAIN = {
     'dummy3': types_endpoint,
     'dummy4': entities_GET_endpoint,
     'dummy5': temporalentities_endpoint,
+    'dummy6': attributes_endpoint,
 }

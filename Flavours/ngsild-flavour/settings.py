@@ -245,7 +245,7 @@ vthings_datasource_filter = {
 vthings_endpoint = {
   'url': "vthings",
   'resource_title': 'vthing',
-  'resource_methods': ['GET', 'POST'],
+  'resource_methods': ['GET', 'POST', 'DELETE'],
   'schema': schema_for_entities_without_unicity_restraint,
   'allow_unknown': True,
   'datasource': vthings_datasource_filter,

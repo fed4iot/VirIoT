@@ -113,11 +113,22 @@ with app.app_context():
                 # the vthingid Property of the Entity that represents an EntityType will be a multi-attribute one,
                 # because the same type can be produced by several different vThings.
                 # the $addToSet already gives back an array.
-                #"vthingid":{"$addToSet":{"type":"Property","value":"$vthingid.value","datasetId":"$vthingid.value"}},
+                "vthingid":{"$addToSet":{"type":"Property","value":"$vthingid.value","datasetId":"$vthingid.value"}},
                 ### FOR NOW decided to use one single Property with array of values instead
-                "tempvthingid":{"$addToSet":"$vthingid.value"},
+                ###"tempvthingid":{"$addToSet":"$vthingid.value"},
                 "count":{"$sum" : 1},
             }},
+
+            {
+                "$lookup":
+                    {
+                        "from": "vthings", #foreign collection
+                        "localField": "vthingid.value",
+                        "foreignField": "id",
+                        "as": "vthing_info",
+                    }
+            },
+
             # copy the _id aggregation pivot, which is the measurement type, into a new NGSI-LD "id" field
             {"$set": { "id":"$_id" } },
             # the NGSI-LD type of this kind of typeentities is a meta-type representing the notion of NGSI-LD Entities' type
@@ -127,9 +138,9 @@ with app.app_context():
             {"$unset" : [ "tempid" ] },
             # reshape the count aggregator into a proper NGSI-LD Property
             {"$set": {"count":{"type":"Property","value":"$count"}}},
-            # and the others too
-            {"$set": {"generatedByVThings":{"type":"Property","value":"$tempvthingid"}}},
-            {"$unset" : [ "tempvthingid" ] },
+            ### FOR NOW the tempvthingid too
+            ###{"$set": {"generatedByVThings":{"type":"Property","value":"$tempvthingid"}}},
+            ###{"$unset" : [ "tempvthingid" ] },
             #{"$unset" : [ "_created", "_updated", "_etag", "_id", "@context" ] }
         ]
     )

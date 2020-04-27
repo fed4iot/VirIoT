@@ -5,8 +5,9 @@ import json
 import time
 
 vSiloBrokerIP = "172.17.0.5"
+port = "7579"
 
-url_prefix = "http://"+vSiloBrokerIP+":7579/Mobius/pHueActuator:light1/pHueActuator:light1/"
+url_prefix = "http://"+vSiloBrokerIP+":" + port +"/Mobius/pHueActuator:light2/pHueActuator:light1/"
 
 headers = {
         'accept': "application/json",

@@ -5,7 +5,7 @@ role_start = "admin"
 password_cifrata = generate_password_hash(password_start)
 mongo_db_setup = {'userID': userID, 'password': password_cifrata, 'role': role_start}
 
-# Inserire user nel mongoDB
+# Add user to mongoDB
 # db.createUser(
 #   {
 #     user: "admin",
@@ -15,7 +15,3 @@ mongo_db_setup = {'userID': userID, 'password': password_cifrata, 'role': role_s
 #     ]
 #   }
 # )
-
-
-
-# db-svc-mc.default.svc.cluster.local

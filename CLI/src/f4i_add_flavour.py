@@ -32,8 +32,8 @@ def get_yaml_file(yaml_path):
     if yaml_path is not "":
         with open(yaml_path) as f:
             yamls = yaml.safe_load_all(f)
-            for a in yamls:
-                yaml_list.append(a)
+            for element in yamls:
+                yaml_list.append(element)
                 # pprint(a)
             return yaml_list
 
@@ -41,11 +41,11 @@ def run(args):
     url = args.controllerUrl + "/addFlavour"
     print("Adding Flavour, please wait ....\n")
 
-    yaml_list = get_yaml_file(args.yamlsFilePath)
+    yaml_list = get_yaml_file(args.yamlFilesPath)
 
     # yaml_list = []
-    # if args.yamlsFilePath is not "":
-    #     with open(args.yamlsFilePath) as f:
+    # if args.yamlFilesPath is not "":
+    #     with open(args.yamlFilesPath) as f:
     #         yamls = yaml.safe_load_all(f)
     #         print(type(yamls))
     #         for a in yamls:
@@ -58,7 +58,7 @@ def run(args):
                "flavourParams": args.flavourParams,
                "imageName": args.imageName,
                "flavourDescription": args.description,
-               "yamlsFile": yaml_list}
+               "yamlFiles": yaml_list}
     # printj(payload)
     print(payload)
 
@@ -92,8 +92,8 @@ def init_args(parser):
     parser.add_argument('-d', action='store', dest='description',
                         help='description (default: silo flavour formed by a oneM2M Mobius broker)',
                         default='Silo flavour formed by a oneM2M Mobius broker')
-    parser.add_argument('-y', action='store', dest='yamlsFilePath',
-                        help='yamlsFilePath (default: no yamls file)',
+    parser.add_argument('-y', action='store', dest='yamlFilesPath',
+                        help='yamlFilesPath (default: no yaml files)',
                         default='')
     parser.set_defaults(func=run)
 

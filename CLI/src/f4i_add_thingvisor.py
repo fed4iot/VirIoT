@@ -50,8 +50,8 @@ def init_args(parser):
                         help='ThingVisor params, JSON object (default: "") ', default="")
     parser.add_argument('-d', action='store', dest='description',
                         help='ThingVisor description (default: hello thingVisor)', default='hello thingVisor')
-    parser.add_argument('-y', action='store', dest='yamlsFilePath',
-                        help='yamlsFilePath (default: no yamls file)',
+    parser.add_argument('-y', action='store', dest='yamlFilesPath',
+                        help='yamlFilesPath (default: no yaml files)',
                         default='')
     parser.add_argument('-z', action='store', dest='tvZone',
                         help='Zone in which the ThingVisor will be deployed', default='')
@@ -64,7 +64,7 @@ def run(args):
     url = args.controllerUrl+"/addThingVisor"
     print("Adding Thing Visor, please wait ....")
 
-    yaml_list = get_yaml_file(args.yamlsFilePath)
+    yaml_list = get_yaml_file(args.yamlFilesPath)
 
     payload = {"imageName": args.imageName,
                "thingVisorID": args.name,
@@ -72,7 +72,7 @@ def run(args):
                "description": args.description,
                "debug_mode": False if args.debug_mode == "false" else True,
                "tvZone": args.tvZone,
-               "yamlsFile": yaml_list}
+               "yamlFiles": yaml_list}
 
     pprint(payload)
     token = get_token()

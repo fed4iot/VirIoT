@@ -4,7 +4,7 @@ import paho.mqtt.client as mqtt
 import json
 import time
 
-vSiloBrokerIP = "172.17.0.3"
+vSiloBrokerIP = "172.17.0.4"
 vSiloBrokerPort = 1883
 client_mqtt = mqtt.Client()
 client_mqtt.connect(vSiloBrokerIP, vSiloBrokerPort, 10)
@@ -32,7 +32,7 @@ print(topic)
 for hue in range(1,65535,5000):
     con = {"cmd-value": hue, "cmd-qos":0}   # QoS 0 means no feedback from the actuator
     client_mqtt.publish(topic,json.dumps(con),qos=0)
-    time.sleep(2)  
+    time.sleep(0.5)  
 
 time.sleep(1) 
 # switch off light 2

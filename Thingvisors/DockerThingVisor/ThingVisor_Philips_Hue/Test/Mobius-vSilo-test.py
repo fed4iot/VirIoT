@@ -4,7 +4,9 @@ import requests
 import json
 import time
 
-url_prefix = "http://172.17.0.5:7579/Mobius/pHueActuator:light2/pHueActuator:light2/"
+vSiloBrokerIP = "172.17.0.5"
+
+url_prefix = "http://"+vSiloBrokerIP+":7579/Mobius/pHueActuator:light1/pHueActuator:light1/"
 
 headers = {
         'accept': "application/json",

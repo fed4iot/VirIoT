@@ -179,42 +179,78 @@ SYSMONGO_PORT = 30219
 #SYSMONGO_USERNAME = 'admin'
 #SYSMONGO_PASSWORD = 'passw0rd'
 SYSMONGO_DBNAME = 'viriotDB'
-schema_for_vthings = {
-  'tenantID': {
-      'type': 'string',
-      'required': True,
-  },
-  'vThingID': {
-      'type': 'string',
-      'required': True,
-  },
-  'creationTime': {
-      'type': 'datetime',
-      'required': True,
-  },
-  'vSiloID': {
-      'type': 'string',
-      'required': True,
-  },
-}
-vthings_datasource_filter = {
+systemvthings_datasource_filter = {
   # this endpoint targets an external collection, coming from an external mongo server
   # i.e. the fed4iot system database
-  'source': 'vThingC',
+  'source': 'thingVisorC',
+  'aggregation': {
+    'pipeline': [
+    {
+        '$unwind': '$vThings'
+    }, {
+        '$addFields': {
+            'vThings.tvDescription': '$tvDescription'
+        }
+    }, {
+        '$replaceRoot': {
+            'newRoot': '$vThings'
+        }
+    }, {
+        '$project': {
+            'id': '$id', 
+            #'_id': '$id', 
+            #'_created': '$$NOW', 
+            #'_updated': '$$NOW', 
+            'type': 'viriotVThing', 
+            'kind': {
+                'type': 'Property', 
+                'value': '$type'
+            }, 
+            'label': {
+                'type': 'Property', 
+                'value': '$label'
+            }, 
+            'description': {
+                'type': 'Property', 
+                'value': '$description'
+            }, 
+            'tvDescription': {
+                'type': 'Property', 
+                'value': '$tvDescription'
+            }
+        }
+      }
+    ]
+  }
+}
+systemvthings_endpoint = {
+  'url': "systemvthings",
+  'resource_title': 'systemvthing',
+  'resource_methods': ['GET'],
+  'schema': schema_for_entities_without_unicity_restraint,
+  'datasource': systemvthings_datasource_filter,
+  'mongo_prefix': 'SYSMONGO',
+  # lets get all of them from system db
+  'pagination': False,
+}
+
+
+
+
+
+
+vthings_datasource_filter = {
+  'source': 'vthings',
 }
 vthings_endpoint = {
   'url': "vthings",
   'resource_title': 'vthing',
-  'resource_methods': ['GET'],
-  'item_lookup': True,
-  'item_methods': ['GET'],
-  'item_lookup_field': 'id',
-  'item_url': uri_regex,
+  'resource_methods': ['GET', 'POST'],
+  'schema': schema_for_entities_without_unicity_restraint,
   'allow_unknown': True,
-  'schema': schema_for_vthings,
   'datasource': vthings_datasource_filter,
-  'mongo_prefix': 'SYSMONGO',
 }
+
 
 
 
@@ -226,5 +262,6 @@ DOMAIN = {
     'entitiesGETendpoint': entities_GET_endpoint,
     'temporalentitiesendpoint': temporalentities_endpoint,
     'attributesendpoint': attributes_endpoint,
+    'systemvthingsendpoint': systemvthings_endpoint,
     'vthingsendpoint': vthings_endpoint,
 }

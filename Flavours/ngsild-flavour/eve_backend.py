@@ -1,4 +1,6 @@
 from eve import Eve
+from eve.methods.post import post_internal
+import json
 
 def remove_secret_fields(resource, response):
     del(response['_etag'])
@@ -11,6 +13,9 @@ def remove_secret_fields(resource, response):
 def remove_secret_fields_in_list(resource, response):
     for item in response['_items']:
         remove_secret_fields(resource, item)
+
+
+
 
 def materialize_latestentities_via_aggregation(resource_name, items):
     app.data.driver.db.entities.aggregate(latestentities_pipeline)
@@ -37,9 +42,25 @@ latestentities_pipeline = [
     {"$merge":"latestentities"},
 ]
 
+
+
+
+def push_systemvthings_locally(request, payload):
+    x = post_internal('vthingsendpoint', json.loads(payload.get_data()).get('_items'))
+    print(x)
+    #response_dict = json.loads(payload.get_data())
+    #for key, value in sorted(response_dict.items()):
+    #    print("KK "+key)
+    #    print("{} : {}".format(key, value))
+
+
+
+
 app = Eve()
+
 app.on_fetched_item += remove_secret_fields
 app.on_fetched_resource += remove_secret_fields_in_list
+
 # we now want to trigger the aggegation that creates the "materialized view" named
 # latestentities, AFTER each time items are inserted, updated, replaced, deleted into the entities collection
 # well, btter to trigger on any insert, etc.. since we have multiple POST entry points
@@ -49,17 +70,13 @@ app.on_updated += materialize_latestentities_via_aggregation
 app.on_deleted_item += materialize_latestentities_via_aggregation
 app.on_deleted += materialize_latestentities_via_aggregation
 
-#app.on_inserted_entitiesviaattrsendpoint += materialize_latestentities_via_aggregation
-#app.on_replaced_entitiesviaattrsendpoint += materialize_latestentities_via_aggregation
-#app.on_updated_entitiesviaattrsendpoint += materialize_latestentities_via_aggregation
-#app.on_deleted_item_entitiesviaattrsendpoint += materialize_latestentities_via_aggregation
-#app.on_deleted_entitiesviaattrsendpoint += materialize_latestentities_via_aggregation
+app.on_post_GET_systemvthingsendpoint += push_systemvthings_locally
 
 
+
+# we can use the following to customize connection to cluster system database
 app.config.update({"SYSMONGO_PORT": 30219})
 
-for key, value in sorted(app.config.items()):
-    print("{} : {}".format(key, value))
 
 
 mongo = app.data.driver

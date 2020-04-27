@@ -28,15 +28,15 @@ uri_regex = 'regex("[-a-z0-9:A-Z]{1,100}")'
 
 
 schema_for_entities = {
-    'id': {
-        'type': 'string',
-        'required': True,
-        'unique': True,
-    },
-    'type': {
-        'type': 'string',
-        'required': True,
-    },
+  'id': {
+      'type': 'string',
+      'required': True,
+      'unique': True,
+  },
+  'type': {
+      'type': 'string',
+      'required': True,
+  },
 }
 
 schema_for_entities_without_unicity_restraint = copy.deepcopy(schema_for_entities)
@@ -93,7 +93,7 @@ entities_POST_DELETE_endpoint = {
 
 entities_GET_datasource_filter = {
   # this endpoint targets a mongodb view (created outside of settings, at initialization of EVE app)
-  'source': 'latestentities_view',
+  'source': 'latestentities',
 }
 entities_GET_endpoint = {
   'url': "entities",
@@ -174,11 +174,57 @@ temporalentities_endpoint = {
 
 
 
+SYSMONGO_HOST = '13.80.153.4'
+SYSMONGO_PORT = 30219
+#SYSMONGO_USERNAME = 'admin'
+#SYSMONGO_PASSWORD = 'passw0rd'
+SYSMONGO_DBNAME = 'viriotDB'
+schema_for_vthings = {
+  'tenantID': {
+      'type': 'string',
+      'required': True,
+  },
+  'vThingID': {
+      'type': 'string',
+      'required': True,
+  },
+  'creationTime': {
+      'type': 'datetime',
+      'required': True,
+  },
+  'vSiloID': {
+      'type': 'string',
+      'required': True,
+  },
+}
+vthings_datasource_filter = {
+  # this endpoint targets an external collection, coming from an external mongo server
+  # i.e. the fed4iot system database
+  'source': 'vThingC',
+}
+vthings_endpoint = {
+  'url': "vthings",
+  'resource_title': 'vthing',
+  'resource_methods': ['GET'],
+  'item_lookup': True,
+  'item_methods': ['GET'],
+  'item_lookup_field': 'id',
+  'item_url': uri_regex,
+  'allow_unknown': True,
+  'schema': schema_for_vthings,
+  'datasource': vthings_datasource_filter,
+  'mongo_prefix': 'SYSMONGO',
+}
+
+
+
+
 DOMAIN = {
-    'dummy1': entities_via_attrs_endpoint,
-    'dummy2': entities_POST_DELETE_endpoint,
-    'dummy3': types_endpoint,
-    'dummy4': entities_GET_endpoint,
-    'dummy5': temporalentities_endpoint,
-    'dummy6': attributes_endpoint,
+    'entitiesviaattrsendpoint': entities_via_attrs_endpoint,
+    'entitiesPOSTDELETEendpoint': entities_POST_DELETE_endpoint,
+    'typesendpoint': types_endpoint,
+    'entitiesGETendpoint': entities_GET_endpoint,
+    'temporalentitiesendpoint': temporalentities_endpoint,
+    'attributesendpoint': attributes_endpoint,
+    'vthingsendpoint': vthings_endpoint,
 }

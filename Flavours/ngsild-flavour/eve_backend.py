@@ -12,34 +12,65 @@ def remove_secret_fields_in_list(resource, response):
     for item in response['_items']:
         remove_secret_fields(resource, item)
 
+def materialize_latestentities_via_aggregation(resource_name, items):
+    app.data.driver.db.entities.aggregate(latestentities_pipeline)
+
+# we group by NGSI-LD "id", hence it has to be assigned to the _id pivot of the group.
+# $$ROOT to keep the whole document per each name followed by $replaceRoot to promote the document to the top.
+# https://stackoverflow.com/questions/52566913/how-to-group-in-mongodb-and-return-all-fields-in-result
+latestentities_pipeline = [
+    # oldest first, normal direction sorting
+    {"$sort" : {"_created":1}},
+    # group them based on the same NGSI-LD id.
+    # then, either pick fields from first, so that basically id will always
+    # stay the same (the ObjectID of the first inserted item), hence
+    # the merge will overwrite the ones with same id,
+    # OR let the merge create new ObjectIds everytime and use the "parkingsite" NGSI-LD id
+    # as reference for voerwriting during the merge.
+    # I prefer the second option, so that _Created and _updated are the ones from the last
+    # individual.    
+    {"$group" : {"_id":"$id", "doc":{"$last":"$$ROOT"}}},
+    {"$replaceRoot":{"newRoot":"$doc"}},
+    {"$project":{"_id":0}},
+    {"$set":{"_id":"$id"}},
+    {"$unset":["_etag"]},
+    {"$merge":"latestentities"},
+]
 
 app = Eve()
 app.on_fetched_item += remove_secret_fields
 app.on_fetched_resource += remove_secret_fields_in_list
+# we now want to trigger the aggegation that creates the "materialized view" named
+# latestentities, AFTER each time items are inserted, updated, replaced, deleted into the entities collection
+# well, btter to trigger on any insert, etc.. since we have multiple POST entry points
+app.on_inserted += materialize_latestentities_via_aggregation
+app.on_replaced += materialize_latestentities_via_aggregation
+app.on_updated += materialize_latestentities_via_aggregation
+app.on_deleted_item += materialize_latestentities_via_aggregation
+app.on_deleted += materialize_latestentities_via_aggregation
+
+#app.on_inserted_entitiesviaattrsendpoint += materialize_latestentities_via_aggregation
+#app.on_replaced_entitiesviaattrsendpoint += materialize_latestentities_via_aggregation
+#app.on_updated_entitiesviaattrsendpoint += materialize_latestentities_via_aggregation
+#app.on_deleted_item_entitiesviaattrsendpoint += materialize_latestentities_via_aggregation
+#app.on_deleted_entitiesviaattrsendpoint += materialize_latestentities_via_aggregation
+
+
+app.config.update({"SYSMONGO_PORT": 30219})
+
+for key, value in sorted(app.config.items()):
+    print("{} : {}".format(key, value))
+
 
 mongo = app.data.driver
 with app.app_context():
 
     mongo.db.drop_collection("entities")
-    #mongo.db.create_collection("entities")
     mongo.db.create_collection("entities", capped=True, size=5242880)
-    #mongo.db.command("convertToCapped", "entities", size=5242880)
-
-    mongo.db.drop_collection("latestentities_view")
-    mongo.db.create_collection(
-        'latestentities_view',
-        viewOn='entities',
-        # we group by NGSI-LD "id", hence it has to be assigned to the _id pivot of the group.
-        # $$ROOT to keep the whole document per each name followed by $replaceRoot to promote the document to the top.
-        # https://stackoverflow.com/questions/52566913/how-to-group-in-mongodb-and-return-all-fields-in-result
-        pipeline=[
-            # oldest first, normal direction sorting
-            {"$sort" : {"_created":1}},
-            # group them based on the same NGSI-LD id
-            {"$group" : {"_id":"$id", "doc":{"$last":"$$ROOT"}}}, #pick fields from last
-            {"$replaceRoot":{"newRoot":"$doc"}},
-        ]
-    )
+    mongo.db.entities.create_index([("location.value", "2dsphere")])
+    mongo.db.drop_collection("latestentities")
+    mongo.db.create_collection("latestentities")
+    mongo.db.latestentities.create_index([("location.value", "2dsphere")])
 
 
     # the available types view is constructed on top of the latestentities view,
@@ -50,7 +81,7 @@ with app.app_context():
     mongo.db.drop_collection("types_view")
     mongo.db.create_collection(
         'types_view',
-        viewOn='latestentities_view',
+        viewOn='latestentities',
         pipeline=[
             # oldest first, normal direction sorting, so that the typeenity's _created will be the _created
             # of the oldest entity, and typeentity's _updated will be the _updated of the newest entity
@@ -91,7 +122,7 @@ with app.app_context():
     mongo.db.drop_collection("attributes_view")
     mongo.db.create_collection(
         'attributes_view',
-        viewOn='latestentities_view',
+        viewOn='latestentities',
         pipeline=[
             #{"$unset" : [ "id", "_created", "_updated", "_etag", "_id", "@context" ] },
             {

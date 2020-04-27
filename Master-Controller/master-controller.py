@@ -48,7 +48,6 @@ import db_setup
 import kubernetes_functions as k8s
 import requests
 
-
 # public IP address through the which it is possible to access thingvisors, database, vSilos, etc.
 default_gateway_IP = settings.default_gateway_IP
 
@@ -100,7 +99,7 @@ container_manager = settings.container_manager
 
 
 def create_virtual_silo_on_docker(v_silo_id, v_silo_name, tenant_id, flavour_params,
-                                  debug_mode, flavour_image_name, flavour_id, yamls_file=None, deploy_zone=None):
+                                  debug_mode, flavour_image_name, flavour_id, yaml_files=None, deploy_zone=None):
     try:
         # Add mqtt subscription to silo control topics
         mqttc.message_callback_add(v_silo_prefix + '/' + v_silo_id + '/' + out_control_suffix,
@@ -146,7 +145,7 @@ def create_virtual_silo_on_docker(v_silo_id, v_silo_name, tenant_id, flavour_par
 # -t [TENANT_ID] -s [VSILO_NAME] -f [FLAVOUR_NAME]
 # python3 f4i.py create-vsilo -c http://127.0.0.1:8090 -t tenant1 -f mqtt-f-k8s -s Silo2
 def create_virtual_silo_on_kubernetes(v_silo_id, v_silo_name, tenant_id, flavour_params,
-                                  debug_mode, flavour_image_name, flavour_id, yamls_file, deploy_zone):
+                                  debug_mode, flavour_image_name, flavour_id, yaml_files, deploy_zone):
     print("Creation of vSilo on k8s")
     global working_namespace
     try:
@@ -166,7 +165,7 @@ def create_virtual_silo_on_kubernetes(v_silo_id, v_silo_name, tenant_id, flavour
         label_app = str("%s-%s") % (tenant_id.lower(), v_silo_name.lower())
         api_response_service = None
         if not debug_mode:
-            for yaml in yamls_file:
+            for yaml in yaml_files:
                 if yaml["kind"] == "Deployment":
                     print("Deployment Creation")
                     yaml["spec"]["selector"]["matchLabels"]["siloID"] = label_app
@@ -255,7 +254,7 @@ def destroy_virtual_silo_on_kubernetes(silo_entry):
                 {"message": 'Error on silo destroy, problem with delete service: ' + service_name}), 401
 
 
-def create_thing_visor_on_docker(tv_img_name, debug_mode, tv_id, tv_params, tv_description, yamls_file=None, deploy_zone=None):
+def create_thing_visor_on_docker(tv_img_name, debug_mode, tv_id, tv_params, tv_description, yaml_files=None, deploy_zone=None):
     try:
         if not dockerImageExist(tv_img_name) and not debug_mode:
             docker_client.images.pull(tv_img_name)
@@ -314,7 +313,7 @@ def create_thing_visor_on_docker(tv_img_name, debug_mode, tv_id, tv_params, tv_d
         # print(traceback.format_exc())
 
 
-def create_thing_visor_on_kubernetes(tv_img_name, debug_mode, tv_id, tv_params, tv_description, yamls_file, deploy_zone):
+def create_thing_visor_on_kubernetes(tv_img_name, debug_mode, tv_id, tv_params, tv_description, yaml_files, deploy_zone):
     global working_namespace
     try:
         print("Creation of ThingVisor on k8s")
@@ -337,7 +336,7 @@ def create_thing_visor_on_kubernetes(tv_img_name, debug_mode, tv_id, tv_params, 
         if not debug_mode:
             api_response_service = None
 
-            for yaml in yamls_file:
+            for yaml in yaml_files:
                 if yaml["kind"] == "Deployment":
                     print("Deployment Creation")
                     yaml["metadata"]["name"] += "-" + tv_id.lower().replace("_", "-")
@@ -437,8 +436,8 @@ def delete_thing_visor_on_kubernetes(tv_entry):
                 {"message": 'Error on ThingVisor destroy, problem with delete service: ' + service_name}), 401
 
 
-# yamls_file only for compatibility with Kubernetes implementation (not used)
-def add_flavour_on_docker(image_name, flavour_id, flavour_params, flavour_description, yamls_file):
+# yaml_files only for compatibility with Kubernetes implementation (not used)
+def add_flavour_on_docker(image_name, flavour_id, flavour_params, flavour_description, yaml_files):
     try:
         # docker image name must do not contains upper case characters
         if not image_name.islower():
@@ -489,10 +488,10 @@ def add_flavour_on_docker(image_name, flavour_id, flavour_params, flavour_descri
         return  # 'Add fails', 401
 
 
-def add_flavour_on_kubernetes(image_name, flavour_id, flavour_params, flavour_description, yamls_file):
+def add_flavour_on_kubernetes(image_name, flavour_id, flavour_params, flavour_description, yaml_files):
     try:
 
-        for yaml in yamls_file:
+        for yaml in yaml_files:
             if yaml["kind"] == "Deployment":
                 image_name = yaml["spec"]["template"]["spec"]["containers"][0]["image"]
                 break
@@ -509,7 +508,7 @@ def add_flavour_on_kubernetes(image_name, flavour_id, flavour_params, flavour_de
                                                     "flavourDescription": flavour_description,
                                                     "creationTime": datetime.datetime.now().isoformat(),
                                                     "status": STATUS_READY,
-                                                    "yamlsFile": yamls_file}})
+                                                    "yamlFiles": yaml_files}})
         print("Flavour " + flavour_id + " added")
         return
 
@@ -523,7 +522,7 @@ def add_flavour_on_kubernetes(image_name, flavour_id, flavour_params, flavour_de
                                                     "creationTime": datetime.datetime.now().isoformat(),
                                                     "status": STATUS_ERROR,
                                                     "error": "%s" % err,
-                                                    "yamlsFile": yamls_file}})
+                                                    "yamlFiles": yaml_files}})
         print('Add fails - Could not find the Docker image of the flavour')
         return  # 'Add fails - Could not find the Docker image of the flavour', 409
     except docker.errors.APIError as err:
@@ -536,7 +535,7 @@ def add_flavour_on_kubernetes(image_name, flavour_id, flavour_params, flavour_de
                                                     "creationTime": datetime.datetime.now().isoformat(),
                                                     "status": STATUS_ERROR,
                                                     "error": "%s" % err,
-                                                    "yamlsFile": yamls_file}})
+                                                    "yamlFiles": yaml_files}})
         print('Add fails - Could not find the Docker image of the flavour')
         return  # 'Add fails - Could not find the Docker image of the flavour', 409
     except Exception:
@@ -548,7 +547,7 @@ def add_flavour_on_kubernetes(image_name, flavour_id, flavour_params, flavour_de
                                                     "flavourDescription": flavour_description,
                                                     "creationTime": datetime.datetime.now().isoformat(),
                                                     "status": STATUS_ERROR,
-                                                    "yamlsFile": yamls_file}})
+                                                    "yamlFiles": yaml_files}})
         return  # 'Add fails', 401
 
 
@@ -753,9 +752,9 @@ class httpThread(Thread):
             if flavour_entry["status"] == STATUS_ERROR:
                 return json.dumps({"message": 'Create fails - Requested flavour status is: %s' % STATUS_ERROR}), 409
 
-            yamls_file = ""
-            if "yamlsFile" in flavour_entry:
-                yamls_file = flavour_entry["yamlsFile"]
+            yaml_files = ""
+            if "yamlFiles" in flavour_entry:
+                yaml_files = flavour_entry["yamlFiles"]
 
             silo_entry = {"vSiloID": v_silo_id, "status": STATUS_PENDING}
 
@@ -763,7 +762,7 @@ class httpThread(Thread):
 
             Thread(target=create_virtual_silo,
                    args=(v_silo_id, v_silo_name, tenant_id, flavour_params, debug_mode, flavour_image_name,
-                         flavour_id, yamls_file, deploy_zone)).start()
+                         flavour_id, yaml_files, deploy_zone)).start()
 
             msg = "Virtual Silo is starting. Please wait... \n\n" \
                   "Check process status with inspectVirtualSilo API, \n" \
@@ -961,7 +960,7 @@ class httpThread(Thread):
             tv_img_name = request.json.get("imageName", None)
             tv_params = request.json.get("params", None)
             debug_mode = request.json.get("debug_mode", False)
-            yamls_file = request.json.get("yamlsFile", None)
+            yaml_files = request.json.get("yamlFiles", None)
             tv_zone = request.json.get("tvZone", None)
 
 
@@ -976,7 +975,7 @@ class httpThread(Thread):
             if db[thing_visor_collection].count({"thingVisorID": tv_id}) != 0:
                 # already exists
                 return json.dumps({"message": "Add fails - thingVisor " + tv_id + " already exists"}), 409
-            thing_visor_entry = {"thingVisorID": tv_id, "status": STATUS_PENDING, "yamlsFile": yamls_file}
+            thing_visor_entry = {"thingVisorID": tv_id, "status": STATUS_PENDING, "yamlFiles": yaml_files}
 
 
             deploy_zone = {}
@@ -991,7 +990,7 @@ class httpThread(Thread):
 
             db[thing_visor_collection].insert_one(thing_visor_entry)
             Thread(target=create_thing_visor,
-                   args=(tv_img_name, debug_mode, tv_id, tv_params, tv_description, yamls_file, deploy_zone)).start()
+                   args=(tv_img_name, debug_mode, tv_id, tv_params, tv_description, yaml_files, deploy_zone)).start()
 
             msg = "ThingVisor is starting. Please wait... \n\n" \
                   "Check process status with inspectThingVisor API, \n" \
@@ -1065,7 +1064,7 @@ class httpThread(Thread):
             flavour_params = request.json.get("flavourParams", None)
             image_name = request.json.get("imageName", None)
             flavour_description = request.json.get("flavourDescription", None)
-            yamls_file = request.json.get("yamlsFile", None)
+            yaml_files = request.json.get("yamlFiles", None)
 
 
             # check if flavour already exists in system database
@@ -1074,7 +1073,7 @@ class httpThread(Thread):
             db[flavour_collection].insert_one({"flavourID": flavour_id, "status": STATUS_PENDING})
 
             Thread(target=add_flavour,
-                   args=(image_name, flavour_id, flavour_params, flavour_description, yamls_file)).start()
+                   args=(image_name, flavour_id, flavour_params, flavour_description, yaml_files)).start()
 
             msg = "Flavour is being created. Please wait... \n\n" \
                   "Check process status with inspectFlavour API, \n" \

@@ -85,23 +85,23 @@ def add_entity_under_vThing_on_Broker(v_thing_id, entity):
     # in order to adapt to a NGSI-LD mis-behaving, we have
     # to change the value of the entity's GeoProperties into a string,
     # hence we need to escape the quote and make it a string
-    for attribute_name, attribute_value in entity.items():
-      # let's find wether this attribute of the object is a GeoProperty
-      # by examining its "type", if it has one
-      if isinstance(attribute_value, dict):
-        try:
-          type_of_the_attribute = attribute_value['type']
-          if type_of_the_attribute == "GeoProperty":
-            try:
-              value_of_the_geo_property = attribute_value['value']
-              value_of_the_geo_property_as_string = json.dumps(value_of_the_geo_property)
-              value_of_the_geo_property_as_escaped_string = value_of_the_geo_property_as_string.replace('"', '\"').replace('\n', '\\n')
-              # turn it into a string
-              attribute_value['value'] = value_of_the_geo_property_as_escaped_string
-            except Exception:
-              print("GeoProperty malformed? no value field??: " + entity['id'])
-        except Exception:
-          print("entity malformed? no type field??: " + entity['id'])
+    # for attribute_name, attribute_value in entity.items():
+    #   # let's find wether this attribute of the object is a GeoProperty
+    #   # by examining its "type", if it has one
+    #   if isinstance(attribute_value, dict):
+    #     try:
+    #       type_of_the_attribute = attribute_value['type']
+    #       if type_of_the_attribute == "GeoProperty":
+    #         try:
+    #           value_of_the_geo_property = attribute_value['value']
+    #           value_of_the_geo_property_as_string = json.dumps(value_of_the_geo_property)
+    #           value_of_the_geo_property_as_escaped_string = value_of_the_geo_property_as_string.replace('"', '\"').replace('\n', '\\n')
+    #           # turn it into a string
+    #           attribute_value['value'] = value_of_the_geo_property_as_escaped_string
+    #         except Exception:
+    #           print("GeoProperty malformed? no value field??: " + entity['id'])
+    #     except Exception:
+    #       print("entity malformed? no type field??: " + entity['id'])
 
     # lets now push the entity to the Broker
     try:

@@ -3,6 +3,8 @@
 
 # mac osx Finder
 .DS_Store
+.idea
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -1,19 +1,26 @@
-![k8s CI](https://github.com/fed4iot/VirIoT/workflows/k8s%20CI/badge.svg)
-![docker CI](https://github.com/fed4iot/VirIoT/workflows/docker%20CI/badge.svg)
-  
-# Description
+# README
 
 This ThingVisor is a dummy ThingVisor showing basic actuator functinality. It exports only a vThing named Lamp01.
 
-# How To RUN (local Docker deployment)
+## How To Run
 
-Use the VirIoT CLI and run the follwiong command in case of a Hue Bridge whose IP address and port are 172.17.0.1:8080 (this is the case when using the emulator and a VirIoT Docker-base deployment)  
+### Local Docker deployment
+
+Use the VirIoT CLI and run the following command to run the ThinghVisor actuator example.  
 
 ```bash  
 python3 f4i.py add-thingvisor -i fed4iot/helloworld-actuator-tv -n helloWorldTV -d "hello thingvisor"
 ```
 
-# NGSI-LD data model
+### Kubernetes deployment
+
+Use the VirIoT CLI and run the following command to run the ThinghVisor actuator example.  
+
+```bash  
+python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n helloWorldTV -d "hello thingvisor" -y "yaml/thinghVisor-helloWorldActuator.yaml"
+```
+
+## NGSI-LD data model
 
 The NGSI-LD entity of Lamp01 is the following:
 

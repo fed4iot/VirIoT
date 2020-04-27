@@ -3,7 +3,6 @@ kind: Deployment
 metadata:
   name: f4i-orion-f
 spec:
-  serviceName: f4i-orion-svc
   replicas: 1
   selector:
     matchLabels:

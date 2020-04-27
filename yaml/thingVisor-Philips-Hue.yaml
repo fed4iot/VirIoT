@@ -1,0 +1,18 @@
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: f4i-tv-phue-actuator
+spec:
+  selector:
+    matchLabels:
+      app: f4i-phue-actuator
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: f4i-phue-actuator
+    spec:
+      containers:
+      - name: f4i-phue-actuator
+        image: fed4iot/phue-actuator-tv:latest
+

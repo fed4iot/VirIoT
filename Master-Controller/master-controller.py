@@ -971,7 +971,7 @@ class httpThread(Thread):
 
             if not (tv_img_name.islower() or tv_img_name == ""):
                 return json.dumps({"message": "Add fails - image name must be lowercase"}), 409
-            # check vThing ID in the database
+            # check thingVisor ID in the database
             if db[thing_visor_collection].count({"thingVisorID": tv_id}) != 0:
                 # already exists
                 return json.dumps({"message": "Add fails - thingVisor " + tv_id + " already exists"}), 409
@@ -1052,6 +1052,53 @@ class httpThread(Thread):
             db[thing_visor_collection].delete_one({"thingVisorID": tv_id})
             print(traceback.format_exc())
             return json.dumps({"message": 'thingVisor delete fails'}), 401
+
+
+    @app.route('/updateThingVisor', methods=['POST'])
+    @jwt_required
+    def recv_updateThingVisor():
+        print("updateThingVisor")
+
+        try:
+            if not User(get_jwt_identity()).check_admin_permission(db, user_collection):
+                httpThread.app.logger.warn('%s tried to update a thingVisor', get_jwt_identity())
+                return json.dumps({"message": "operation not allowed"}), 401
+
+            tv_description = request.json.get("description", None)
+            tv_params = request.json.get("params", None)
+            tv_id = request.json.get("thingVisorID", None)
+            update_info = request.json.get("update_info", None)
+
+            if db[thing_visor_collection].count({"thingVisorID": tv_id}) == 0:
+                return json.dumps({"message": "Update fails - thingVisor " + tv_id + " does not exist"}), 409
+            else:
+                tv_entry = db[thing_visor_collection].find_one({"thingVisorID": tv_id})
+                if tv_entry is None:
+                    return json.dumps({"message": 'Update fails - thingVisor ID not valid'}), 401
+
+                thing_visor_entry = {}
+                if tv_description is not "hello thingVisor":
+                    thing_visor_entry["tvDescription"] = tv_description
+                if tv_params is not None:
+                    thing_visor_entry["params"] = tv_params
+
+                if thing_visor_entry:
+                    db[thing_visor_collection].update_one({"thingVisorID": tv_id}, {"$set": thing_visor_entry})
+
+                # Send update command to TV
+                update_cmd = {"command": "updateTV", "thingVisorID": tv_id,
+                              "tvDescription": tv_description,
+                              "params": tv_params,
+                              "update_info": update_info}
+
+                mqttc.publish(thing_visor_prefix + "/" + tv_id + "/" + in_control_suffix,
+                              json.dumps(update_cmd))
+
+                return json.dumps({"message": 'updating thingVisor: ' + tv_id}), 200
+        except Exception:
+            print(traceback.format_exc())
+            return json.dumps({"message": 'thingVisor update failed'}), 401
+
 
     @app.route('/addFlavour', methods=['POST'])
     @jwt_required

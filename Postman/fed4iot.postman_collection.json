@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "dabdd905-0158-4828-a6bd-0434d8d64198",
-		"name": "fed4iot",
+		"_postman_id": "87fd91f8-35bc-4943-b8bb-f2e8956237e2",
+		"name": "fed4iot copy",
 		"description": "commands for fed4iot virtualization framework",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -205,6 +205,51 @@
 					"port": "8090",
 					"path": [
 						"addThingVisor"
+					]
+				},
+				"description": "add virtual Thing Visor"
+			},
+			"response": []
+		},
+		{
+			"name": "updateThingVisor",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"thingVisorID\": \"helloWorld\",\n\t\"params\": \"\",\n    \"description\": \"hello thingVisor\",\n    \"update_info\": \"\"\n}"
+				},
+				"url": {
+					"raw": "127.0.0.1:8090/updateThingVisor",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8090",
+					"path": [
+						"updateThingVisor"
 					]
 				},
 				"description": "add virtual Thing Visor"
@@ -952,5 +997,6 @@
 			},
 			"response": []
 		}
-	]
+	],
+	"protocolProfileBehavior": {}
 }

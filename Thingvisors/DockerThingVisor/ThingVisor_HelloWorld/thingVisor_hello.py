@@ -30,8 +30,11 @@ class FetcherThread(Thread):
     c = random.randint(0, 500)              # counter
 
     # Thread used to fetch and publish data
-    def __init__(self):
+    def __init__(self, sleep_time):
         Thread.__init__(self)
+        self.sleep_time = sleep_time
+
+        self.restart = False
 
         # Create initial status
         ngsiLdEntity1 = {"id": "urn:ngsi-ld:HelloSensor1",
@@ -47,9 +50,10 @@ class FetcherThread(Thread):
         context_hello.set_all(data)
 
     def run(self):
-        while True:
+        # while True:
+        while not self.restart:
+            print("Started thread with sleep time:", self.sleep_time)
             self.c = self.c + 1
-
             # neutral-format {"data":<NGSI-LD Entity Array>, "meta": {"vThingID":<v_thing_ID>}}
             # vThingID is mandatory, making possible to identify the vThingID without exploiting the data_out topic name
 
@@ -69,12 +73,16 @@ class FetcherThread(Thread):
             message = {"data": data, "meta": {"vThingID": v_thing_ID}}
             self.publish(message)
 
-            time.sleep(5)  # possible fetch interval
+            time.sleep(self.sleep_time)  # possible fetch interval
+        print("Killing thread...")
 
     def publish(self, message):
-        print("topic name: " + v_thing_topic + '/' + v_thing_data_suffix + " ,message: " + json.dumps(message))
+        print("topic name: " + v_thing_topic + '/' + v_thing_data_suffix + ", message: " + json.dumps(message))
         mqtt_data_client.publish(v_thing_topic + '/' + v_thing_data_suffix,
                                  json.dumps(message))  # publish received data to data topic by using neutral format
+
+    def restart_thread(self):
+        self.restart = True
 
 
 class mqttDataThread(Thread):
@@ -114,9 +122,20 @@ class MqttControlThread(Thread):
         self.send_destroy_thing_visor_ack_message()
         print("Shutdown completed")
 
+    def on_message_update_thing_visor(self, jres):
+        # mqtt_control_client.publish(v_thing_prefix + "/" + v_thing_ID + "/" + out_control_suffix, json['update-info'])
+        print("Print update_info:", jres['update_info'])
+        sleep_time = jres['params']['rate']
+        # kill thread
+        self.data_thread.restart_thread()
+        # restart thread with new parameters
+        self.data_thread = FetcherThread(sleep_time)
+        self.data_thread.start()
+
     # handler for mqtt control topics
-    def __init__(self):
+    def __init__(self, data_thread):
         Thread.__init__(self)
+        self.data_thread = data_thread
 
     def on_message_in_control_vThing(self, mosq, obj, msg):
         payload = msg.payload.decode("utf-8", "ignore")
@@ -132,12 +151,16 @@ class MqttControlThread(Thread):
 
     def on_message_in_control_TV(self, mosq, obj, msg):
         payload = msg.payload.decode("utf-8", "ignore")
-        print(msg.topic + " " + str(payload))
-        jres = json.loads(payload.replace("\'", "\""))
+        jres = json.loads(payload)
+
+        print(msg.topic + " " + str(jres))
+
         try:
             command_type = jres["command"]
             if command_type == "destroyTV":
                 self.on_message_destroy_thing_visor(jres)
+            elif command_type == "updateTV":
+                self.on_message_update_thing_visor(jres)
         except Exception as ex:
             traceback.print_exc()
         return 'invalid command'
@@ -151,6 +174,7 @@ class MqttControlThread(Thread):
         v_thing_message = {"command": "createVThing",
                            "thingVisorID": thing_visor_ID,
                            "vThing": v_thing}
+
         mqtt_control_client.publish(tv_control_prefix + "/" + thing_visor_ID + "/" + out_control_suffix,
                                     json.dumps(v_thing_message))
 
@@ -179,12 +203,13 @@ if __name__ == '__main__':
     MQTT_data_broker_port = int(os.environ["MQTTDataBrokerPort"])
     MQTT_control_broker_IP = os.environ["MQTTControlBrokerIP"]
     MQTT_control_broker_port = int(os.environ["MQTTControlBrokerPort"])
-    parameters = os.environ["params"].replace("'", '"')
+    parameters = os.environ["params"]
+
     if parameters:
         try:
             params = json.loads(parameters)
         except json.decoder.JSONDecodeError:
-            # TODO manage exception
+    #         TODO manage exception
             print("error on params (JSON) decoding")
 
     # Context is a "map" of current virtual thing state
@@ -218,10 +243,15 @@ if __name__ == '__main__':
     # e.g vThing/helloWorld/hello
     v_thing_topic = v_thing_prefix + "/" + v_thing_ID
 
-    data_thread = FetcherThread()  # Thread used to fetch data
+    if params['rate']:
+        sleep_time = params['rate']
+    else:
+        sleep_time = 5
+
+    data_thread = FetcherThread(sleep_time)  # Thread used to fetch data
     data_thread.start()
 
-    mqtt_control_thread = MqttControlThread()  # mqtt control thread
+    mqtt_control_thread = MqttControlThread(data_thread)  # mqtt control thread
     mqtt_control_thread.start()
 
     mqtt_data_thread = mqttDataThread()  # mqtt data thread

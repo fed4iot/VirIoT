@@ -23,7 +23,7 @@ import f4i_login
 import f4i_logout
 import f4i_register
 import f4i_unregister
-
+import f4i_update_thingvisor
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -84,6 +84,10 @@ if __name__ == '__main__':
     # inspect thingvisor
     parser_it = subparsers.add_parser('inspect-thingvisor', help='dump thingvisor properties')
     f4i_inspect_thingvisor.init_args(parser_it)
+
+    # update thingvisor
+    parser_it = subparsers.add_parser('update-thingvisor', help='update thingvisor properties')
+    f4i_update_thingvisor.init_args(parser_it)
 
     # inspect flavour
     parser_it = subparsers.add_parser('inspect-flavour', help='dump flavour properties')

@@ -30,7 +30,8 @@ def init_args(parser):
                         help='Controller url (default: http://127.0.0.1:8090)', default='http://127.0.0.1:8090')
     parser.add_argument('-n', action='store', dest='name',
                         help='ThingVisor ID (default: helloWorld)', default='helloWorld')
-    parser.add_argument('-f', action='store_true', dest='force', help='Force ThingVisor deletion (default: false)')
+    parser.add_argument('-f', action='store_true', dest='force',
+                        help='Force ThingVisor deletion (default: false)')
     parser.set_defaults(func=run)
 
 
@@ -39,10 +40,14 @@ def run(args):
     print("Deleting ThingVisor, please wait ....")
 
     # payload = "{\n\t\"thingVisorID\":\"" + args.name + "\", \"force\":" + args.force + "\n}"
-    payload_json = {"thingVisorID": args.name,
-                   "force": args.force}
-    payload = json.dumps(payload_json)
-    printj(payload)
+    # payload_json = {"thingVisorID": args.name,
+    #                "force": args.force}
+    # payload = json.dumps(payload_json)
+    # printj(payload)
+
+    payload = {"thingVisorID": args.name,
+               "force": args.force}
+    print("deleteThingVisor payload:", payload)
 
     token = get_token()
     if not token:
@@ -54,7 +59,9 @@ def run(args):
         'cache-control': "no-cache",
     }
 
-    response = requests.request("POST", url, data=payload, headers=headers)
+    # response = requests.request("POST", url, data=payload, headers=headers)
+
+    response = requests.request("POST", url, data=json.dumps(payload), headers=headers)
     print(response.json().get('message') + "\n")
 
 

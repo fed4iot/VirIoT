@@ -41,10 +41,16 @@ def run(args):
     print("Removing IoT vThing, please wait ....")
     url = args.controllerUrl + "/deleteVThing"
 
-    payload = "{\n\t\"tenantID\":\"" + args.tenantID + "\",\n" \
-                                                       "\t\"vThingID\":\"" + args.vThingID + "\",\n" \
-                                                                                             "\t\"vSiloName\":\"" + args.vSiloName + "\"}"
-    printj(payload)
+    # payload = "{\n\t\"tenantID\":\"" + args.tenantID + "\",\n" \
+    #            "\t\"vThingID\":\"" + args.vThingID + "\",\n" \
+    #            "\t\"vSiloName\":\"" + args.vSiloName + "\"}"
+    # printj(payload)
+
+    payload = {"tenantID": args.tenantID,
+               "vThingID": args.vThingID,
+               "vSiloName": args.vSiloName}
+    print(payload)
+
     token = get_token()
     if not token:
         return
@@ -55,7 +61,7 @@ def run(args):
         'cache-control': "no-cache",
     }
 
-    response = requests.request("POST", url, data=payload, headers=headers)
+    response = requests.request("POST", url, data=json.dumps(payload), headers=headers)
     print(response.json().get('message') + "\n")
 
 

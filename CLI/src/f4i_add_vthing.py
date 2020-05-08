@@ -31,7 +31,9 @@ def init_args(parser):
     parser.add_argument('-t', action='store', dest='tenantID',
                         help='tenantID (default: tenant1)', default='tenant1')
     parser.add_argument('-s', action='store', dest='vSiloName',
-                        help='Name of the vSilo used to distinguish the different vSilos of the same tenant (default: Silo1, unique per tenant). The unique identifier (vSiloID) of the vSilo in the system is <tenantID>_<vSiloName>',
+                        help='Name of the vSilo used to distinguish the different vSilos of the same tenant '
+                             '(default: Silo1, unique per tenant). The unique identifier (vSiloID) of the vSilo '
+                             'in the system is <tenantID>_<vSiloName>',
                         default='Silo1')
     parser.add_argument('-v', action='store', dest='vThingID',
                         help='vThingID (default: helloWorld/hello)', default='helloWorld/hello')
@@ -42,10 +44,16 @@ def run(args):
     url = args.controllerUrl + "/addVThing"
     print("Adding IoT vThing, please wait ....")
 
-    payload = "{\n\t\"tenantID\":\"" + args.tenantID + "\",\n" \
-                                                       "\t\"vThingID\":\"" + args.vThingID + "\",\n" \
-                                                                                             "\t\"vSiloName\":\"" + args.vSiloName + "\"}"
-    printj(payload)
+    # payload = "{\n\t\"tenantID\":\"" + args.tenantID + "\",\n" \
+    #             "\t\"vThingID\":\"" + args.vThingID + "\",\n" \
+    #             "\t\"vSiloName\":\"" + args.vSiloName + "\"}"
+    # printj(payload)
+
+    payload = {"tenantID": args.tenantID,
+               "vThingID": args.vThingID,
+               "vSiloName": args.vSiloName}
+
+    print("addVThing payload", payload)
 
     token = get_token()
     if not token:
@@ -57,7 +65,7 @@ def run(args):
         'cache-control': "no-cache",
     }
 
-    response = requests.request("POST", url, data=payload, headers=headers)
+    response = requests.request("POST", url, data=json.dumps(payload), headers=headers)
     print(response.json().get('message') + "\n")
 
 

@@ -22,8 +22,8 @@ For instance, the ThingVisor [HelloWorldTV](../Thingvisors/DockerThingVisor/Thin
     "data":
         [
             {
-                "id": "urn:ngsi-ld:HelloSensor1", 
-                "type": "my-counter", 
+                "id": "urn:ngsi-ld:HelloSensor1",
+                "type": "my-counter",
                 "counter": {"type": "Property", "value": 497}
             },
             {

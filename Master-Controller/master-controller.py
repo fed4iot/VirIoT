@@ -302,6 +302,7 @@ def create_thing_visor_on_docker(tv_img_name, debug_mode, tv_id, tv_params, tv_d
                              "IP": default_gateway_IP,
                              "status": STATUS_RUNNING
                              }
+
         db[thing_visor_collection].update_one({"thingVisorID": tv_id}, {"$set": thing_visor_entry})
 
         print("insert thingVisorID into DB")
@@ -1035,9 +1036,12 @@ class httpThread(Thread):
                     if tv_entry['vThings'] is not None:
                         for v_thing in tv_entry['vThings']:
                             db[v_thing_collection].delete_many({"vThingID": v_thing['id']})
-                            msg = {"command": "deleteVThing", "vThingID": v_thing['id'], "vSiloID": "ALL"}
-                            # TODO replace json
-                            mqttc.publish(v_thing_prefix + "/" + v_thing['id'] + "/" + out_control_suffix, str(msg).replace("\'", "\""))
+                            msg = {"command": "deleteVThing",
+                                   "vThingID": v_thing['id'],
+                                   "vSiloID": "ALL"}
+                            # TODO replace json OK
+                            # mqttc.publish(v_thing_prefix + "/" + v_thing['id'] + "/" + out_control_suffix, str(msg).replace("\'", "\""))
+                            mqttc.publish(v_thing_prefix + "/" + v_thing['id'] + "/" + out_control_suffix, json.dumps(msg))
                     tv_entry = db[thing_visor_collection].find_one_and_delete({"thingVisorID": tv_id})
                     # container_id = tv_entry["containerID"]
                     if not tv_entry["debug_mode"]:
@@ -1052,9 +1056,11 @@ class httpThread(Thread):
                 db[thing_visor_collection].update_one({"thingVisorID": tv_id}, {"$set": {"status": STATUS_STOPPING}})
 
                 # Send destroy command to TV
-                destroy_cmd = {"command": "destroyTV", "thingVisorID": tv_id}
-                # TODO replace json
-                mqttc.publish(thing_visor_prefix + "/" + tv_id + "/" + in_control_suffix, str(destroy_cmd).replace("\'", "\""))
+                destroy_cmd = {"command": "destroyTV",
+                               "thingVisorID": tv_id}
+                # TODO replace json OK
+                # mqttc.publish(thing_visor_prefix + "/" + tv_id + "/" + in_control_suffix, str(destroy_cmd).replace("\'", "\""))
+                mqttc.publish(thing_visor_prefix + "/" + tv_id + "/" + in_control_suffix, json.dumps(destroy_cmd))
 
                 if tv_entry["debug_mode"]:
                     db[thing_visor_collection].delete_one({"thingVisorID": tv_id})
@@ -1444,8 +1450,9 @@ def on_tv_out_control_message(mosq, obj, msg):
         print("on_tv_out_control_message")
         payload = msg.payload.decode("utf-8", "ignore")
         print(msg.topic + " " + str(payload))
-        # TODO replace json
-        jres = json.loads(payload.replace("\'", "\""))
+        # TODO replace json OK
+        # jres = json.loads(payload.replace("\'", "\""))
+        jres = json.loads(payload)
         command = jres["command"]
         if command == "createVThing":
             on_message_create_vThing(jres)
@@ -1461,8 +1468,9 @@ def on_silo_out_control_message(mosq, obj, msg):
         print("on_silo_out_control_message")
         payload = msg.payload.decode("utf-8", "ignore")
         print(msg.topic + " " + str(payload))
-        # TODO replace json
-        jres = json.loads(payload.replace("\'", "\""))
+        # TODO replace json OK
+        # jres = json.loads(payload.replace("\'", "\""))
+        jres = json.loads(payload)
         command = jres["command"]
         if command == "destroyVSiloAck":
             on_message_destroy_v_silo_ack(jres)
@@ -1472,7 +1480,7 @@ def on_silo_out_control_message(mosq, obj, msg):
 
 def on_master_controller_in_message(mosq, obj, msg):
     try:
-        # TODO replace json
+        # TODO replace json OK
         payload = msg.payload.decode("utf-8", "ignore")
         print(msg.topic + " " + str(payload))
         # jres = json.loads(payload.replace("\'", "\""))
@@ -1483,10 +1491,10 @@ def on_master_controller_in_message(mosq, obj, msg):
 
 def on_v_thing_out_control_message(mosq, obj, msg):
     try:
-        # TODO replace json
+        # TODO replace json OK
         payload = msg.payload.decode("utf-8", "ignore")
         print(msg.topic + " " + str(payload))
-        jres = json.loads(payload.replace("\'", "\""))
+        jres = json.loads(payload)
         command = jres["command"]
         if command == "deleteVThing":
             on_message_delete_vThing(jres)

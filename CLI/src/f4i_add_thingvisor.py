@@ -68,7 +68,7 @@ def run(args):
 
     payload = {"imageName": args.imageName,
                "thingVisorID": args.name,
-               "params": args.params,
+               "params": json.loads(args.params),
                "description": args.description,
                "debug_mode": False if args.debug_mode == "false" else True,
                "tvZone": args.tvZone,

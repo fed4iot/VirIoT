@@ -8,8 +8,8 @@ These messages are tranferred as MQTT payload on specific data and control topic
 
 ```json
 {
-    "data":NGSI-LD Entity Array,
-    "meta": {"vThingID":vThingID, ....}
+    "data":"<NGSI-LD Entity Array>",
+    "meta": {"vThingID":"<vThingID>", "<otherMetadata>":"<value>"}
 }
 ```
 
@@ -43,10 +43,10 @@ The neutral format includes the name of the command in the `command` key and oth
 
 ```json
 {
-    "command":Command name,
-    arg1-key: arg1-value,
-    ...
-    arg#n-key: arg#n-value
+    "command":"<Command name>",
+    "<arg1-key>": "<arg1-value>",
+    
+    "<arg#n-key>": "<arg#n-value>"
 }
 ```
 

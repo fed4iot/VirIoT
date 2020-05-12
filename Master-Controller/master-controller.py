@@ -268,7 +268,7 @@ def create_thing_visor_on_docker(tv_img_name, debug_mode, tv_id, tv_params, tv_d
 
         env = {"MQTTDataBrokerIP": MQTT_data_broker_IP, "MQTTDataBrokerPort": MQTT_data_broker_port,
                "MQTTControlBrokerIP": MQTT_control_broker_IP, "MQTTControlBrokerPort": MQTT_control_broker_port,
-               "params": tv_params, "thingVisorID": tv_id, "systemDatabaseIP": mongo_IP,
+               "params": json.dumps(tv_params), "thingVisorID": tv_id, "systemDatabaseIP": mongo_IP,
                "systemDatabasePort": mongo_port}
 
         exposed_ports = {}

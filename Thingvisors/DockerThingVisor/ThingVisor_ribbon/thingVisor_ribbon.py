@@ -41,7 +41,7 @@ from flask import json
 from flask import request
 # sys.path.insert(0, '/app/PyLib/')
 sys.path.insert(0, 'PyLib/')
-import F4Im2m
+
 
 app = Flask(__name__)
 flask_port = 8089
@@ -53,71 +53,22 @@ class httpThread(Thread):
         Thread.__init__(self)
 
     def run(self):
-        global vtype
         print("Thread http started")
-        # fetch latest value from Mobius server
-        value="None"
-        vtype="None"
-        
-        status,cin=F4Im2m.get_cin_latest("Mobius/"+cnt_arn,origin,CSE_url)
-        if status == 200:
-            try:
-                value=cin['m2m:cin']['con']
-            except:
-                print("No CIN in the container "+cnt_arn)
-        else:
-             print("No CIN in the container "+cnt_arn)
-        
-        status, cnt = F4Im2m.container_get("Mobius/"+cnt_arn,origin,CSE_url)
-        if status == 200:
-            try:
-                lbl=cnt['m2m:cnt']['lbl']
-                vtype=lbl[0]
-                for i in range(1,len(lbl)):
-                    vtype=vtype+","+lbl[i]
-            except:
-                print("No labels for the container "+cnt_arn)
-        else:
-            print("No labels for the container "+cnt_arn)
-        
-        ngsiLdEntity1 = {"id": "urn:ngsi-ld:"+v_thing_name,
-                                 "type": vtype,
-                                 cnt_arn.replace('/', ':'): {"type": "Property", "value": value}}
-
-        data = [ngsiLdEntity1]
-        # set initial context for the virtual thing
-        context_vThing.set_all(data)
         app.run(host='0.0.0.0', port=flask_port)
         print("Thread '" + self.name + " closed")
 
     @app.route('/notify', methods=['POST'])
     def recv_notify():
         global v_thing_ID
-        jres = request.get_json()
-        print("enter notify, POST body: " + str(jres))
+        data = request.data
+
         try:
-            if 'm2m:sgn' in jres:
-                value = jres['m2m:sgn']['nev']['rep']['m2m:cin']['con']  # TODO could be a list?
+            # publish received data to data topic by using neutral format
+            mqtt_data_client.publish(v_thing_topic + '/' + v_thing_data_suffix, data)
+            return 'OK', 201
 
-                ngsiLdEntity1 = {"id": "urn:ngsi-ld:" + v_thing_name,
-                                 "type": vtype,
-                                 cnt_arn.replace('/', ':'): {"type": "Property", "value": value}}
-
-                print("ngsiLdEntity1--->", ngsiLdEntity1)
-                context_vThing.update([ngsiLdEntity1])
-                message = {"data": [ngsiLdEntity1], "meta": {"vThingID": v_thing_ID}}
-                print("topic name: " + v_thing_topic + '/' + v_thing_data_suffix + " ,message: " + json.dumps(message))
-                # TODO mod qui json.dumps invece di str
-                mqtt_data_client.publish(v_thing_topic + '/' + v_thing_data_suffix,
-                                         str(message).replace("\'", "\""))  # publish received data to data topic by using neutral format
-                return 'OK', 201
-
-            else:
-                print("Bad notification format")
-                return 'Bad notification format', 401
-
-        except:
-            print("Bad notification format")
+        except Exception as err:
+            print("Bad notification format", err)
             return 'Bad notification format', 401
 
 
@@ -132,6 +83,51 @@ class mqttDataThread(Thread):
         mqtt_data_client.connect(MQTT_data_broker_IP, MQTT_data_broker_port, 30)
         mqtt_data_client.loop_forever()
         print("Thread '" + self.name + "' terminated")
+
+
+class mqttRibbonThread(Thread):
+    # mqtt client used for sending data
+    def __init__(self):
+        Thread.__init__(self)
+
+    def on_message_in_ribbon(self, mosq, obj, msg):
+        payload = msg.payload
+        # payload = msg.payload.decode("utf-8", "ignore")
+        # print("on_message_in_ribbon ---> msg -->", msg.topic + " " + payload)
+        # print("payload --- ", json.loads(payload))
+        # print("type payload --- ", type(json.loads(payload)))
+
+
+
+        mqtt_data_client.publish(v_thing_topic + '/' + v_thing_data_suffix,
+                                 payload=payload)
+
+        '''
+        ngsiLdEntity1 = jres
+        context_vThing.update([ngsiLdEntity1])
+        message = {"data": [ngsiLdEntity1], "meta": {"vThingID": v_thing_ID}}
+        print("topic name: " + v_thing_topic + '/' + v_thing_data_suffix + " ,message: " + json.dumps(message))
+        # TODO mod qui json.dumps invece di str
+        mqtt_data_client.publish(v_thing_topic + '/' + v_thing_data_suffix,
+                                 json.dumps(message))
+
+        '''
+
+        # silo_id = jres["vSiloID"]
+        # message = {"command": "getContextResponse", "data": context_vThing.get_all(), "meta": {"vThingID": v_thing_ID}}
+        # mqtt_control_client.publish(v_silo_prefix + "/" + silo_id + "/" + in_control_suffix, str(message).replace("\'", "\""))
+
+    def run(self):
+        print("Thread mqtt ribbon started")
+        global mqtt_ribbon_client
+        mqtt_ribbon_client.connect(MQTT_data_broker_IP, MQTT_data_broker_port, 30)
+        # Add message callbacks that will only trigger on a specific subscription match
+        mqtt_ribbon_client.subscribe('ribbonTopic')
+        mqtt_ribbon_client.message_callback_add("ribbonTopic", self.on_message_in_ribbon)
+        mqtt_ribbon_client.loop_forever()
+        print("Thread '" + self.name + "' terminated")
+
+
 
 
 class mqttControlThread(Thread):
@@ -211,55 +207,32 @@ class mqttControlThread(Thread):
         print("Thread '" + self.name + "' terminated")
 
 
-def add_mobius_sub():
-    global cnt_arn, v_thing_ID, notification_URI, CSE_url, origin, sub_rn
-    print ("Mobius subscription" + " "+origin+" "+str(notification_URI)+" "+cnt_arn+" "+CSE_url)
-    status, sub = F4Im2m.sub_create(sub_rn, origin, notification_URI, "Mobius/"+cnt_arn, CSE_url)
-    if status == 404:
-        print(sub)
-        sys.exit()
-
-
-def clean():
-    global origin, cnt_arn, CSE_url, sub_rn
-    # subscriptions delete
-    subUri = "Mobius/" + cnt_arn + "/" + sub_rn
-    print("deleting subscriptions, wait.....")
-    F4Im2m.sub_delete(subUri, origin, CSE_url)
 
 
 # main
 if __name__ == '__main__':
+    resources_ip = "127.0.0.1"
     # Only for test
     '''
-    os.environ = {'MQTTDataBrokerIP': '172.17.0.1',
+    os.environ = {'MQTTDataBrokerIP': resources_ip,
                     'MQTTDataBrokerPort': 1883,
-                    'MQTTControlBrokerIP': '172.17.0.1',
+                    'MQTTControlBrokerIP': resources_ip,
                     'MQTTControlBrokerPort': 1883,
-                    'params': {
-                               'CSEurl': 'http://160.80.82.44:32769',
-                               'origin': 'Superman',
-                               'poaPort': '8089',  # Non serve (Nessuno lo legge)
-                               'cntArn': 'weather:Tokyo_temp/Tokyo:temp/thermometer',
-                               'poaIP': '127.0.0.1',  # Non serve (Nessuno lo legge)
-                               'vThingName': 'Tokyo-temp',
-                               'vThingDescription': 'OneM2M temp'
-                                },
-                    'thingVisorID': 'test-oneM2M',
-                    'systemDatabaseIP': '172.17.0.1',
-                    'systemDatabasePort': 31950}
+                    'params': {},
+                    'thingVisorID': 'ribbon-tv',
+                    'systemDatabaseIP': "172.17.0.2",
+                    'systemDatabasePort': 27017}
     '''
+
     thing_visor_ID = os.environ["thingVisorID"]
     parameters = os.environ["params"]
     if parameters:
         try:
-            params = json.loads(parameters.replace("'", '"'))
-            CSE_url = params['CSEurl']
-            cnt_arn = params['cntArn']  # source container absolute resource name
-            v_thing_name = params["vThingName"]
-            v_thing_label = v_thing_name
-            v_thing_description = params["vThingDescription"]
-            origin = params["origin"]
+            params = json.loads()
+            # CSE_url = params['CSEurl']
+            # cnt_arn = params['cntArn']  # source container absolute resource name
+
+            # origin = params["origin"]
         except json.decoder.JSONDecodeError:
             # TODO manage exception
             print("error on params (JSON) decoding")
@@ -267,8 +240,14 @@ if __name__ == '__main__':
         except KeyError:
             print(Exception.with_traceback())
             os._exit(1)
-    
+        except Exception as err:
+            print("ERROR on params (JSON)", err)
+
+    v_thing_name = "vThingRibbon"
+    v_thing_label = v_thing_name
+    v_thing_description = "Pass Through vThing"
     v_thing_ID = thing_visor_ID + "/" + v_thing_name
+
     v_thing = {"label": v_thing_label,
                "id": v_thing_ID,
                "description": v_thing_description}
@@ -278,8 +257,8 @@ if __name__ == '__main__':
     MQTT_control_broker_IP = os.environ["MQTTControlBrokerIP"]
     MQTT_control_broker_port = int(os.environ["MQTTControlBrokerPort"])
 
-    sub_rn = v_thing_ID.replace("/",":") + "_subF4I"
-    vtype = ""
+    # sub_rn = v_thing_ID.replace("/",":") + "_subF4I"
+    # vtype = ""
 
     # Context is a "map" of current virtual thing state
     context_vThing = Context()
@@ -305,7 +284,7 @@ if __name__ == '__main__':
     port_mapping = db[thing_visor_collection].find_one({"thingVisorID": thing_visor_ID}, {"port": 1, "_id": 0})
     poa_IP_dict = db[thing_visor_collection].find_one({"thingVisorID": thing_visor_ID}, {"IP": 1, "_id": 0})
     poa_IP = str(poa_IP_dict['IP'])
-    print(poa_IP)
+    print("poa_IP->", poa_IP)
     poa_port = port_mapping['port'][str(flask_port)+'/tcp']
     if not poa_IP:
         poa_IP = socket.gethostbyname(socket.gethostname())
@@ -319,6 +298,7 @@ if __name__ == '__main__':
 
     mqtt_control_client = mqtt.Client()
     mqtt_data_client = mqtt.Client()
+    mqtt_ribbon_client = mqtt.Client()
 
     thread1 = httpThread()  # http server used to receive subscribed data
     thread1.start()
@@ -329,8 +309,11 @@ if __name__ == '__main__':
     mqtt_data_thread = mqttDataThread()             # mqtt data thread
     mqtt_data_thread.start()
 
+    mqtt_ribbon_thread = mqttRibbonThread()             # mqtt data thread
+    mqtt_ribbon_thread.start()
+
+
     time.sleep(2)
-    add_mobius_sub()  # add subscription to container to receive published data
     # thread1.join()
     # thread2.join()
     while True:
@@ -338,6 +321,6 @@ if __name__ == '__main__':
             time.sleep(3)
         except:
             print("KeyboardInterrupt")
-            clean()
+
             time.sleep(1)
             os._exit(1)

@@ -17,7 +17,8 @@ def remove_secret_fields_in_list(resource, response):
 
 
 
-def materialize_latestentities_via_aggregation(resource_name, items):
+def materialize_latestentities_via_aggregation(request, payload):
+    print("materializing")
     app.data.driver.db.entities.aggregate(latestentities_pipeline)
 
 # we group by NGSI-LD "id", hence it has to be assigned to the _id pivot of the group.
@@ -31,10 +32,12 @@ latestentities_pipeline = [
     # stay the same (the ObjectID of the first inserted item), hence
     # the merge will overwrite the ones with same id,
     # OR let the merge create new ObjectIds everytime and use the "parkingsite" NGSI-LD id
-    # as reference for voerwriting during the merge.
+    # as reference for overwriting during the merge.
     # I prefer the second option, so that _Created and _updated are the ones from the last
-    # individual.    
-    {"$group" : {"_id":"$id", "doc":{"$last":"$$ROOT"}}},
+    # individual.
+    # OR coalesce them by merging them, so that whenever fields are different, the are
+    # retained: the last one (based on sorting) is retained  
+    {"$group" : {"_id":"$id", "doc":{"$mergeObjects":"$$ROOT"}}},
     {"$replaceRoot":{"newRoot":"$doc"}},
     {"$project":{"_id":0}},
     {"$set":{"_id":"$id"}},
@@ -46,12 +49,12 @@ latestentities_pipeline = [
 
 
 def push_systemvthings_locally(request, payload):
-    x = post_internal('vthingsendpoint', json.loads(payload.get_data()).get('_items'))
-    print(x)
-    #response_dict = json.loads(payload.get_data())
-    #for key, value in sorted(response_dict.items()):
-    #    print("KK "+key)
-    #    print("{} : {}".format(key, value))
+    with app.test_request_context():
+        print("pushing locally")
+        post_internal('entitiesPOSTDELETEendpoint', json.loads(payload.get_data()).get('_items'))
+        # i have to materialize redundantly here because the hook is not fired
+        # when using the post_internal. And the call to db requires the context
+        app.data.driver.db.entities.aggregate(latestentities_pipeline)
 
 
 
@@ -61,15 +64,15 @@ app = Eve()
 app.on_fetched_item += remove_secret_fields
 app.on_fetched_resource += remove_secret_fields_in_list
 
+
 # we now want to trigger the aggegation that creates the "materialized view" named
 # latestentities, AFTER each time items are inserted, updated, replaced, deleted into the entities collection
-# well, btter to trigger on any insert, etc.. since we have multiple POST entry points
-app.on_inserted += materialize_latestentities_via_aggregation
-app.on_replaced += materialize_latestentities_via_aggregation
-app.on_updated += materialize_latestentities_via_aggregation
-app.on_deleted_item += materialize_latestentities_via_aggregation
-app.on_deleted += materialize_latestentities_via_aggregation
+app.on_post_POST_entitiesPOSTDELETEendpoint += materialize_latestentities_via_aggregation
+app.on_post_POST_entitiesPOSTattrsendpoint += materialize_latestentities_via_aggregation
 
+
+# here we push into a local collection whatever we GET from the remote
+# system database vthings endpoint. So, whenever we get, we push them locally
 app.on_post_GET_systemvthingsendpoint += push_systemvthings_locally
 
 
@@ -92,14 +95,36 @@ with app.app_context():
 
     # the available types view is constructed on top of the latestentities view,
     # so that if a novel entity has replaced an old instance of the same Entity
-    # and the new one does not have a pecific Attribute, it will not show up in the types.
+    # and the new one does not have a specific Attribute, it will not show up in the types.
     # Also, if the new Entity was produced by a different vThing, then the old vThing
     # will not show uo inside the type.
     mongo.db.drop_collection("types_view")
     mongo.db.create_collection(
         'types_view',
-        viewOn='latestentities',
+        # we make it on entities so as to exploit the whole history and grouping
+        # multi-relationships with many vthings
+        viewOn='entities',
         pipeline=[
+            # first thing: filter out those of type "viriotVThing"
+            {"$match" : {"type":{"$ne":"viriotVThing"}}},
+
+            # seek vthings within the same entities collection
+            # that this entity is related to
+            {
+                "$lookup":
+                    {
+                        "from": "latestentities",
+                        ###"localField": "generatedByVThing.object",
+                        ###"foreignField": "id",
+                        "let": { "object": "$generatedByVThing.object" },
+                        "pipeline": [
+                            { "$match": { "$expr": { "$eq": [ "$id",  "$$object" ] } } },
+                            { "$project": { "_created": 0, "_id": 0, "_updated": 0, "type": 0 } }
+                        ],
+                        "as": "vthing_info",
+                    }
+            },
+
             # oldest first, normal direction sorting, so that the typeenity's _created will be the _created
             # of the oldest entity, and typeentity's _updated will be the _updated of the newest entity
             {"$sort" : {"_created":1}},
@@ -113,21 +138,17 @@ with app.app_context():
                 # the vthingid Property of the Entity that represents an EntityType will be a multi-attribute one,
                 # because the same type can be produced by several different vThings.
                 # the $addToSet already gives back an array.
-                "vthingid":{"$addToSet":{"type":"Property","value":"$vthingid.value","datasetId":"$vthingid.value"}},
+                "vthingsGeneratingThisType":{"$addToSet":{
+                    "type":"Property",
+                    # we take first element of the array vthing_info, because vthing_info is the array generated by the lookup
+                    # (which only has one matching element in it)
+                    "value":{"$arrayElemAt":["$vthing_info",0]},
+                    "datasetId":{"$arrayElemAt":["$vthing_info.id",0]}
+                }},
                 ### FOR NOW decided to use one single Property with array of values instead
                 ###"tempvthingid":{"$addToSet":"$vthingid.value"},
                 "count":{"$sum" : 1},
             }},
-
-            {
-                "$lookup":
-                    {
-                        "from": "vthings", #foreign collection
-                        "localField": "vthingid.value",
-                        "foreignField": "id",
-                        "as": "vthing_info",
-                    }
-            },
 
             # copy the _id aggregation pivot, which is the measurement type, into a new NGSI-LD "id" field
             {"$set": { "id":"$_id" } },
@@ -137,7 +158,8 @@ with app.app_context():
             {"$set": { "_id":"$tempid" } },
             {"$unset" : [ "tempid" ] },
             # reshape the count aggregator into a proper NGSI-LD Property
-            {"$set": {"count":{"type":"Property","value":"$count"}}},
+            {"$set": {"howManyEntitiesHaveThisType":{"type":"Property","value":"$count"}}},
+            {"$unset" : [ "count" ] },
             ### FOR NOW the tempvthingid too
             ###{"$set": {"generatedByVThings":{"type":"Property","value":"$tempvthingid"}}},
             ###{"$unset" : [ "tempvthingid" ] },

@@ -1,3 +1,11 @@
+/*
+
+Copyright Odin Solutions S.L. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+
+*/
+
 module.exports = {
 /*
     port: process.env.PORT || 1030,
@@ -77,7 +85,7 @@ module.exports = {
     //Greedy Flexible configuration... define data provider servicePath in service
     //Wildcard : '/#' (to recover all servicePath into the service).
     noGreedyListServicePath: '/#',
-    //PDTE_JUAN:
+    //TODO:
     //Improvement in consideration (NO SUPPORTED):
     //Considerer specific servicepaths in each service : noGreedyListServicePath: [['/murcia','madrid','barcelona'],['/murcia']],
 
@@ -87,7 +95,7 @@ module.exports = {
     //noGreedyListTypes: [['Sensor','SensorBici'],['SensorTest','SensorBiciTest']],
     noGreedyListTypes: [['Punto']],
     //noGreedyListTypes: [['Sensor'],['Sensor']],
-    //PDTE_JUAN:
+    //TODO:
     //Improvement in consideration (NO SUPPORTED):
     //Considerer wildcard (all types into the service/servicepath.): noGreedyListTypes: [['.*'],['.*']],
 
@@ -159,15 +167,23 @@ module.exports = {
 
     */
 
-   "parkingsite_id": [],
-   "parkingsite_disSpacePCCapacity": [],
-   "parkingsite_maxHeight": [],
-   "parkingsite_carWash": [],
-   "parkingsite_valet": [],
-   "parkingsite_phoneNumber": [],
-   "parkingsite_webSite": [],
-   "parkingsite_mail": [],
-   "parkingsite_address": [],
+    smartParkingStandardDM_Service: [''],
+    smartParkingStandardDM_ListTypes: [['parkingmeter']],
+    smartParkingStandardDM_Attributes: [  //parkingmeter attributes
+                                        [[
+                                        'name','location'
+                                        ]]
+                                      ],
+
+    "parkingsite_id": [],
+    "parkingsite_disSpacePCCapacity": [],
+    "parkingsite_maxHeight": [],
+    "parkingsite_carWash": [],
+    "parkingsite_valet": [],
+    "parkingsite_phoneNumber": [],
+    "parkingsite_webSite": [],
+    "parkingsite_mail": [],
+    "parkingsite_address": [],
 
     frecuency_mseg: 10000
 }

@@ -122,8 +122,8 @@ class mqttRibbonThread(Thread):
         global mqtt_ribbon_client
         mqtt_ribbon_client.connect(MQTT_data_broker_IP, MQTT_data_broker_port, 30)
         # Add message callbacks that will only trigger on a specific subscription match
-        mqtt_ribbon_client.subscribe('ribbonTopic')
         mqtt_ribbon_client.message_callback_add("ribbonTopic", self.on_message_in_ribbon)
+        mqtt_ribbon_client.subscribe('ribbonTopic')
         mqtt_ribbon_client.loop_forever()
         print("Thread '" + self.name + "' terminated")
 
@@ -228,7 +228,7 @@ if __name__ == '__main__':
     parameters = os.environ["params"]
     if parameters:
         try:
-            params = json.loads()
+            params = json.loads(parameters)
             # CSE_url = params['CSEurl']
             # cnt_arn = params['cntArn']  # source container absolute resource name
 

@@ -4,11 +4,11 @@ FROM python:3.6-slim
 
 RUN apt update
 RUN apt install -y screen
-RUN pip3 install paho-mqtt flask requests pymongo
+RUN pip3 install paho-mqtt flask requests pymongo jsonmerge
 
 COPY . /app
 WORKDIR /app
 
 ENTRYPOINT []
-CMD /app/start.sh
+CMD [ "/bin/bash", "./start.sh" ]
 EXPOSE 8089

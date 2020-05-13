@@ -1,1 +1,1 @@
-{"data": [{"id": "urn:ngsi-ld:vThingRibbon", "type": "time", "timestamp" : { "type": "Property",  "value": 313}}], "meta": {"vThingID": "ribbon-tv/vThingRibbon"}}
+{"data": [{"id": "urn:ngsi-ld:vThingRibbon", "type": "time", "ribbon_time" : { "type": "Property",  "value": {"seq":1,"timestamp": 313}}}], "meta": {"vThingID": "ribbon-tv/vThingRibbon"}}

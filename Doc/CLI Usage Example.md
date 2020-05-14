@@ -126,8 +126,7 @@ python3 f4i.py add-thingvisor -c http://[master_controller_ip]:[master_controlle
   
 For the ThingVisor and VirtualSilo deployments in Kubernetes it is optional to specify  
 the zone where to deploy them, it can be done using the `-z` argument. If not specified,   
-Kubernetes will randomly choose a zone for the deployment in the available   
-fed4iot node pool.  
+Kubernetes will randomly choose a node in the default zone for the deployment.  
 
 
 ```bash  

@@ -1,4 +1,11 @@
 #!/bin/bash
+
+#
+#Copyright Odin Solutions S.L. All Rights Reserved.
+#
+#SPDX-License-Identifier: Apache-2.0
+#
+
 USER=${MONGODB_USERNAME:-mongo}
 PASS=${MONGODB_PASSWORD:-$(pwgen -s -1 16)}
 DB=${MONGODB_DBNAME:-admin}

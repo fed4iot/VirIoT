@@ -1,3 +1,11 @@
+/*
+
+Copyright Odin Solutions S.L. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+
+*/
+
 module.exports = {
     
     parkingsite: {
@@ -63,11 +71,33 @@ module.exports = {
                         "value": "0"
                     },
 */
-                    "phoneNumber": { "type": "StructuredValue", "value": { } },
+                    //"phoneNumber": { "type": "StructuredValue", "value": { } },
+                    "phoneNumber": { "type": "StructuredValue", 
+                                    "value": [ 
+                                               {
+                                                "phoneType": "",
+                                                "countryCode": "",
+                                                "areaCode": "",
+                                                "contactNumber": ""
+                                                }
+                                           ] 
+                                    },
                     "webSite": { "type": "Text", "value": "" },
                    
                     "mail": { "type": "Text", "value": "" },
-                    "address": { "type": "StructuredValue", "value": { } },
+                    //"address": { "type": "StructuredValue", "value": { } },
+                    "address": { "type": "StructuredValue", 
+                                "value": {  
+                                            "country": "",
+                                            "state": "",
+                                            "city": "",
+                                            "citySection": "",
+                                            "streetType": "",
+                                            "streetDirection": "",
+                                            "streetNumber": "",
+                                            "postalCode": ""
+                                        } 
+                                },
                     "location": { "type": "geo:json", "value": { "type": "Point",  "coordinates": [] } },
 
                     "@context" : {

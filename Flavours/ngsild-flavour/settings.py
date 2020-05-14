@@ -50,7 +50,7 @@ entities_POST_DELETE_datasource_filter = {
   # We pput it here so both endpoints can target the same collection
   'source': 'entities',
 }
-entities_via_attrs_endpoint = {
+entities_POST_attrs_endpoint = {
     # since we are using a regexp in the url, leaving the default resource_title = url gives some
     # XML printing issues of the regexp characters of the url. Hence we redefine it.
     'resource_title': 'entity',
@@ -238,30 +238,12 @@ systemvthings_endpoint = {
 
 
 
-
-vthings_datasource_filter = {
-  'source': 'vthings',
-}
-vthings_endpoint = {
-  'url': "vthings",
-  'resource_title': 'vthing',
-  'resource_methods': ['GET', 'POST', 'DELETE'],
-  'schema': schema_for_entities_without_unicity_restraint,
-  'allow_unknown': True,
-  'datasource': vthings_datasource_filter,
-}
-
-
-
-
-
 DOMAIN = {
-    'entitiesviaattrsendpoint': entities_via_attrs_endpoint,
-    'entitiesPOSTDELETEendpoint': entities_POST_DELETE_endpoint,
-    'typesendpoint': types_endpoint,
-    'entitiesGETendpoint': entities_GET_endpoint,
-    'temporalentitiesendpoint': temporalentities_endpoint,
-    'attributesendpoint': attributes_endpoint,
-    'systemvthingsendpoint': systemvthings_endpoint,
-    'vthingsendpoint': vthings_endpoint,
+  'entitiesPOSTattrsendpoint': entities_POST_attrs_endpoint,
+  'entitiesPOSTDELETEendpoint': entities_POST_DELETE_endpoint,
+  'entitiesGETendpoint': entities_GET_endpoint,
+  'temporalentitiesendpoint': temporalentities_endpoint,
+  'typesendpoint': types_endpoint,
+  'attributesendpoint': attributes_endpoint,
+  'systemvthingsendpoint': systemvthings_endpoint,
 }

@@ -1,3 +1,9 @@
+#
+#Copyright Odin Solutions S.L. All Rights Reserved.
+#
+#SPDX-License-Identifier: Apache-2.0
+#
+
 FROM node:8
 
 ENV NODE_ENV=production
@@ -6,7 +12,8 @@ ENV NODE_ENV=production
 WORKDIR /home/node/app
 
 # Copy package*.json (workdir)
-COPY src/package*.json ./
+#COPY src/package*.json ./
+COPY src/package.json ./
 
 # Create node_modules  WORKDIR
 # --only=production --> without development packages

@@ -1,3 +1,11 @@
+/*
+
+Copyright Odin Solutions S.L. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+
+*/
+
 'use strict'
 
 const config = require('./config')
@@ -678,7 +686,7 @@ async function delete_vThing(vThingID,urlCB) {
         //topicArray.push(MQTTbrokerApiKeyvThing + "/" + vThingID + "/" + MQTTbrokerTopicDataOut)
         topicArray.push(topicElement)
 
-        //PDTE_JUAN: TODO handle ¿unsubscribe not done --> delete context broker entity error?
+        //TODO: handle ¿unsubscribe not done --> delete context broker entity error?
 
         const response_unsubscribeMQTTData = await unsubscribeMQTT(topicArray,"data")
 
@@ -697,7 +705,7 @@ async function delete_vThing(vThingID,urlCB) {
             //topicArray.push(MQTTbrokerApiKeyvThing + "/" + vThingID + "/" + MQTTbrokerTopic_c_out_Control)
             topicArray.push(topicElement)
 
-            //PDTE_JUAN: TODO handle ¿unsubscribe not done --> delete context broker entity error?
+            //TODO: handle ¿unsubscribe not done --> delete context broker entity error?
 
             const response_unsubscribeMQTTControl = await unsubscribeMQTT(topicArray,"control")
 
@@ -952,7 +960,7 @@ async function shutdown(param) {
             }
         }
         
-        //PDTE_JUAN: TODO process response_unsubscribeMQTT value (true or false) send topic message¿?¿?
+        //TODO: process response_unsubscribeMQTT value (true or false) send topic message¿?¿?
         console.log('MQTT Subscriptions Deleted.');
 
         //STEP 2: //Silos Controller sends the response to Master-Controller ( vSilo/<ID>/c_out destroyVSilo).  
@@ -1002,11 +1010,11 @@ async function shutdown(param) {
 https://stackoverflow.com/questions/16338884/what-does-exited-abnormally-with-signal-9-killed-9-mean/27989874
 */
 
-//PDTE_JUAN: TODO remove or update?
+//TODO: remove or update?
 // To capture signals.
 const capt_signals = ['SIGHUP', 'SIGINT', 'SIGTERM'];
 
-//PDTE_JUAN: TODO remove or update?
+//TODO: remove or update?
 // processing exit condition signals
 capt_signals.forEach(signal => {
 	var sd_gen = (s) => {
@@ -1019,197 +1027,6 @@ capt_signals.forEach(signal => {
 	}
 );
 
-//PDTE_JUAN: TODO To avoid the container remove after clientMosquittoMqtt*.end()
+//TODO: To avoid the container remove after clientMosquittoMqtt*.end()
 var http = require('http');
 http.createServer().listen(8080);
-
-/*
-//PDTE_JUAN, 
-//Comando para monitorizar MQTT SERVER
-//mosquitto_sub -h 155.54.99.118 -p 1884 -t "#" -u iota -P iotapass -v | xargs -d$'\n' -L1 bash -c 'date "+%Y-%m-%d %T.%3N $0"'
-//mosquitto_pub -h 155.54.99.118 -p 1884 -u iota -P iotapass -t TV/thingVisorID_Greedy/c_in -q 2 -m "{\"command\": \"mapped_port\", \"port\": {\"1030/tcp\": \"1030\"}}"    
-*/
-
-/*
-
-***************** Versión actual Master-Controller 2019/04/08 *****************
-
-Inicio Master-controller
-
-	Subscribe a master_controller_prefix/c_in (+1)
-
-create_thing_visor_on_docker
-
-	subscribe a thing_visor_prefix/tv_id/c_out (+2)
-
-
-create_virtual_silo_on_docker
-
-	subscribe a v_silo_prefix/v_silo_id/c_out (+3)
-
-
-(1) Cuando captura master_controller_prefix/c_in
-	llama on_master_controller_in_message
-
-	on_master_controller_in_message
-
-		imprime el cuerpo....
-
-(2) Cuando captura thing_visor_prefix/tv_id/c_out 
-
-	llama on_tv_out_control_message
-
-	Si el comando es createVThing 
-	
-		Llama a on_message_create_vThing
-
-		on_message_create_vThing
-	
-			Crea en la BD
-			subscribe --> v_thing_prefix/v_thing_id/c_out (+4)
-
-	si el comando es destroyTVAck
-
-		Llama a  on_message_destroy_TV_ack
-
-		on_message_destroy_TV_ack
-
-			Borra de la BD
-			Unsubscribe --> thing_visor_prefix/tv_id/c_out	 (-2)
-
-(3) Cuando captura v_silo_prefix/v_silo_id/c_out
-
-	llama on_silo_out_control_message
-
-		imprime el cuerpo....
-
-		Falta hacer el tratamiento del comando "destroyVSiloAck" (****)
-			Borra de la BD
-			Unsubscribe --> v_silo_prefix/v_silo_id/c_out	 (-3)
-			
-
-(4) Cuando captura v_thing_prefix/v_thing_id/c_out 
-	
-	Llama a on_v_thing_out_control_message
-
-	si el comando es deleteVThing
-
-		Llama a  on_message_delete_vThing
-
-		on_message_delete_vThing
-
-			Borra de la BD
-			Unsubscribe --> v_thing_prefix/v_thing_id/c_out (-4)
-
-************************************************************************
-
-1) Launch Master-Controller.
-    Connect to the MQTT control brokers.
-    Subscribe to the master/c_in topic.
-
-2) addThingVisor (Greedy).
-
-    Master-Controller.
-        Subscribe to the TV/<ThingVisorID>/c_out topic.
-		Launch TV container.
-		Store TV container information in System Database (SDB).
-
-	TV container
-        Connect to the MQTT data/control brokers.
-        Subscribe to the TV/<ThingVisorID>/c_in topic.
-		SDB query to obtain its mapped port.
-		Context Broker query to obtain real things. Per real thing:
-			Obtain a virtual id to the real one and store the mapping.
-			Subscribe to the vThing/<vthingID>/c_in topic.
-			Create Context Broker subscription.
-			Publish TV/<ThingVisorID>/c_out {"command":"createVThing"...}
-
-	Master-Controller.
-        Capture TV/<ThingVisorID>/c_out {"command":"createVThing"...}
-            Store TV/vThing information in System Database (SDB).
-            Subscribe to vThing/<vThingID>/c_out topic.
-    
-    When TV container receives a Context Broker notification, it will send her a message publishing in corresponding vThing/<vthingID>/data_out topic.
-
-3) siloCreate.
-
-    Master-Controller.
-		Subscribe to the vSilo/<vSiloID>/c_out topic.
-		Launch Silo container.
-		Store Silo container information in System Database (SDB).
-
-    Silo container
-        Connect to the MQTT data/control brokers.
-        Subscribe to the vSilo/<vSiloID>/c_in topic.
-
-4) addVThing        
-
-    Master-Controller.
-        Store Silo/vThing relation in System Database (SDB).
-        Publish on vSilo/<vSiloID>/c_in {'command': 'addVThing',...}
-
-    Silo container
-        Capture vSilo/<vSiloID>/c_in {'command': 'addVThing',...}
-            Subscribe to the vThing/<vThingID>/data_out and vThing/<vThingID>/c_out topics.
-    
-    When Silo container receives a vThing/<vThingID>/data_out message, it will create/update the corresponding Context Broker entity.
-
-
-5) deleteVThing
-
-    Master-Controller.
-        Delete Silo/vThing relation in System Database (SDB).
-        Publish on vSilo/<vSiloID>/c_in {'command': 'deleteVThing', 
-    
-    Silo container
-        Capture vSilo/<vSiloID>/c_in {'command': 'deleteVThing', 
-            Unsubscribe from vThing/<vThingID>/data_out and vThing/<vThingID>/c_out topics.
-            Delete the corresponding Context Broker entity.
-
-6) deleteThingVisor.
-
-    Master-Controller.
-        Publish on  TV/<ThingVisorID>/c_in {"command":"destroyTV"...}
-
-    TV container
-        Capture TV/<ThingVisorID>/c_in {"command":"destroyTV"...}
-
-            Delete Context Broker subscription.
-            Unsubscribe from all data topics.
-            Unsubscribe from all control topics.
-            Publish on vThing/<vThingID>/c_out {"command":"deleteVThing"...}
-            Publish on TV/<ThingVisorID>/c_out {"command":"destroyTVAck"...}
-            Disconnect from the MQTT data/control brokers.
-            
-    Master-Controller.
-
-        Capture vThing/<vThingID>/c_out {"command":"deleteVThing"...}
-            Delete TV/vThing container information in System Database (SDB).
-            Unsubscribe from vThing/<vThingID>/c_out topic.
-
-        Capture TV/<ThingVisorID>/c_out {"command":"destroyTVAck"...}
-            Delete TV container information from System Database (SDB).
-            Kill TV container
-            Unsubscribe from TV/<ThingVisorID>/c_out
-        
-    Silo container --> Same as /deleteVThing
-
-7) siloDestroy.
-
-    Master-Controller.
-        Publish on vSilo/<vSiloID>/c_in {"command":"destroyVSilo"...}
-
-    Silo container
-        Capture vSilo/<vSiloID>/c_in {"command":"destroyVSilo"...}
-            Unsubscribe from all data topics.
-            Unsubscribe from all control topics.
-            Publish vSilo/<vSiloID>/c_out {"command":"destroyVSiloAck"...}
-            Disconnect from the MQTT data/control brokers.
-
-    Master-Controller.
-        Capture vSilo/<vSiloID>/c_out {"command":"destroyVSiloAck"...}
-            Delete Silo container information from System Database (SDB).
-            Kill Silo container
-            Unsubscribe from vSilo/<vSiloID>/c_out
-        
-*/

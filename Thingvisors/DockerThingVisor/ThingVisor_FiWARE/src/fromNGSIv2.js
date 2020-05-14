@@ -1,3 +1,11 @@
+/*
+
+Copyright Odin Solutions S.L. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+
+*/
+
 "use strict";
 
 var libWrapperUtils = require("./wrapperUtils");
@@ -80,7 +88,7 @@ function fromNGSIv2toNGSILD(body,ldContext){
     }
   }
 
-  //PDTE_JUAN: TODO Test this code.
+  //TODO: Test this code.
   var test = false
   if (typeof attributes["@context"] != "undefined") {
     for(var k=0; k< attributes["@context"].length; k++) {
@@ -186,8 +194,8 @@ function match_keyNGSIv2(key, attribute, paramIn, paramOut, ldReversedContext) {
 
         for(let i in metadataBody){
           if (i.toUpperCase()=="timestamp".toUpperCase()) {
-            //PDTE_JUAN: TODO Review --> I think it may do.
-            //PDTE_JUAN: TODO Review --> NGSI-LD DateTime format?.
+            //TODO: Review --> I think it may do.
+            //TODO: Review --> NGSI-LD DateTime format?.
             //attrObject["observedAt"] = metadataBody[i].value.split(".")[0]
             attrObject["observedAt"] = metadataBody[i].value
           } else if (i.toUpperCase()=="unitCode".toUpperCase()) {

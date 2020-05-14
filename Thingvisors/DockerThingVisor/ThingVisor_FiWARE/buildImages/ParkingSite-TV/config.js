@@ -1,3 +1,11 @@
+/*
+
+Copyright Odin Solutions S.L. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+
+*/
+
 module.exports = {
 /*
     port: process.env.PORT || 1030,
@@ -77,7 +85,7 @@ module.exports = {
     //Greedy Flexible configuration... define data provider servicePath in service
     //Wildcard : '/#' (to recover all servicePath into the service).
     noGreedyListServicePath: '/#',
-    //PDTE_JUAN:
+    //TODO:
     //Improvement in consideration (NO SUPPORTED):
     //Considerer specific servicepaths in each service : noGreedyListServicePath: [['/murcia','madrid','barcelona'],['/murcia']],
 
@@ -87,7 +95,7 @@ module.exports = {
     //noGreedyListTypes: [['Sensor','SensorBici'],['SensorTest','SensorBiciTest']],
     noGreedyListTypes: [['Sensor']],
     //noGreedyListTypes: [['Sensor'],['Sensor']],
-    //PDTE_JUAN:
+    //TODO:
     //Improvement in consideration (NO SUPPORTED):
     //Considerer wildcard (all types into the service/servicepath.): noGreedyListTypes: [['.*'],['.*']],
 
@@ -159,12 +167,26 @@ module.exports = {
 
     */
 
-   "parkingsite_id": ["Aparcamiento:101","Aparcamiento:102","Aparcamiento:103","Aparcamiento:104","Aparcamiento:105"],
-   "parkingsite_disSpacePCCapacity": [14,20,7,0,0],
-   "parkingsite_maxHeight": [2.3,2.3,1.9,1.9,2.0],
-   "parkingsite_carWash": [true,true,false,false,false],
-   "parkingsite_valet": [false,false,false,false,false],
-   "parkingsite_phoneNumber": [
+    
+    smartParkingStandardDM_Service: [''],
+    smartParkingStandardDM_ListTypes: [['parkingsite']],
+    smartParkingStandardDM_Attributes: [  //parkingsite attributes
+                                        [[
+                                        'name','timestamp','disSpaceMc','disSpaceMcCapacity','disSpacePC','disSpacePCCapacity','EVSpaceMc','EVSpaceMcCapacity','EVSpacePC','EVSpacePCCapacity',
+                                        'numSpaceMc','totSpaceMcCapacity','numSpacePC','totSpacePCCapacity','maxHeight','maxLength','maxWidth','payMthd','payMthdCreditCard',
+                                        /*'policyMc','policyPC','policyMcPHolidays',policyPCPHolidays',*/
+                                        'isOpen','monday','tuesday','wednesday','thursday','friday','saturday','sunday','pHolidays','carWash','valet','EVCharger',
+                                        /*'forzado',*/
+                                        'phoneNumber','webSite','mail','address','location'
+                                        ]]
+                                      ],
+
+    "parkingsite_id": ["Aparcamiento:101","Aparcamiento:102","Aparcamiento:103","Aparcamiento:104","Aparcamiento:105"],
+    "parkingsite_disSpacePCCapacity": [14,20,7,0,0],
+    "parkingsite_maxHeight": [2.3,2.3,1.9,1.9,2.0],
+    "parkingsite_carWash": [true,true,false,false,false],
+    "parkingsite_valet": [false,false,false,false,false],
+    "parkingsite_phoneNumber": [
                                    [ 
                                        {
                                            "phoneType": "Work Phone",
@@ -206,13 +228,13 @@ module.exports = {
                                        }
                                    ]
                                ],
-   "parkingsite_webSite": ["https://aparcamientosnewcapital.es/pf/avenida-libertad-murcia/#info",
+    "parkingsite_webSite": ["https://aparcamientosnewcapital.es/pf/avenida-libertad-murcia/#info",
                            "https://aparcamientosnewcapital.es/pf/la-vega-murcia/",
                            "https://www.interparking.es/es-ES/find-parking/AlfonsoX/",
                            "https://aparcamientosnewcapital.es/pf/centrofama-murcia/",
                            "https://aparcamientosnewcapital.es/pf/hospital-morales-meseguer-murcia/"],
-   "parkingsite_mail": ["info@newcapital2000.es","info@newcapital2000.es","5759@interparking.com","info@newcapital2000.es","info@newcapital2000.es"],
-   "parkingsite_address": [
+    "parkingsite_mail": ["info@newcapital2000.es","info@newcapital2000.es","5759@interparking.com","info@newcapital2000.es","info@newcapital2000.es"],
+    "parkingsite_address": [
                            {   "country": "Spain",
                                "state": "Murcia",
                                "city": "Murcia",

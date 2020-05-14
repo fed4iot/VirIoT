@@ -1,3 +1,11 @@
+/*
+
+Copyright Odin Solutions S.L. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+
+*/
+
 'use strict'
 
 const app = require('./app')
@@ -58,6 +66,11 @@ var noGreedyListTypes
 var noGreedyListTypesAttributes
 var noGreedyListDestTypes
 var noGreedyListDestAttributesTypes
+
+var smartParkingStandardDM_use
+var smartParkingStandardDM_Service
+var smartParkingStandardDM_ListTypes
+var smartParkingStandardDM_Attributes
 
 var parkingsite_id
 var parkingsite_disSpacePCCapacity
@@ -151,7 +164,20 @@ try {
     commandGetContextRequest = config.commandGetContextRequest
     commandGetContextResponse = config.commandGetContextResponse
 
-    params = JSON.parse(config.providerParams)
+    var paramaux = {}
+
+    try {
+        paramaux = JSON.parse(config.providerParams)
+    } catch(e) {
+        try {
+            paramaux = JSON.parse(config.providerParams.replace(/'/g,'"'))
+        } catch(e1) {
+            paramaux = {}
+        }
+    }
+
+    //params = JSON.parse(config.providerParams)
+    params = paramaux
 
     isGreedy = config.isGreedy
     if (typeof isGreedy === "undefined") {
@@ -234,13 +260,27 @@ try {
     noGreedyListDestTypes = config.noGreedyListDestTypes
     noGreedyListDestAttributesTypes = config.noGreedyListDestAttributesTypes
 
+    smartParkingStandardDM_use = params.StdDataModel || false
+    smartParkingStandardDM_Service = config.smartParkingStandardDM_Service
+    smartParkingStandardDM_ListTypes = config.smartParkingStandardDM_ListTypes
+    smartParkingStandardDM_Attributes = config.smartParkingStandardDM_Attributes
+
+    //Mapping to smart parking standard Data Model.
+    if (isGreedy == false && isAggregated == false  && smartParkingStandardDM_use) {
+        noGreedyListService = smartParkingStandardDM_Service
+        noGreedyListTypes = smartParkingStandardDM_ListTypes
+        noGreedyListTypesAttributes = smartParkingStandardDM_Attributes
+        noGreedyListDestTypes = noGreedyListTypes
+        noGreedyListDestAttributesTypes = noGreedyListTypesAttributes
+    }
+
     if (isGreedy) {
         ocb_service = params.ocb_service || [""]
         ocb_servicePath = '/#'
     } else {
         ocb_service = noGreedyListService
         ocb_servicePath = noGreedyListServicePath
-        //PDTE_JUAN: TODO ocb_servicePath = config.noGreedyListServicePath || [['/#']]
+        //TODO: ocb_servicePath = config.noGreedyListServicePath || [['/#']]
     }
 
     if (isGreedy == true) {  //For compatibility with initProcess only (nested "for" statements)
@@ -805,56 +845,61 @@ function obtainNGSILDPayload(service,dataBody){
                 //Additional information (config.js)
                 if (typeResult.toUpperCase() == "parkingsite".toUpperCase()) {
 
+
+                    const timestampIndex = obtainArrayIndex(mappedAttr,"timestamp")
+                    if (timestampIndex==-1) {
+                        entityDataModel.timestamp.value = timestampValue
+                    }
+
                     //Find "id" in "parkingsite_id"
                     const idIndex = obtainArrayIndex(parkingsite_id,dataBody.id)
 
                     //If it exists, it obtains the additional information only when it wasn't mapped previously (mappedAttr).
                     if (idIndex!=-1) {
 
-                        const timestampIndex = obtainArrayIndex(mappedAttr,"timestamp")
-                        if (timestampIndex==-1) {
-                            entityDataModel.timestamp.value = timestampValue
-                        }
+                        if(smartParkingStandardDM_use == false){
 
-                        const disSpacePCCapacityIndex = obtainArrayIndex(mappedAttr,"disSpacePCCapacity")
-                        if (disSpacePCCapacityIndex==-1) {
-                            entityDataModel.disSpacePCCapacity.value = parkingsite_disSpacePCCapacity[idIndex]
-                        }
 
-                        const maxHeightIndex = obtainArrayIndex(mappedAttr,"maxHeight")
-                        if (maxHeightIndex==-1) {
-                            entityDataModel.maxHeight.value = parkingsite_maxHeight[idIndex]
-                        }
+                            const disSpacePCCapacityIndex = obtainArrayIndex(mappedAttr,"disSpacePCCapacity")
+                            if (disSpacePCCapacityIndex==-1) {
+                                entityDataModel.disSpacePCCapacity.value = parkingsite_disSpacePCCapacity[idIndex]
+                            }
 
-                        const carWashIndex = obtainArrayIndex(mappedAttr,"carWash")
-                        if (carWashIndex==-1) {
-                            entityDataModel.carWash.value = parkingsite_carWash[idIndex]
-                        }
+                            const maxHeightIndex = obtainArrayIndex(mappedAttr,"maxHeight")
+                            if (maxHeightIndex==-1) {
+                                entityDataModel.maxHeight.value = parkingsite_maxHeight[idIndex]
+                            }
 
-                        const valetIndex = obtainArrayIndex(mappedAttr,"valet")
-                        if (valetIndex==-1) {
-                            entityDataModel.valet.value = parkingsite_valet[idIndex]
-                        }
+                            const carWashIndex = obtainArrayIndex(mappedAttr,"carWash")
+                            if (carWashIndex==-1) {
+                                entityDataModel.carWash.value = parkingsite_carWash[idIndex]
+                            }
 
-                        const phoneNumberIndex = obtainArrayIndex(mappedAttr,"phoneNumber")
-                        if (phoneNumberIndex==-1) {
-                            entityDataModel.phoneNumber.value = parkingsite_phoneNumber[idIndex]
-                        }
+                            const valetIndex = obtainArrayIndex(mappedAttr,"valet")
+                            if (valetIndex==-1) {
+                                entityDataModel.valet.value = parkingsite_valet[idIndex]
+                            }
 
-                        const webSiteIndex = obtainArrayIndex(mappedAttr,"webSite")
-                        if (webSiteIndex==-1) {
-                            entityDataModel.webSite.value = parkingsite_webSite[idIndex]
-                        }
+                            const phoneNumberIndex = obtainArrayIndex(mappedAttr,"phoneNumber")
+                            if (phoneNumberIndex==-1) {
+                                entityDataModel.phoneNumber.value = parkingsite_phoneNumber[idIndex]
+                            }
 
-                        const mailIndex = obtainArrayIndex(mappedAttr,"mail")
-                        if (mailIndex==-1) {
-                            entityDataModel.mail.value = parkingsite_mail[idIndex]
-                        }
-                                
-                        const addressIndex = obtainArrayIndex(mappedAttr,"address")
-                        if (addressIndex==-1) {
-                            entityDataModel.address.value = parkingsite_address[idIndex]
-                        }
+                            const webSiteIndex = obtainArrayIndex(mappedAttr,"webSite")
+                            if (webSiteIndex==-1) {
+                                entityDataModel.webSite.value = parkingsite_webSite[idIndex]
+                            }
+
+                            const mailIndex = obtainArrayIndex(mappedAttr,"mail")
+                            if (mailIndex==-1) {
+                                entityDataModel.mail.value = parkingsite_mail[idIndex]
+                            }
+                                    
+                            const addressIndex = obtainArrayIndex(mappedAttr,"address")
+                            if (addressIndex==-1) {
+                                entityDataModel.address.value = parkingsite_address[idIndex]
+                            } 
+                        }  
 
                     }
                 }
@@ -1139,9 +1184,7 @@ app.listen(notificacion_port_container,() => {
             console.log(util.unixTime(Date.now()) + " - Try to obtain mapped TV port...")
                 
             var MongoClient = require('mongodb').MongoClient;
-            //var url = "mongodb://155.54.99.118:27018/viriotDB";
             var url = "mongodb://"+systemDatabaseIP+":"+systemDatabasePort;
-            //"mongodb://155.54.99.118:27018";
             const dbName = 'viriotDB';
 
             console.info('Mongoose openning connection...'+url);
@@ -1168,7 +1211,7 @@ app.listen(notificacion_port_container,() => {
     //                console.log("responseStartThingVisor")
     //                console.log(responseStartThingVisor)
 
-                    //PDTE_JUAN: TODO process responseStartThingVisor value (true or false) send topic message¿?¿?
+                    //TODO: process responseStartThingVisor value (true or false) send topic message¿?¿?
 
     //                obtainMappedTVPort = true
                 });
@@ -1195,7 +1238,7 @@ async function startThingVisor() {
 //        console.log("responseInitProces")
 //        console.log(responseInitProces)
 
-        //PDTE_JUAN: TODO process responseInitProces value (true or false) send topic message¿?¿?
+        //TODO: process responseInitProces value (true or false) send topic message¿?¿?
 
         console.log("")
         console.log("******* ThingVisor is completly configured!!! *******")
@@ -1362,7 +1405,7 @@ async function initProcess() {
 //        console.log("responseInitProcessAux")
 //        console.log(responseInitProcessAux)
 
-        //PDTE_JUAN: TODO process responseInitProcessAux value (true or false) send topic message¿?¿?
+        //TODO: process responseInitProcessAux value (true or false) send topic message¿?¿?
 
         return true
 
@@ -1381,7 +1424,7 @@ async function noGreedyProcess() {
         //STEP 1: Obtain all Orion Context Broker entities, the request are limited by a register fixed number (100). This process store the
         //traceability between NGSI-v2 id and NGSI-LD id.
 
-        //PDTE_JUAN: TODO --> podria necesitarse para esto la función "obtainDataProvider" ya que en este punto tenemos que saber id y type
+        //TODO: --> podria necesitarse para esto la función "obtainDataProvider" ya que en este punto tenemos que saber id y type
         //de la entidad ya que tenemos que crear vThingList como se hace en "greedyProcess", si tenemos el id y type por params entonces no necesitamos
         //este paso porque podremos crear el array directamente. Si va por params, habría que poner la validación al arrancar el proceso.
         
@@ -1393,7 +1436,7 @@ async function noGreedyProcess() {
 //        console.log("responseInitProcessAux")
 //        console.log(responseInitProcessAux)
 
-        //PDTE_JUAN: TODO process responseInitProcessAux value (true or false) send topic message¿?¿?
+        //TODO: process responseInitProcessAux value (true or false) send topic message¿?¿?
 
         return true
         
@@ -1480,7 +1523,7 @@ async function initProcessAux() {
 //        console.log("responseOrionSubscription")
 //        console.log(responseOrionSubscription)
        
-        //PDTE_JUAN: TODO process responseOrionSubscription value (true or false) send topic message¿?¿?
+        //TODO: process responseOrionSubscription value (true or false) send topic message¿?¿?
 
         //console.log("ThingVisor subscribed to all Orion Context Broker entities.")
 
@@ -1491,7 +1534,7 @@ async function initProcessAux() {
 //        console.log("responseSendCreateVThingMessages")
 //        console.log(responseSendCreateVThingMessages)
                
-        //PDTE_JUAN: TODO process responseSendCreateVThingMessages value (true or false) send topic message¿?¿?
+        //TODO: process responseSendCreateVThingMessages value (true or false) send topic message¿?¿?
 
         //console.log("ThingVisor sent createVThings topic message to Master-Controller.")
 
@@ -2200,7 +2243,7 @@ async function sendDataMQTT(dataBody, dataBodyLD, service) {
             })
                     
         } else {
-            //PDTE_JUAN: TODO Handle error situation.
+            //TODO: Handle error situation.
         }
 
         return true
@@ -2422,7 +2465,7 @@ async function shutdown(param) {
             subscriptionIdOCBList = []
         }
 
-        //PDTE_JUAN: TODO process responseOrionUnsubscription value (true or false) send topic message¿?¿?
+        //TODO: process responseOrionUnsubscription value (true or false) send topic message¿?¿?
 
         console.log('All Orion Context Broker subscriptions deleted.');
         console.log('MQTT Subscriptions deleting...');
@@ -2434,7 +2477,7 @@ async function shutdown(param) {
             mqttSubscriptionList = []
         }
 
-        //PDTE_JUAN: TODO process response_unsubscribeMQTT value (true or false) send topic message¿?¿?
+        //TODO: process response_unsubscribeMQTT value (true or false) send topic message¿?¿?
         console.log('MQTT Subscriptionsd deleted.');
         console.log('MQTT Delete messages sending...');
 
@@ -2453,7 +2496,7 @@ async function shutdown(param) {
             vThingListAggValueContext = []
         }
 
-        //PDTE_JUAN: TODO process response_sendDeleteMessages value (true or false) send topic message¿?¿?
+        //TODO: process response_sendDeleteMessages value (true or false) send topic message¿?¿?
         console.log('MQTT Delete Messages sent.');
 
         clientMosquittoMqttControl.end()
@@ -2497,11 +2540,11 @@ https://stackoverflow.com/questions/16338884/what-does-exited-abnormally-with-si
 
 */
 
-//PDTE_JUAN: TODO remove or update?
+//TODO: remove or update?
 // To capture signals.
 const capt_signals = ['SIGHUP', 'SIGINT', 'SIGTERM'];
 
-//PDTE_JUAN: TODO remove or update?
+//TODO: remove or update?
 // processing exit condition signals
 capt_signals.forEach(signal => {
 	var sd_gen = (s) => {

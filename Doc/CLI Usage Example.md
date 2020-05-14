@@ -1,6 +1,6 @@
 # Command Line Interface  
 
-After the initial configuration, it is possible to interact with the VirIoT platform using the Command Line Interface (CLI).
+After the initial configuration, it is possible to interact with the VirIoT platform using the Command Line Interface (CLI) or Postman.
 
 To activate python3 and bash autocomplete:  
 
@@ -16,7 +16,10 @@ Also, it is required to install the `PyYAML` module, as follows:
 pip3 install PyYAML
 ```
   
-## Use the CLI (or POSTMAN)
+## Postman
+To interact with VirIoT platform using Postman, import the collection from the [Postman directory](../Postman)
+
+## Use the CLI
 
 The `f4i.py` CLI commands are the same for both the implementation [Kubernetes-based](Kubernetes%20Deployment.md) 
 and [Docker-based](Docker%20Depolyment.md), except for the `-c <ControllerURL>` argument.

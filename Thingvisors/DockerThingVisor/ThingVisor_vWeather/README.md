@@ -1,7 +1,4 @@
-![k8s CI](https://github.com/fed4iot/VirIoT/workflows/k8s%20CI/badge.svg)
-![docker CI](https://github.com/fed4iot/VirIoT/workflows/docker%20CI/badge.svg)
-
-# Description
+# Weather ThingVisor
 
 This ThingVisor fetchs  data from <openweathermap.org> and creates different vThings for a set of configurable cities. For each city, three vThings are created that report temperature, humidity and pressure
 
@@ -9,7 +6,7 @@ This ThingVisor fetchs  data from <openweathermap.org> and creates different vTh
 
 ## Local Docker deployment
 
-Use the VirIoT CLI and run the follwiong command in case of Rome and Tokyo, with a refresh rate equal to 10 seconds  
+Use the VirIoT CLI and run the following command in case of Rome and Tokyo, with a refresh rate equal to 10 seconds  
 
 ```bash
 f4i.py add-thingvisor -c http://127.0.0.1:8090 -i fed4iot/v-weather-tv:2.2 -n WeatherTV -d "Weather ThingVisor fetching data from open weather" -p "{'cities':['Rome', 'Tokyo'], 'rate':'10'}"
@@ -17,7 +14,14 @@ f4i.py add-thingvisor -c http://127.0.0.1:8090 -i fed4iot/v-weather-tv:2.2 -n We
 
 ## Kubernetes deployment
 
-TODO
+Use the VirIoT CLI and run the following command in case of Rome and Tokyo, with a refresh rate equal to 10 seconds.
+The `-z` argument is optional, it can be used to specify the deployment zone. If not specified,   
+Kubernetes will randomly choose a node in the default zone.
+
+```bash
+python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n WeatherTV -d "Weather ThingVisor fetching data from open weather" -p '{"cities":["Rome", "Tokyo"], "rate":10}' -y "../yaml/thingVisor-weather.yaml" -z Japan  
+```
+
 
 # NGSI-LD data model
 

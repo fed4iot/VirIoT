@@ -8,7 +8,7 @@ This is a OneM2M ThingVisor which enables communications between the IoT devices
 Use the VirIoT CLI and run the following command to run the ThingVisor example.
 
 ```bash
-python3 f4i.py add-thingvisor -c http://[master_controller_ip]:[master_controller_port] -i fed4iot/onem2m-tv:2.2 -n EGM-Abbass -d "OneM2M data from EGM Abbass sensor" -p '{"CSEurl":"https://fed4iot.eglobalmark.com","origin":"Superman", "poaPort":"8089","cntArn":"Abbas123456/humidity/value","poaIP":"127.0.0.1","vThingName":"EGM-Abbas123456-humidity","vThingDescription":"OneM2M humidity data from EGM Abbass sensor"}'  
+python3 f4i.py add-thingvisor -i fed4iot/onem2m-tv:2.2 -n EGM-Abbass -d "OneM2M data from EGM Abbass sensor" -p '{"CSEurl":"https://fed4iot.eglobalmark.com","origin":"Superman", "poaPort":"8089","cntArn":"Abbas123456/humidity/value","poaIP":"127.0.0.1","vThingName":"EGM-Abbas123456-humidity","vThingDescription":"OneM2M humidity data from EGM Abbass sensor"}'  
 ```
 
 ### Kubernetes deployment

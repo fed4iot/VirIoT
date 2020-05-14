@@ -9,7 +9,7 @@ This ThingVisor fetches  data from [OpenWeatherMap](openweathermap.org) and crea
 Use the VirIoT CLI and run the following command in case of Rome and Tokyo, with a refresh rate equal to 10 seconds  
 
 ```bash
-f4i.py add-thingvisor -c http://127.0.0.1:8090 -i fed4iot/v-weather-tv:2.2 -n WeatherTV -d "Weather ThingVisor fetching data from open weather" -p "{'cities':['Rome', 'Tokyo'], 'rate':'10'}"
+f4i.py add-thingvisor -i fed4iot/v-weather-tv:2.2 -n WeatherTV -d "Weather ThingVisor fetching data from open weather" -p "{'cities':['Rome', 'Tokyo'], 'rate':'10'}"
 ```
 
 ## Kubernetes deployment

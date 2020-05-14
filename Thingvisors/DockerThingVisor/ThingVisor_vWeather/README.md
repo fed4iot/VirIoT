@@ -1,6 +1,6 @@
 # Weather ThingVisor
 
-This ThingVisor fetchs  data from <openweathermap.org> and creates different vThings for a set of configurable cities. For each city, three vThings are created that report temperature, humidity and pressure
+This ThingVisor fetches  data from [OpenWeatherMap](openweathermap.org) and creates different vThings for a set of configurable cities. For each city, three vThings are created that report temperature, humidity and pressure
 
 # How To RUN
 

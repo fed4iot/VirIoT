@@ -140,7 +140,8 @@ class MqttControlThread(Thread):
     def on_message_in_control_vThing(self, mosq, obj, msg):
         payload = msg.payload.decode("utf-8", "ignore")
         print(msg.topic + " " + str(payload))
-        jres = json.loads(payload.replace("\'", "\""))
+        # jres = json.loads(payload.replace("\'", "\""))
+        jres = json.loads(payload)
         try:
             command_type = jres["command"]
             if command_type == "getContextRequest":
@@ -204,12 +205,12 @@ if __name__ == '__main__':
     MQTT_control_broker_IP = os.environ["MQTTControlBrokerIP"]
     MQTT_control_broker_port = int(os.environ["MQTTControlBrokerPort"])
     parameters = os.environ["params"]
-
+    params = ""
     if parameters:
         try:
             params = json.loads(parameters)
         except json.decoder.JSONDecodeError:
-    #         TODO manage exception
+            # TODO manage exception
             print("error on params (JSON) decoding")
 
     # Context is a "map" of current virtual thing state
@@ -243,8 +244,11 @@ if __name__ == '__main__':
     # e.g vThing/helloWorld/hello
     v_thing_topic = v_thing_prefix + "/" + v_thing_ID
 
-    if params['rate']:
-        sleep_time = params['rate']
+    if params:
+        if params['rate']:
+            sleep_time = params['rate']
+        else:
+            sleep_time = 5
     else:
         sleep_time = 5
 

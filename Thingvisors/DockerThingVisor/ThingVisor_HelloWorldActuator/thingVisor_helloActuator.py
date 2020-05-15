@@ -161,7 +161,8 @@ class DataThread(Thread):
     def on_message_data_in_vThing(self, mosq, obj, msg):
         payload = msg.payload.decode("utf-8", "ignore")
         print("Message received on "+msg.topic + "\n" + payload+"\n")
-        jres = json.loads(payload.replace("\'", "\""))
+        # jres = json.loads(payload.replace("\'", "\""))
+        jres = json.loads(payload)
         try:
             data = jres["data"]
             for entity in data:
@@ -245,7 +246,8 @@ class ControlThread(Thread):
     def on_message_control_in_vThing(self, mosq, obj, msg):
         payload = msg.payload.decode("utf-8", "ignore")
         print(msg.topic + " " + str(payload)+"\n")
-        jres = json.loads(payload.replace("\'", "\""))
+        # jres = json.loads(payload.replace("\'", "\""))
+        jres = json.loads(payload)
         try:
             command_type = jres["command"]
             if command_type == "getContextRequest":
@@ -257,7 +259,8 @@ class ControlThread(Thread):
     def on_message_control_in_TV(self, mosq, obj, msg):
         payload = msg.payload.decode("utf-8", "ignore")
         print(msg.topic + " " + str(payload)+"\n")
-        jres = json.loads(payload.replace("\'", "\""))
+        # jres = json.loads(payload.replace("\'", "\""))
+        jres = json.loads(payload)
         try:
             command_type = jres["command"]
             if command_type == "destroyTV":
@@ -335,8 +338,10 @@ if __name__ == '__main__':
     v_thing_topic = v_thing_prefix + "/" + v_thing_ID
 
     # import paramenters from environments
-    parameters = str(os.environ.get("params")).replace("'", '"')
+    # parameters = str(os.environ.get("params")).replace("'", '"')
+    parameters = os.environ.get("params")
     # parameters = os.environ["params"].replace("'", '"')
+    params = []
     if parameters:
         try:
             params = json.loads(parameters)

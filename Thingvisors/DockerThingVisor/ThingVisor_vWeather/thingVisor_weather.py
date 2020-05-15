@@ -129,7 +129,8 @@ class mqttControlThread(Thread):
     def on_message_in_control_vThing(self, mosq, obj, msg):
         payload = msg.payload.decode("utf-8", "ignore")
         print(msg.topic + " " + str(payload))
-        jres = json.loads(payload.replace("\'", "\""))
+        # jres = json.loads(payload.replace("\'", "\""))
+        jres = json.loads(payload)
         try:
             command_type = jres["command"]
             if command_type == "getContextRequest":
@@ -141,7 +142,8 @@ class mqttControlThread(Thread):
     def on_message_in_control_TV(self, mosq, obj, msg):
         payload = msg.payload.decode("utf-8", "ignore")
         print(msg.topic + " " + str(payload))
-        jres = json.loads(payload.replace("\'", "\""))
+        # jres = json.loads(payload.replace("\'", "\""))
+        jres = json.loads(payload)
         try:
             command_type = jres["command"]
             if command_type == "destroyTV":
@@ -192,7 +194,8 @@ if __name__ == '__main__':
     contexts = {}
 
     parameters = os.environ["params"]
-    params = json.loads(parameters.replace("'", '"'))
+    # params = json.loads(parameters.replace("'", '"'))
+    params = json.loads(parameters)
     cities = params["cities"]
     sensors = [{"id": "_temp", "type": "temp", "description": "current temperature, Kelvin",
                 "dataType": "temperature", "thing": "thermometer"},

@@ -1,6 +1,8 @@
 from eve import Eve
+from eve.methods.post import post
 from eve.methods.post import post_internal
 import json
+import requests
 
 def remove_secret_fields(resource, response):
     del(response['_etag'])
@@ -52,9 +54,18 @@ def push_systemvthings_locally(request, payload):
     with app.test_request_context():
         print("pushing locally")
         itms = json.loads(payload.get_data()).get('_items')
+
+        headers = {
+            'Accept': "application/json",
+            'Content-Type': "application/ld+json",
+        }
+
         for itm in itms:
             itm["id"] = itm["id"].replace("/", ":")
-        post_internal('entitiesPOSTDELETEendpoint', itms)
+            response = requests.request("POST", "http://localhost:9090/ngsi-ld/v1/entities/"+itm["id"]+"/attrs", data=json.dumps(itm), headers=headers)
+
+
+        #post_internal('entitiesPOSTDELETEendpoint', json.loads(payload.get_data()).get('_items'))
         # i have to materialize redundantly here because the hook is not fired
         # when using the post_internal. And the call to db requires the context
         app.data.driver.db.entities.aggregate(latestentities_pipeline)

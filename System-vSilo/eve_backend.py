@@ -145,9 +145,21 @@ with app.app_context():
                     "value":{"$arrayElemAt":["$vthing_info",0]},
                     "datasetId":{"$arrayElemAt":["$vthing_info.id",0]}
                 }},
-                ### FOR NOW decided to use one single Property with array of values instead
+                ### THIS SOLUTION IF decided to use one single Property with array of values instead
                 ###"tempvthingid":{"$addToSet":"$vthingid.value"},
-                "count":{"$sum" : 1},
+                "setOfId":{"$addToSet" : "$id"},
+            }},
+
+            # do show vthingsGeneratingThisType if it has collected some vthings, i.e. if $type of vthingsGeneratingThisType.value (first elem)
+            # is not "missing" , then include. Otherwise $$REMOVE
+            { "$project": {
+                "_id":1,
+                "tempid":1,
+                "_updated":1,
+                "_created":1,
+                "count":1,
+                "setOfId":1,
+                "vthingsGeneratingThisType": { "$cond": [{ "$ne": [ {"$type":{"$arrayElemAt":["$vthingsGeneratingThisType.value",0]}}, "missing" ] }, "$vthingsGeneratingThisType", "$$REMOVE" ] }
             }},
 
             # copy the _id aggregation pivot, which is the measurement type, into a new NGSI-LD "id" field
@@ -158,9 +170,9 @@ with app.app_context():
             {"$set": { "_id":"$tempid" } },
             {"$unset" : [ "tempid" ] },
             # reshape the count aggregator into a proper NGSI-LD Property
-            {"$set": {"howManyEntitiesHaveThisType":{"type":"Property","value":"$count"}}},
-            {"$unset" : [ "count" ] },
-            ### FOR NOW the tempvthingid too
+            {"$set": {"howManyEntitiesHaveThisType":{"type":"Property","value":{"$size":"$setOfId"}}}},
+            {"$unset" : [ "setOfId" ] },
+            ### THIS SOLUTION IF the tempvthingid too
             ###{"$set": {"generatedByVThings":{"type":"Property","value":"$tempvthingid"}}},
             ###{"$unset" : [ "tempvthingid" ] },
             #{"$unset" : [ "_created", "_updated", "_etag", "_id", "@context" ] }
@@ -182,7 +194,7 @@ with app.app_context():
                     '_created': 1,
                     '_updated': 1,
                     'type': 1,
-                    'vthingid': 1,
+                    #'vthingid': 1,
                     'x': {
                         '$objectToArray': '$$CURRENT'
                     }
@@ -204,7 +216,7 @@ with app.app_context():
                         {'x.k': {'$ne': 'id'}},
                         {'x.k': {'$ne': '@context'}},
                         {'x.k': {'$ne': 'type'}},
-                        {'x.k': {'$ne': 'vthingid'}}
+                        #{'x.k': {'$ne': 'vthingid'}}
                     ]
                 }
             },
@@ -219,7 +231,7 @@ with app.app_context():
                 "_updated":{"$last":"$_updated"},
                 "_created":{"$first":"$_created"},
                 "tempReferencedByType":{"$addToSet":"$type"},
-                "tempReferencedByVthing":{"$addToSet":"$vthingid.value"},
+                #"tempReferencedByVthing":{"$addToSet":"$vthingid.value"},
                 "count":{"$sum" : 1},
             }},
             # copy the _id aggregation pivot, which is the attribute name, into a new NGSI-LD "id" field
@@ -233,8 +245,8 @@ with app.app_context():
             {"$set": {"count":{"type":"Property","value":"$count"}}},
             # and the others too
             {"$set": {"usedByEntityTypes":{"type":"Property","value":"$tempReferencedByType"}}},
-            {"$set": {"generatedByVThings":{"type":"Property","value":"$tempReferencedByVthing"}}},
-            {"$unset" : [ "tempReferencedByType", "tempReferencedByVthing" ] },
+            #{"$set": {"generatedByVThings":{"type":"Property","value":"$tempReferencedByVthing"}}},
+            {"$unset" : [ "tempReferencedByType" ] },
         ]
     )
 

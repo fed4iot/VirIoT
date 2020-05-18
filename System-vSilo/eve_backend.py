@@ -51,7 +51,10 @@ latestentities_pipeline = [
 def push_systemvthings_locally(request, payload):
     with app.test_request_context():
         print("pushing locally")
-        post_internal('entitiesPOSTDELETEendpoint', json.loads(payload.get_data()).get('_items'))
+        itms = json.loads(payload.get_data()).get('_items')
+        for itm in itms:
+            itm["id"] = itm["id"].replace("/", ":")
+        post_internal('entitiesPOSTDELETEendpoint', itms)
         # i have to materialize redundantly here because the hook is not fired
         # when using the post_internal. And the call to db requires the context
         app.data.driver.db.entities.aggregate(latestentities_pipeline)

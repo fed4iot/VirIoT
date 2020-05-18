@@ -197,7 +197,8 @@ systemvthings_datasource_filter = {
         }
     }, {
         '$project': {
-            'id': '$id', 
+            'id': '$id',
+            #'id': {"$replaceOne": { "input": "$id", "find": "/", "replacement": ":" }},
             #'_id': '$id', 
             #'_created': '$$NOW', 
             #'_updated': '$$NOW', 

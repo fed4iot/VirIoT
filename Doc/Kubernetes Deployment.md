@@ -27,20 +27,20 @@ Unless differently specified, the following commands are run from the k8s master
 
 ### Node labelling from k8s master node  
 
-We consider a kubernetes distributed cluster formed by a default zone and (optional) multiple edge zones. 
-Default zone has no "zone" label. Nodes of an edge zone must be labelled with "zone" and "gw" labels, as follows: 
-the value of the "gw" key must contain a public IP address through which it is possible to access the edge cluster.   
+We consider a Kubernetes distributed cluster formed by a default zone and (optionally) multiple edge zones. 
+The default zone has no "viriot-zone" label. Nodes of an edge zone must be labelled with "viriot-zone" and "viriot-gw" labels, as follows: 
+the value of the "viriot-gw" key must contain a public IP address through which it is possible to access the edge cluster.   
 
 
 ```bash  
-kubectl label nodes <NodeName> zone=<ZoneName>  
-kubectl label nodes <NodeName> gw=<gatewayIP>  
+kubectl label nodes <NodeName> viriot-zone=<ZoneName>  
+kubectl label nodes <NodeName> viriot-gw=<gatewayIP>  
   
-#e.g.: kubectl label nodes node2 zone=Japan  
-#e.g.: kubectl label nodes node2 gw=162.80.82.44  
+#e.g.: kubectl label nodes node2 viriot-zone=Japan  
+#e.g.: kubectl label nodes node2 viriot-gw=162.80.82.44  
   
 # to see labelling results....  
-kubectl get nodes -L gw -L zone  
+kubectl get nodes -L viriot-gw -L viriot-zone  
 ```   
 
 ### Setup MQTT cluster from k8s master node (one VerneMQ broker per node)

@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: f4i-murcia-rpz
-        image: fed4iot/fiware-rpz-tv:2.3
+        image: fed4iot/fiware-rpz-tv:2.4
         ports:
         - containerPort: 1030
 ---

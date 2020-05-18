@@ -93,11 +93,6 @@ def delete_service(namespace, name):
         return False, err
 
 
-
-def get_target_ip():
-    return "13.80.153.4"
-
-
 def dictSearch(key, dictionary):
     for k, v in dictionary.items():
         if k == key:
@@ -150,16 +145,14 @@ def list_available_node_zone():
     zones = {}
     try:
         api_response = api_instance.list_node()
-        # pprint(api_response)
         for node in api_response.items:
-            if "zone" in node.metadata.labels.keys():
-                if "gw" in node.metadata.labels.keys():
-                    zones[node.metadata.labels["zone"]] = node.metadata.labels["gw"]
+            if "viriot-zone" in node.metadata.labels.keys():
+                if "viriot-gw" in node.metadata.labels.keys():
+                    zones[node.metadata.labels["viriot-zone"]] = node.metadata.labels["viriot-gw"]
                 else:
-                    # Alredy have an entry {"zone": "gw"} so do nothing
-                    if node.metadata.labels["zone"] not in zones.keys():
-                        zones[node.metadata.labels["zone"]] = ""
-                #zones.append(node.metadata.labels["zone"])
+                    # Alredy have an entry {"zone": "gw"}
+                    if node.metadata.labels["viriot-zone"] not in zones.keys():
+                        zones[node.metadata.labels["viriot-zone"]] = ""
         return zones
 
     except ApiException as e:

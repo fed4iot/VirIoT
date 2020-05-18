@@ -177,7 +177,7 @@ def create_virtual_silo_on_kubernetes(v_silo_id, v_silo_name, tenant_id, flavour
                     yaml["spec"]["template"]["metadata"]["labels"]["siloID"] = label_app
                     yaml["spec"]["template"]["spec"]["containers"][0]["env"] = k8s.convert_env(env)
                     if deploy_zone is not None and deploy_zone:
-                        yaml["spec"]["template"]["spec"]["nodeSelector"] = {"zone": deploy_zone["zone"]}
+                        yaml["spec"]["template"]["spec"]["nodeSelector"] = {"viriot-zone": deploy_zone["zone"]}
                         gateway_IP = deploy_zone["gw"] if "gw" in deploy_zone.keys() else default_gateway_IP
                     else:
                         # This variable set the node anti affinity to deploy the resources in the default zone,
@@ -360,7 +360,7 @@ def create_thing_visor_on_kubernetes(tv_img_name, debug_mode, tv_id, tv_params, 
 
                     if deploy_zone is not None and deploy_zone:
 
-                        yaml["spec"]["template"]["spec"]["nodeSelector"] = {"zone": deploy_zone["zone"]}
+                        yaml["spec"]["template"]["spec"]["nodeSelector"] = {"viriot-zone": deploy_zone["zone"]}
                         gateway_IP = deploy_zone["gw"] if "gw" in deploy_zone.keys() else default_gateway_IP
                     else:
                         # This variable set the node anti affinity to deploy the resources in the default zone,

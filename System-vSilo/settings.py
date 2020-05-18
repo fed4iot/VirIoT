@@ -19,7 +19,7 @@ HATEOAS = False
 
 # to match NGSI-LD spec for query keyword
 QUERY_WHERE = 'q'
-
+MONGO_QUERY_BLACKLIST = ['$where']
 
 # my custom regex for URIs:
 # ids can be composed of "minus" "colon" "underscore" and chars/digits

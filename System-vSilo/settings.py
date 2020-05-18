@@ -22,9 +22,9 @@ QUERY_WHERE = 'q'
 
 
 # my custom regex for URIs:
-# ids can be composed of "minus" "column" and chars/digits
+# ids can be composed of "minus" "colon" "underscore" and chars/digits
 # max len = 100
-uri_regex = 'regex("[-a-z0-9:A-Z]{1,100}")'
+uri_regex = 'regex("[-a-z0-9:A-Z_]{1,100}")'
 
 
 schema_for_entities = {

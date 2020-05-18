@@ -2,7 +2,7 @@ FROM python:3
 
 ### eve backend implementing a simple NGSI-LD REST API
 
-RUN pip3 install eve
+RUN pip3 install eve requests
 
 COPY settings.py /
 COPY eve_backend.py /

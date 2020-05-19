@@ -239,9 +239,7 @@ if __name__ == '__main__':
                     'params': {
                                'CSEurl': 'http://160.80.82.44:32769',
                                'origin': 'Superman',
-                               'poaPort': '8089', 
                                'cntArn': 'weather:Tokyo_temp/Tokyo:temp/thermometer',
-                               'poaIP': '127.0.0.1',
                                'vThingName': 'Tokyo-temp',
                                'vThingDescription': 'OneM2M temp'
                                 },

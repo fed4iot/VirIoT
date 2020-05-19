@@ -134,12 +134,12 @@ Kubernetes will randomly choose a node in the default zone for the deployment.
 python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n weather -p '{"cities":["Rome", "Tokyo","Murcia","Grasse","Heidelberg"], "rate":60}' -d "Weather ThingVisor" -y "../yaml/thingVisor-weather.yaml" -z Japan  
 ```  
   
-Add thingVisor for oneM2M container on oneM2M of EGM in Grasse. Change poaIP with public IP address of running machines: 
+Add thingVisor for oneM2M container on oneM2M of EGM in Grasse: 
 
 ```bash  
-python3 f4i.py add-thingvisor -c http://[master_controller_ip]:[master_controller_port] -i fed4iot/onem2m-tv:2.2 -n EGM-Abbass -d "OneM2M data from EGM Abbass sensor" -p '{"CSEurl":"https://fed4iot.eglobalmark.com","origin":"Superman", "poaPort":"8089","cntArn":"Abbas123456/humidity/value","poaIP":"127.0.0.1","vThingName":"EGM-Abbas123456-humidity","vThingDescription":"OneM2M humidity data from EGM Abbass sensor"}'  
+python3 f4i.py add-thingvisor -c http://[master_controller_ip]:[master_controller_port] -i fed4iot/onem2m-tv:2.2 -n EGM-Abbass -d "OneM2M data from EGM Abbass sensor" -p '{"CSEurl":"https://fed4iot.eglobalmark.com","origin":"Superman","cntArn":"Abbas123456/humidity/value","vThingName":"EGM-Abbas123456-humidity","vThingDescription":"OneM2M humidity data from EGM Abbass sensor"}'  
 # Kubernetes: add the flavour yaml argument using -y and the optional zone to deploy the pod -z  
-python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n EGM-Abbass -d "OneM2M data from EGM Abbass sensor" -p '{"CSEurl":"https://fed4iot.eglobalmark.com","origin":"Superman", "poaPort":"8089","cntArn":"Abbas123456/humidity/value","poaIP":"127.0.0.1","vThingName":"EGM-Abbas123456-humidity","vThingDescription":"OneM2M humidity data from EGM Abbass sensor"}' -y "../yaml/thingVisor-oneM2M.yaml" -z Japan  
+python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n EGM-Abbass -d "OneM2M data from EGM Abbass sensor" -p '{"CSEurl":"https://fed4iot.eglobalmark.com","origin":"Superman","cntArn":"Abbas123456/humidity/value","vThingName":"EGM-Abbas123456-humidity","vThingDescription":"OneM2M humidity data from EGM Abbass sensor"}' -y "../yaml/thingVisor-oneM2M.yaml" -z Japan  
 ```  
   
 

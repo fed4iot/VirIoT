@@ -25,7 +25,7 @@ python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n WeatherTV -d
 
 # NGSI-LD data model
 
-Eacy vThing of a city (e.g. Tokyo) is internally represented by the following entities
+Each vThing of a city (e.g. Tokyo) is internally represented by the following entities
 
 ## Thermometer vThingID: "WeatherTV/Tokyo_temp"
 

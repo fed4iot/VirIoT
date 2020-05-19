@@ -87,6 +87,17 @@ entities_POST_DELETE_endpoint = {
     'schema': schema_for_entities,
     'datasource': entities_POST_DELETE_datasource_filter,
 }
+batchentitiesUpdate_POST_endpoint = {
+    'url': "entityOperations/update",
+    'resource_title': 'entity',
+    # /entityOperations/update POST is used for operation "Batch Entity Update" 6.16.3.1 -> 5.6.9.
+    #                          (that is a loop of update operations 5.6.3)
+    'resource_methods': ['POST'],
+    # in entities this is important for the NGSI-LD Attributes
+    'allow_unknown': True,
+    'schema': schema_for_entities_without_unicity_restraint,
+    'datasource': entities_POST_DELETE_datasource_filter,
+}
 
 
 
@@ -247,4 +258,5 @@ DOMAIN = {
   'typesendpoint': types_endpoint,
   'attributesendpoint': attributes_endpoint,
   'systemvthingsendpoint': systemvthings_endpoint,
+  'batchentitiesUpdatePOSTendpoint': batchentitiesUpdate_POST_endpoint,
 }

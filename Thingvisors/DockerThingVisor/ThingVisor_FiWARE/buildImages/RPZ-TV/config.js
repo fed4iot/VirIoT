@@ -168,12 +168,6 @@ module.exports = {
     */
 
     smartParkingStandardDM_Service: [''],
-    smartParkingStandardDM_ListTypes: [['parkingmeter']],
-    smartParkingStandardDM_Attributes: [  //parkingmeter attributes
-                                        [[
-                                        'name','location'
-                                        ]]
-                                      ],
 
     "parkingsite_id": [],
     "parkingsite_disSpacePCCapacity": [],

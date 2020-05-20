@@ -146,9 +146,9 @@ python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n EGM-Abbass -
 Add thingVisor FIWARE Murcia, change notify_ip address with the public address of the running machine:
 
 ```bash
-python3 f4i.py add-thingvisor -c http://[master_controller_ip]:[master_controller_port] -i fed4iot/fiware-greedy-tv:2.2 -n Murcia_Sensors -p '{"ocb_service":["trafico","aparcamiento","pluviometria","tranvia","autobuses","bicis","lecturas","gps","suministro"], "ocb_ip":"fiware-dev.inf.um.es", "ocb_port":"1026", "notificacion_protocol":"http", "notify_ip":"52.166.130.229"}' -d "Greedy ThingVisor for FIWARE Murcia Platform"  
+python3 f4i.py add-thingvisor -c http://[master_controller_ip]:[master_controller_port] -i fed4iot/fiware-greedy-tv:2.2 -n Murcia_Sensors -p '{"ocb_service":["trafico","aparcamiento","pluviometria","tranvia","autobuses","bicis","lecturas","gps","suministro"], "ocb_ip":"fiware-dev.inf.um.es", "ocb_port":"1026"}' -d "Greedy ThingVisor for FIWARE Murcia Platform"  
 # Kubernetes: add the flavour yaml argument using -y and the optional zone to deploy the pod -z  
-python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n Murcia_Sensors -p '{"ocb_service":["trafico","aparcamiento","pluviometria","tranvia","autobuses","bicis","lecturas","gps","suministro"], "ocb_ip":"fiware-dev.inf.um.es", "ocb_port":"1026", "notificacion_protocol":"http", "notify_ip":"52.166.130.229"}' -d "Greedy ThingVisor for FIWARE Murcia Platform" -y "../yaml/thingVisor-fiWARE.yaml" -z Japan  
+python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n Murcia_Sensors -p '{"ocb_service":["trafico","aparcamiento","pluviometria","tranvia","autobuses","bicis","lecturas","gps","suministro"], "ocb_ip":"fiware-dev.inf.um.es", "ocb_port":"1026"}' -d "Greedy ThingVisor for FIWARE Murcia Platform" -y "../yaml/thingVisor-fiWARE.yaml" -z Japan  
 ```  
   
 

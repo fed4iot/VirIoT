@@ -169,17 +169,6 @@ module.exports = {
 
     
     smartParkingStandardDM_Service: [''],
-    smartParkingStandardDM_ListTypes: [['parkingsite']],
-    smartParkingStandardDM_Attributes: [  //parkingsite attributes
-                                        [[
-                                        'name','timestamp','disSpaceMc','disSpaceMcCapacity','disSpacePC','disSpacePCCapacity','EVSpaceMc','EVSpaceMcCapacity','EVSpacePC','EVSpacePCCapacity',
-                                        'numSpaceMc','totSpaceMcCapacity','numSpacePC','totSpacePCCapacity','maxHeight','maxLength','maxWidth','payMthd','payMthdCreditCard',
-                                        /*'policyMc','policyPC','policyMcPHolidays',policyPCPHolidays',*/
-                                        'isOpen','monday','tuesday','wednesday','thursday','friday','saturday','sunday','pHolidays','carWash','valet','EVCharger',
-                                        /*'forzado',*/
-                                        'phoneNumber','webSite','mail','address','location'
-                                        ]]
-                                      ],
 
     "parkingsite_id": ["Aparcamiento:101","Aparcamiento:102","Aparcamiento:103","Aparcamiento:104","Aparcamiento:105"],
     "parkingsite_disSpacePCCapacity": [14,20,7,0,0],

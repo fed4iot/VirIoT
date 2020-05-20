@@ -33,9 +33,6 @@ var vThingLocalIDAggregated
 var vThingList = []
 var vThingListAggValueContext = []
 
-//var MQTTbrokerIP
-//var MQTTbrokerPort
-
 var MQTTDataBrokerIP
 var MQTTDataBrokerPort
 var MQTTControlBrokerIP
@@ -132,570 +129,670 @@ console.log("")
 console.log("")
 console.log("**********" + util.unixTime(Date.now()) + " ***************")
 
-//Processing environment variables...
+
 try {
 
-    //MQTTbrokerIP = config.MQTTbrokerIP
-    //MQTTbrokerPort = config.MQTTbrokerPort
-    
-    MQTTDataBrokerIP = config.MQTTDataBrokerIP
-    MQTTDataBrokerPort = config.MQTTDataBrokerPort
-    MQTTControlBrokerIP = config.MQTTControlBrokerIP
-    MQTTControlBrokerPort = config.MQTTControlBrokerPort
-    
     systemDatabaseIP=config.systemDatabaseIP
-    systemDatabasePort = config.systemDatabasePort
-
-    thingVisorID = config.thingVisorID
-    MQTTbrokerApiKeyvThing = config.MQTTbrokerApiKeyvThing
-    MQTTbrokerApiKeySilo = config.MQTTbrokerApiKeySilo
-    MQTTbrokerApiKeyThingVisor = config.MQTTbrokerApiKeyThingVisor
-    MQTTbrokerTopicData = config.MQTTbrokerTopicData
-    MQTTbrokerTopicDataOut = config.MQTTbrokerTopicDataOut
-    MQTTbrokerTopicDataIn = config.MQTTbrokerTopicDataIn
-
-    MQTTbrokerTopic_c_in_Control = config.MQTTbrokerTopic_c_in_Control
-    MQTTbrokerTopic_c_out_Control = config.MQTTbrokerTopic_c_out_Control
-
-    commandDestroyTV = config.commandDestroyTV
-    commandDestroyTVAck = config.commandDestroyTVAck
-    commandDeleteVThing = config.commandDeleteVThing
-    commandCreateVThing = config.commandCreateVThing
-    commandGetContextRequest = config.commandGetContextRequest
-    commandGetContextResponse = config.commandGetContextResponse
-
-    var paramaux = {}
-
-    try {
-        paramaux = JSON.parse(config.providerParams)
-    } catch(e) {
-        try {
-            paramaux = JSON.parse(config.providerParams.replace(/'/g,'"'))
-        } catch(e1) {
-            paramaux = {}
-        }
-    }
-
-    //params = JSON.parse(config.providerParams)
-    params = paramaux
-
-    isGreedy = config.isGreedy
-    if (typeof isGreedy === "undefined") {
-        isGreedy = true
-    }
-
-    isAggregated = config.isAggregated
-    if (typeof isAggregated === "undefined") {
-        isAggregated = false
-    }
-
-    isGroupingByType = config.isGroupingByType
-    if (typeof isGroupingByType === "undefined" && isGreedy) {
-        isGroupingByType = true
-    }
-    
-    vThingLocalIDAggregated = config.vThingLocalIDAggregated
-
-    if (params == '' || typeof params === 'undefined' || 
-        params.ocb_ip == '' || typeof params.ocb_ip === 'undefined') {
-        console.error("Error - processing ThingVisor's environment variables: 'ocb_ip' param not found.")
-        return
-    }
-
-    if (params == '' || typeof params === 'undefined' || 
-        params.ocb_port == '' || typeof params.ocb_port === 'undefined') {
-        console.error("Error - processing ThingVisor's environment variables: 'ocb_port' param not found.")
-        return
-    }
-
-/*    
-    if (MQTTbrokerIP == '' || typeof MQTTbrokerIP === 'undefined') {
-        console.error("Error - processing ThingVisor's environment variables: 'MQTTbrokerIP' param not found.")
-        return
-    }
-
-    if (MQTTbrokerPort == '' || typeof MQTTbrokerPort === 'undefined') {
-        console.error("Error - processing ThingVisor's environment variables: 'MQTTbrokerPort' param not found.")
-        return
-    }
-*/
-
-    if (MQTTDataBrokerIP == '' || typeof MQTTDataBrokerIP === 'undefined') {
-        console.error("Error - processing ThingVisor's environment variables: 'MQTTDataBrokerIP' param not found.")
-        return
-    }
-
-    if (MQTTDataBrokerPort == '' || typeof MQTTDataBrokerPort === 'undefined') {
-        console.error("Error - processing ThingVisor's environment variables: 'MQTTDataBrokerPort' param not found.")
-        return
-    }
-
-    if (MQTTControlBrokerIP == '' || typeof MQTTControlBrokerIP === 'undefined') {
-        console.error("Error - processing ThingVisor's environment variables: 'MQTTControlBrokerIP' param not found.")
-        return
-    }
-
-    if (MQTTControlBrokerPort == '' || typeof MQTTControlBrokerPort === 'undefined') {
-        console.error("Error - processing ThingVisor's environment variables: 'MQTTControlBrokerPort' param not found.")
-        return
-    }
-
     if (systemDatabaseIP == '' || typeof systemDatabaseIP === 'undefined') {
         console.error("Error - processing ThingVisor's environment variables: 'systemDatabaseIP' param not found.")
         return
     }
 
+    systemDatabasePort = config.systemDatabasePort
     if (systemDatabasePort == '' || typeof systemDatabasePort === 'undefined') {
         console.error("Error - processing ThingVisor's environment variables: 'systemDatabasePort' param not found.")
         return
     }
 
-    ocb_ip = params.ocb_ip
-    ocb_port = params.ocb_port
-
-    noGreedyListService = config.noGreedyListService || [""]
-    noGreedyListServicePath = config.noGreedyListServicePath || '/#'
-    noGreedyListTypes = config.noGreedyListTypes
-    noGreedyListTypesAttributes = config.noGreedyListTypesAttributes
-    noGreedyListDestTypes = config.noGreedyListDestTypes
-    noGreedyListDestAttributesTypes = config.noGreedyListDestAttributesTypes
-
-    smartParkingStandardDM_use = params.StdDataModel || false
-    smartParkingStandardDM_Service = config.smartParkingStandardDM_Service
-    smartParkingStandardDM_ListTypes = config.smartParkingStandardDM_ListTypes
-    smartParkingStandardDM_Attributes = config.smartParkingStandardDM_Attributes
-
-    //Mapping to smart parking standard Data Model.
-    if (isGreedy == false && isAggregated == false  && smartParkingStandardDM_use) {
-        noGreedyListService = smartParkingStandardDM_Service
-        noGreedyListTypes = smartParkingStandardDM_ListTypes
-        noGreedyListTypesAttributes = smartParkingStandardDM_Attributes
-        noGreedyListDestTypes = noGreedyListTypes
-        noGreedyListDestAttributesTypes = noGreedyListTypesAttributes
-    }
-
-    if (isGreedy) {
-        ocb_service = params.ocb_service || [""]
-        ocb_servicePath = '/#'
-    } else {
-        ocb_service = noGreedyListService
-        ocb_servicePath = noGreedyListServicePath
-        //TODO: ocb_servicePath = config.noGreedyListServicePath || [['/#']]
-    }
-
-    if (isGreedy == true) {  //For compatibility with initProcess only (nested "for" statements)
-        ocb_type = []
-
-        for(var i = 0; i < ocb_service.length;i++){
-            ocb_type.push([i])
-        }
-    } else {
-        ocb_type = noGreedyListTypes
-    }
-
-    ocb_attrList = noGreedyListTypesAttributes
-
-    dest_ocb_type = noGreedyListDestTypes
-
-    dest_ocb_attrList = noGreedyListDestAttributesTypes
-
-    parkingsite_id = config.parkingsite_id
-    parkingsite_disSpacePCCapacity = config.parkingsite_disSpacePCCapacity
-    parkingsite_maxHeight = config.parkingsite_maxHeight
-    parkingsite_carWash = config.parkingsite_carWash
-    parkingsite_valet = config.parkingsite_valet
-    parkingsite_phoneNumber = config.parkingsite_phoneNumber
-    parkingsite_webSite = config.parkingsite_webSite
-    parkingsite_mail = config.parkingsite_mail
-    parkingsite_address = config.parkingsite_address
-
-    //Configuration controls...
-    if (isGreedy == false) {
-
-        //noGreedyListService.length>0
-        if (noGreedyListService.length <= 0 || typeof noGreedyListService === 'undefined') {
-            console.error("Error - processing ThingVisor's configuration params: invalid length (noGreedyListService).")
-            return
-        }
-
-        //noGreedyListTypes.length>0
-        if (noGreedyListTypes.length <= 0 || typeof noGreedyListTypes === 'undefined') {
-            console.error("Error - processing ThingVisor's configuration params: invalid length (noGreedyListTypes).")
-            return
-        }
-
-        //noGreedyListTypesAttributes.length>0
-        if (noGreedyListTypesAttributes.length <= 0 || typeof noGreedyListTypesAttributes === 'undefined') {
-            console.error("Error - processing ThingVisor's configuration params: invalid length (noGreedyListTypesAttributes).")
-            return
-        }
-
-        //noGreedyListDestTypes.length>0
-        if (noGreedyListDestTypes.length <= 0 || typeof noGreedyListDestTypes === 'undefined') {
-            console.error("Error - processing ThingVisor's configuration params: invalid length (noGreedyListDestTypes).")
-            return
-        }
-
-        //noGreedyListDestAttributesTypes.length>0
-        if (noGreedyListDestAttributesTypes.length <= 0 || typeof noGreedyListDestAttributesTypes === 'undefined') {
-            console.error("Error - processing ThingVisor's configuration params: invalid length (noGreedyListDestAttributesTypes).")
-            return
-        }
-
-        //noGreedyListService.length == noGreedyListTypes.length
-        if (noGreedyListService.length != noGreedyListTypes.length) {
-            console.error("Error - processing ThingVisor's configuration params: (noGreedyListService/noGreedyListTypes) have different first level length.")
-            return
-        }
-
-        //noGreedyListTypes.length == noGreedyListTypesAttributes.length
-        if (noGreedyListTypes.length != noGreedyListTypesAttributes.length) {
-            console.error("Error - processing ThingVisor's configuration params: (noGreedyListTypes/noGreedyListTypesAttributes) have different first level length.")
-            return
-        }
-
-        //noGreedyListTypes.length == noGreedyListDestTypes.length
-        if (noGreedyListTypes.length != noGreedyListDestTypes.length) {
-            console.error("Error - processing ThingVisor's configuration params: (noGreedyListTypes/noGreedyListDestTypes) have different first level length.")
-            return
-        }
-
-        //noGreedyListDestTypes.length == noGreedyListDestAttributesTypes.length
-        if (noGreedyListDestTypes.length != noGreedyListDestAttributesTypes.length) {
-            console.error("Error - processing ThingVisor's configuration params: (noGreedyListDestTypes/noGreedyListDestAttributesTypes) have different first level length.")
-            return
-        }
-
-        for(var i = 0; i < noGreedyListService.length;i++){
-
-            //noGreedyListTypes[i].length != 0
-            if (noGreedyListTypes[i].length == 0) {
-                console.error("Error - processing ThingVisor's configuration params: invalid length (noGreedyListTypes second level).")
-                return
-            }
-
-            //noGreedyListDestTypes[i].length != 0
-            if (noGreedyListDestTypes[i].length == 0) {
-                console.error("Error - processing ThingVisor's configuration params: invalid length (noGreedyListDestTypes second level).")
-                return
-            }
-
-            //noGreedyListTypes[i].length == noGreedyListTypesAttributes[i].length
-            if (noGreedyListTypes[i].length != noGreedyListTypesAttributes[i].length) {
-                console.error("Error - processing ThingVisor's configuration params: (noGreedyListTypes/noGreedyListTypesAttributes) have different second level length.")
-                return
-            }
-
-            //noGreedyListTypes[i].length == noGreedyListDestTypes[i].length
-            if (noGreedyListTypes[i].length != noGreedyListDestTypes[i].length) {
-                console.error("Error - processing ThingVisor's configuration params: (noGreedyListTypes/noGreedyListDestTypes) have different second level length.")
-                return
-            }
-
-            for(var k = 0; k < noGreedyListTypes[i].length;k++){
-                //noGreedyListTypes[i][k] != '' NO SUPPORTED
-                if (noGreedyListTypes[i][k] == "") {
-                    console.error("Error - processing ThingVisor's configuration params: invalid value '' (noGreedyListTypes second level).")
-                    return
-                }
-
-                //noGreedyListDestTypes[i][k] != '' NO SUPPORTED
-                if (noGreedyListDestTypes[i][k] == "") {
-                    console.error("Error - processing ThingVisor's configuration params: invalid value '' (noGreedyListDestTypes second level).")
-                    return
-                }
-            }
-
-            //noGreedyListTypesAttributes[i].length == noGreedyListDestAttributesTypes[i].length
-            if (noGreedyListTypesAttributes[i].length != 0 && noGreedyListTypesAttributes[i].length != noGreedyListDestAttributesTypes[i].length) {
-                console.error("Error - processing ThingVisor's configuration params: (noGreedyListTypesAttributes/noGreedyListDestAttributesTypes) have different second level length.")
-                return
-            }
-
-            for(var k = 0; k < noGreedyListTypesAttributes[i].length;k++){
-                //noGreedyListTypesAttributes[i][k].length == noGreedyListDestAttributesTypes[i][k].length
-                if (noGreedyListTypesAttributes[i][k].length != 0 && noGreedyListTypesAttributes[i][k].length != noGreedyListDestAttributesTypes[i][k].length) {
-                    console.error("Error - processing ThingVisor's configuration params: (noGreedyListTypesAttributes/noGreedyListDestAttributesTypes) have different third level length.")
-                    return
-                }
-
-                for(var l = 0; l < noGreedyListTypesAttributes[i][k].length;l++){
-                    //noGreedyListTypesAttributes[i][k][l] != '' NO SUPPORTED
-                    if (noGreedyListTypesAttributes[i][k][l] == "") {
-                        console.error("Error - processing ThingVisor's configuration params: invalid value '' (noGreedyListTypesAttributes third level).")
-                        return
-                    }
-
-                    //noGreedyListDestAttributesTypes[i][k][l] != '' NO SUPPORTED
-                    if (noGreedyListDestAttributesTypes[i][k][l] == "") {
-                        console.error("Error - processing ThingVisor's configuration params: invalid value '' (noGreedyListDestAttributesTypes third level).")
-                        return
-                    }
-                }
-            }
-        }
-    }
-
-    if (systemDatabasePort == '' || typeof systemDatabasePort === 'undefined') {
-        console.error("Error - processing ThingVisor's environment variables: 'systemDatabasePort' param not found.")
+    thingVisorID = config.thingVisorID
+    if (thingVisorID == '' || typeof thingVisorID === 'undefined') {
+        console.error("Error - processing ThingVisor's environment variables: 'thingVisorID' param not found.")
         return
     }
 
-    /* ****************************************************************************************************** */
-
-    notificacion_protocol = params.notificacion_protocol || 'http'
-    notify_ip = params.notify_ip || ''
     notificacion_port_container = config.notificacion_port_container || ''
-    notify_service = config.pathNotification
-   
-    if (notify_ip=="") {
-        console.error("Error - processing ThingVisor's environment variables: 'notify_ip' param not found.")
-        return
-    }
-
-    //entitiesPerVThingID is only considered if "isGroupingByType" == false
-    entitiesPerVThingID = parseInt(params.entitiesPerVThingID || '0')
-
-    if (entitiesPerVThingID < 0){
-        entitiesPerVThingID = 0
-    }
-
-    MQTTbrokerUsername = params.MQTTbrokerUsername || ''
-    MQTTbrokerPassword = params.MQTTbrokerPassword || ''
-
-    //Options MQTT connection
-    optionsControl = {
-        clean: false,
-        clientId: 'mqttjs_' + Math.random().toString(16).substr(2, 8), // Aleatorio
-        username: MQTTbrokerUsername, // Optional
-        password: MQTTbrokerPassword, // Optional
-    };
-
-    optionsData = {
-        clean: false,
-        clientId: 'mqttjs_' + Math.random().toString(16).substr(2, 8), // Aleatorio
-        username: MQTTbrokerUsername, // Optional
-        password: MQTTbrokerPassword, // Optional
-    };
 
 } catch(e) {
-    console.error("Error - processing ThingVisor's environment variables: " + e.toString())
+    console.error("Processing environment's variables - Error: " + e.toString())
     return
 }
 
-//Connecting to MQTT-server...
-try {
-    
-    clientMosquittoMqttControl = mqtt.connect("mqtt://" + MQTTControlBrokerIP + ":" + MQTTControlBrokerPort,optionsControl);
+function settingConfiguration(notify_ipArg, paramsArg,MQTTDataBrokerIPArg, MQTTDataBrokerPortArg, MQTTControlBrokerIPArg, MQTTControlBrokerPortArg) {
 
-    clientMosquittoMqttData = mqtt.connect("mqtt://" + MQTTDataBrokerIP + ":" + MQTTDataBrokerPort,optionsData);
-    
-} catch(e) {
-    console.error("Error - connecting MQTT-server...: " + e.toString())
-    return 
-}
-
-//Mapping connect function
-clientMosquittoMqttControl.on("connect", function() {
     try {
 
-        console.log("")
-        console.log(util.unixTime(Date.now()) + " - MQTT Broker connected")
-        //Establishing topic's subscriptions
-        var topicArray = []
-        var topicElement = MQTTbrokerApiKeyThingVisor + "/" + thingVisorID + "/" + MQTTbrokerTopic_c_in_Control
+        notificacion_protocol = ""
+        notify_service = ""
 
-        //"/TV/thingVisorID/c_in" topic
-        //topicArray.push(MQTTbrokerApiKeyThingVisor + "/" + thingVisorID + "/" + MQTTbrokerTopic_c_in_Control)
-        topicArray.push(topicElement)
+        entitiesPerVThingID = 0
 
-        if (subscribeMQTT(topicArray,'0',thingVisorID) == false) {
-            console.error("Error - connecting MQTT-server: Can't subscribe topics.")
-            return
-        } else {
-
-            //Push into mqttSubscriptionList array new topic subscriptions array
-            if (findArrayElement(mqttSubscriptionList,topicElement) == false) {
-                mqttSubscriptionList = mqttSubscriptionList.concat(topicArray)    
-            }
-            //mqttSubscriptionList = mqttSubscriptionList.concat(topicArray)
-
-            console.log("")
-            console.log("MQTT Subscription Topic List: ")
-            console.log(mqttSubscriptionList)
-            
-        }
-        return
-    } catch(e) {
-      //log.error(error.toString());
-      console.error(e.toString());
-      return;
-    }
-})
-
-//Mapping error function
-clientMosquittoMqttControl.on("error", function(error) {
-    try {
-        clientMosquittoMqttControl.reconnect()
-        return;
-    } catch(e) {
-      //log.error(error.toString());
-      console.error(e.toString());
-      return;
-    }
-})
-
-//Mapping reconnect function
-clientMosquittoMqttControl.on("reconnect", function(a) {
-    try {
-        console.log(util.unixTime(Date.now()) + " - Reconnecting clientMosquittoMqttControl...")
-        return;
-    } catch(e) {
-      //log.error(error.toString());
-      console.error(e.toString());
-      return;
-    }
-})
-
-//Mapping topic's subscriptions function
-clientMosquittoMqttControl.on("message", async function(topic, payload) {
-    
-    try {
-        console.log("");
-        console.log(util.unixTime(Date.now()) + " - Received topic: " + topic + " ; payload: " + payload.toString());
+        MQTTDataBrokerIP = MQTTDataBrokerIPArg
+        MQTTDataBrokerPort = MQTTDataBrokerPortArg
         
-        //var payLoadObject;
-
-        //payLoadObject = JSON.parse(payload.toString());
-
-
-        //Processing topic's message
-        var topicLevelLength = topic.split("/").length
-        var topicLevelElement = []
-
-        var centralElement = ""
-
-        for(var k = 0; k < topicLevelLength;k++) {
-            topicLevelElement[k]=topic.split("/")[k]
-        }
-
-        var centralElement = ""
+        MQTTControlBrokerIP = MQTTControlBrokerIPArg
+        MQTTControlBrokerPort = MQTTControlBrokerPortArg
         
-        for(var k = 1; k < topicLevelLength-1;k++) {
+        MQTTbrokerApiKeyvThing = config.MQTTbrokerApiKeyvThing
+        MQTTbrokerApiKeySilo = config.MQTTbrokerApiKeySilo
+        MQTTbrokerApiKeyThingVisor = config.MQTTbrokerApiKeyThingVisor
+        MQTTbrokerTopicData = config.MQTTbrokerTopicData
+        MQTTbrokerTopicDataOut = config.MQTTbrokerTopicDataOut
+        MQTTbrokerTopicDataIn = config.MQTTbrokerTopicDataIn
 
-            if (centralElement.length==0) {
-                centralElement = topic.split("/")[k]    
-            } else {
-                centralElement = centralElement + "/" + topic.split("/")[k]    
-            }
+        MQTTbrokerTopic_c_in_Control = config.MQTTbrokerTopic_c_in_Control
+        MQTTbrokerTopic_c_out_Control = config.MQTTbrokerTopic_c_out_Control
+
+        commandDestroyTV = config.commandDestroyTV
+        commandDestroyTVAck = config.commandDestroyTVAck
+        commandDeleteVThing = config.commandDeleteVThing
+        commandCreateVThing = config.commandCreateVThing
+        commandGetContextRequest = config.commandGetContextRequest
+        commandGetContextResponse = config.commandGetContextResponse
+
+        //params = obtainParams(paramsArg)
+        params = paramsArg
+
+        isGreedy = config.isGreedy
+        if (typeof isGreedy === "undefined") {
+            isGreedy = true
         }
 
-        if (topicLevelElement[0]==MQTTbrokerApiKeyThingVisor && centralElement==thingVisorID && topicLevelElement[topicLevelLength-1]==MQTTbrokerTopic_c_in_Control) {
-            //Handling "TV/thingVisorID/c_in" message
-            //console.log("Handling TV/thingVisorID/c_in message")
-            
-            //const payLoadObject = JSON.parse(payload.toString());
-            const payLoadObject = JSON.parse(payload.toString().replace(/'/g, '"'));
-
-            if (payLoadObject.command==commandDestroyTV) {
-                //destroyTV command example {"command": "destroyTV", "thingVisorID": thingVisorID}
-                //console.log("Destroying TV")
-
-                const responseShutdown = await shutdown(0)
-
-            } else {
-                console.error("invalid command (" + payLoadObject.command + ") in topic '" + topic + "'");                      
-            }
-
-        } else if (topicLevelElement[0]==MQTTbrokerApiKeyvThing && topicLevelElement[topicLevelLength-1]==MQTTbrokerTopic_c_in_Control) {
-            //Handling "vThing/vThingID/c_in" message
-            //console.log("Handling vThing/vThingID/c_in")
-
-            //const payLoadObject = JSON.parse(payload.toString());
-            const payLoadObject = JSON.parse(payload.toString().replace(/'/g, '"'));
-            
-            if (payLoadObject.command==commandGetContextRequest) {
-                //getContextRequest command example {"command": "getContextRequest", "vSiloID": vSiloID, "vThingID": vThingID}
-                //console.log("Handling getContextRequest.")
-
-                const entities = get_context(payLoadObject.vThingID)
-                
-                //Send sendGetContextResponse
-                const sendGetContextResponseResponse = await sendGetContextResponse(payLoadObject.vThingID,payLoadObject.vSiloID,entities)
-
-                if (sendGetContextResponseResponse) {
-                    //console.log('Operation has been completed successfully');
-                } else {
-                    console.error("Handling getContextRequest fails.")
-                }
-
-            } else {
-                console.error("invalid command (" + payLoadObject.command + ") in topic '" + topic + "'");                      
-            }   
-        } else {
-            console.error("invalid topic: '" + topic + "'");            
+        isAggregated = config.isAggregated
+        if (typeof isAggregated === "undefined") {
+            isAggregated = false
         }
-        return;
 
-    } catch(e) {
-      console.error(e.toString());
-      return;
-    }
-})
-
-//Mapping error function
-clientMosquittoMqttData.on("error", function(error) {
-    try {
-        clientMosquittoMqttData.reconnect()
-        return;
-    } catch(e) {
-      //log.error(error.toString());
-      console.error(e.toString());
-      return;
-    }
-})
-
-//Mapping reconnect function
-clientMosquittoMqttData.on("reconnect", function(a) {
-    try {
-        console.log(util.unixTime(Date.now()) + " - Reconnecting clientMosquittoMqttData...")
-        return;
-    } catch(e) {
-      //log.error(error.toString());
-      console.error(e.toString());
-      return;
-    }
-})
-
-/*
-//Launch ThingVisor...
-if (handleCBSubscriptions==false) {
-    // ********** Periodic process.
-    setInterval(async function() {
-        try {
-            var vThingDataProvider
-            var resultSendMQTT
-
-            console.log("")
-            console.log("")
-            console.log("**********" + util.unixTime(Date.now()) + " ***************")
-
-            vThingDataProvider = await obtainDataProvider(vThingList,ocb_ip,ocb_port,ocb_service,ocb_servicePath)
-
-            if (vThingDataProvider.length>0) {
+        isGroupingByType = config.isGroupingByType
+        if (typeof isGroupingByType === "undefined" && isGreedy) {
+            isGroupingByType = true
+        }
         
-                resultSendMQTT = await processDataProvider(vThingDataProvider, MQTTbrokerIP, MQTTbrokerPort, thingVisorID, MQTTbrokerUsername, MQTTbrokerPassword,
-                                                    MQTTbrokerApiKeyvThing, MQTTbrokerTopicData)    
-            }
-        } catch(e) {
-            console.error("setInterval: " + e.toString())
+        vThingLocalIDAggregated = config.vThingLocalIDAggregated
+
+        if (params == '' || typeof params === 'undefined' || 
+            params.ocb_ip == '' || typeof params.ocb_ip === 'undefined') {
+            console.error("Error - processing ThingVisor's environment variables: 'ocb_ip' param not found.")
             return false
         }
-    }, 10000); //default 5 seconds.
-}
-*/
 
-//const app = require('./app')
+        if (params == '' || typeof params === 'undefined' || 
+            params.ocb_port == '' || typeof params.ocb_port === 'undefined') {
+            console.error("Error - processing ThingVisor's environment variables: 'ocb_port' param not found.")
+            return false
+        }
+
+        if (MQTTDataBrokerIP == '' || typeof MQTTDataBrokerIP === 'undefined') {
+            console.error("Error - processing ThingVisor's environment variables: 'MQTTDataBrokerIP' param not found.")
+            return false
+        }
+
+        if (MQTTDataBrokerPort == '' || typeof MQTTDataBrokerPort === 'undefined') {
+            console.error("Error - processing ThingVisor's environment variables: 'MQTTDataBrokerPort' param not found.")
+            return false
+        }
+
+        if (MQTTControlBrokerIP == '' || typeof MQTTControlBrokerIP === 'undefined') {
+            console.error("Error - processing ThingVisor's environment variables: 'MQTTControlBrokerIP' param not found.")
+            return false
+        }
+
+        if (MQTTControlBrokerPort == '' || typeof MQTTControlBrokerPort === 'undefined') {
+            console.error("Error - processing ThingVisor's environment variables: 'MQTTControlBrokerPort' param not found.")
+            return false
+        }
+
+        ocb_ip = params.ocb_ip
+        ocb_port = params.ocb_port
+
+        //Obtaining mapping attributes/type configuration from config.js file (by default)
+        noGreedyListService = config.noGreedyListService || [""]
+        noGreedyListServicePath = config.noGreedyListServicePath || '/#'
+        noGreedyListTypes = config.noGreedyListTypes
+        noGreedyListTypesAttributes = config.noGreedyListTypesAttributes
+        noGreedyListDestTypes = config.noGreedyListDestTypes
+        noGreedyListDestAttributesTypes = config.noGreedyListDestAttributesTypes
+
+        smartParkingStandardDM_use = params.StdDataModel || false
+        smartParkingStandardDM_Service = config.smartParkingStandardDM_Service
+        
+        //In case it doesn't use mapping attributes/type configuration from config.js file, and OCB has the same configuration use require Mapping to smartparking standard Data Model.
+        if (isGreedy == false && isAggregated == false  && smartParkingStandardDM_use) {
+
+            noGreedyListService = smartParkingStandardDM_Service
+
+            smartParkingStandardDM_ListTypes = []
+            smartParkingStandardDM_Attributes = []
+
+            //Obtains ListTypes and their attributes from entitiesDM, and includes it on smartParkingStandardDM_ListTypes and smartParkingStandardDM_Attributes
+            var typeList = []
+            var attributesTypeList = []
+
+            for (var typeKey in entitiesDM) {
+
+                    if (Object.keys(entitiesDM[typeKey]).length > 0) {
+
+                        typeList.push(typeKey)
+
+                        var attributesList = []
+
+                        for (var attrKey in entitiesDM[typeKey]) {
+
+                            if (findArrayElement(["id","type","@context"],attrKey) == false) {
+                                attributesList.push(attrKey)
+                            }
+
+                        }
+
+                        attributesTypeList.push(attributesList)
+                    }
+            }
+
+            smartParkingStandardDM_ListTypes.push(typeList)
+            smartParkingStandardDM_Attributes.push(attributesTypeList)
+
+            console.log("Standard DataModel mapping - Supported Types.")
+            console.log(JSON.stringify(smartParkingStandardDM_ListTypes))
+            console.log("Standard DataModel mapping - Supported Attributes by type.")
+            console.log(JSON.stringify(smartParkingStandardDM_Attributes))
+
+            noGreedyListTypes = smartParkingStandardDM_ListTypes
+            noGreedyListTypesAttributes = smartParkingStandardDM_Attributes
+            noGreedyListDestTypes = noGreedyListTypes
+            noGreedyListDestAttributesTypes = noGreedyListTypesAttributes
+        }
+
+        if (isGreedy) {
+            ocb_service = params.ocb_service || [""]
+            ocb_servicePath = '/#'
+        } else {
+            ocb_service = noGreedyListService
+            ocb_servicePath = noGreedyListServicePath
+            //TODO: ocb_servicePath = config.noGreedyListServicePath || [['/#']]
+        }
+
+        if (isGreedy == true) {  //For compatibility with initProcess only (nested "for" statements)
+            ocb_type = []
+
+            for(var i = 0; i < ocb_service.length;i++){
+                ocb_type.push([i])
+            }
+        } else {
+            ocb_type = noGreedyListTypes
+        }
+
+        ocb_attrList = noGreedyListTypesAttributes
+
+        dest_ocb_type = noGreedyListDestTypes
+
+        dest_ocb_attrList = noGreedyListDestAttributesTypes
+
+        parkingsite_id = config.parkingsite_id
+        parkingsite_disSpacePCCapacity = config.parkingsite_disSpacePCCapacity
+        parkingsite_maxHeight = config.parkingsite_maxHeight
+        parkingsite_carWash = config.parkingsite_carWash
+        parkingsite_valet = config.parkingsite_valet
+        parkingsite_phoneNumber = config.parkingsite_phoneNumber
+        parkingsite_webSite = config.parkingsite_webSite
+        parkingsite_mail = config.parkingsite_mail
+        parkingsite_address = config.parkingsite_address
+
+        //Configuration controls...
+        if (isGreedy == false) {
+
+            //noGreedyListService.length>0
+            if (noGreedyListService.length <= 0 || typeof noGreedyListService === 'undefined') {
+                console.error("Error - processing ThingVisor's configuration params: invalid length (noGreedyListService).")
+                return false
+            }
+
+            //noGreedyListTypes.length>0
+            if (noGreedyListTypes.length <= 0 || typeof noGreedyListTypes === 'undefined') {
+                console.error("Error - processing ThingVisor's configuration params: invalid length (noGreedyListTypes).")
+                return false
+            }
+
+            //noGreedyListTypesAttributes.length>0
+            if (noGreedyListTypesAttributes.length <= 0 || typeof noGreedyListTypesAttributes === 'undefined') {
+                console.error("Error - processing ThingVisor's configuration params: invalid length (noGreedyListTypesAttributes).")
+                return false
+            }
+
+            //noGreedyListDestTypes.length>0
+            if (noGreedyListDestTypes.length <= 0 || typeof noGreedyListDestTypes === 'undefined') {
+                console.error("Error - processing ThingVisor's configuration params: invalid length (noGreedyListDestTypes).")
+                return false
+            }
+
+            //noGreedyListDestAttributesTypes.length>0
+            if (noGreedyListDestAttributesTypes.length <= 0 || typeof noGreedyListDestAttributesTypes === 'undefined') {
+                console.error("Error - processing ThingVisor's configuration params: invalid length (noGreedyListDestAttributesTypes).")
+                return false
+            }
+
+            //noGreedyListService.length == noGreedyListTypes.length
+            if (noGreedyListService.length != noGreedyListTypes.length) {
+                console.error("Error - processing ThingVisor's configuration params: (noGreedyListService/noGreedyListTypes) have different first level length.")
+                return false
+            }
+
+            //noGreedyListTypes.length == noGreedyListTypesAttributes.length
+            if (noGreedyListTypes.length != noGreedyListTypesAttributes.length) {
+                console.error("Error - processing ThingVisor's configuration params: (noGreedyListTypes/noGreedyListTypesAttributes) have different first level length.")
+                return false
+            }
+
+            //noGreedyListTypes.length == noGreedyListDestTypes.length
+            if (noGreedyListTypes.length != noGreedyListDestTypes.length) {
+                console.error("Error - processing ThingVisor's configuration params: (noGreedyListTypes/noGreedyListDestTypes) have different first level length.")
+                return false
+            }
+
+            //noGreedyListDestTypes.length == noGreedyListDestAttributesTypes.length
+            if (noGreedyListDestTypes.length != noGreedyListDestAttributesTypes.length) {
+                console.error("Error - processing ThingVisor's configuration params: (noGreedyListDestTypes/noGreedyListDestAttributesTypes) have different first level length.")
+                return false
+            }
+
+            for(var i = 0; i < noGreedyListService.length;i++){
+
+                //noGreedyListTypes[i].length != 0
+                if (noGreedyListTypes[i].length == 0) {
+                    console.error("Error - processing ThingVisor's configuration params: invalid length (noGreedyListTypes second level).")
+                    return false
+                }
+
+                //noGreedyListDestTypes[i].length != 0
+                if (noGreedyListDestTypes[i].length == 0) {
+                    console.error("Error - processing ThingVisor's configuration params: invalid length (noGreedyListDestTypes second level).")
+                    return false
+                }
+
+                //noGreedyListTypes[i].length == noGreedyListTypesAttributes[i].length
+                if (noGreedyListTypes[i].length != noGreedyListTypesAttributes[i].length) {
+                    console.error("Error - processing ThingVisor's configuration params: (noGreedyListTypes/noGreedyListTypesAttributes) have different second level length.")
+                    return false
+                }
+
+                //noGreedyListTypes[i].length == noGreedyListDestTypes[i].length
+                if (noGreedyListTypes[i].length != noGreedyListDestTypes[i].length) {
+                    console.error("Error - processing ThingVisor's configuration params: (noGreedyListTypes/noGreedyListDestTypes) have different second level length.")
+                    return false
+                }
+
+                for(var k = 0; k < noGreedyListTypes[i].length;k++){
+                    //noGreedyListTypes[i][k] != '' NO SUPPORTED
+                    if (noGreedyListTypes[i][k] == "") {
+                        console.error("Error - processing ThingVisor's configuration params: invalid value '' (noGreedyListTypes second level).")
+                        return false
+                    }
+
+                    //noGreedyListDestTypes[i][k] != '' NO SUPPORTED
+                    if (noGreedyListDestTypes[i][k] == "") {
+                        console.error("Error - processing ThingVisor's configuration params: invalid value '' (noGreedyListDestTypes second level).")
+                        return false
+                    }
+                }
+
+                //noGreedyListTypesAttributes[i].length == noGreedyListDestAttributesTypes[i].length
+                if (noGreedyListTypesAttributes[i].length != 0 && noGreedyListTypesAttributes[i].length != noGreedyListDestAttributesTypes[i].length) {
+                    console.error("Error - processing ThingVisor's configuration params: (noGreedyListTypesAttributes/noGreedyListDestAttributesTypes) have different second level length.")
+                    return false
+                }
+
+                for(var k = 0; k < noGreedyListTypesAttributes[i].length;k++){
+                    //noGreedyListTypesAttributes[i][k].length == noGreedyListDestAttributesTypes[i][k].length
+                    if (noGreedyListTypesAttributes[i][k].length != 0 && noGreedyListTypesAttributes[i][k].length != noGreedyListDestAttributesTypes[i][k].length) {
+                        console.error("Error - processing ThingVisor's configuration params: (noGreedyListTypesAttributes/noGreedyListDestAttributesTypes) have different third level length.")
+                        return false
+                    }
+
+                    for(var l = 0; l < noGreedyListTypesAttributes[i][k].length;l++){
+                        //noGreedyListTypesAttributes[i][k][l] != '' NO SUPPORTED
+                        if (noGreedyListTypesAttributes[i][k][l] == "") {
+                            console.error("Error - processing ThingVisor's configuration params: invalid value '' (noGreedyListTypesAttributes third level).")
+                            return false
+                        }
+
+                        //noGreedyListDestAttributesTypes[i][k][l] != '' NO SUPPORTED
+                        if (noGreedyListDestAttributesTypes[i][k][l] == "") {
+                            console.error("Error - processing ThingVisor's configuration params: invalid value '' (noGreedyListDestAttributesTypes third level).")
+                            return false
+                        }
+                    }
+                }
+            }
+        }
+
+        /* ****************************************************************************************************** */
+
+        notificacion_protocol = params.notificacion_protocol || 'http'
+        notify_ip = notify_ipArg
+        notify_service = config.pathNotification
+       
+        
+        if (notify_ip=="") {
+            console.error("Error - processing ThingVisor's environment variables: 'notify_ip' param not found.")
+            return
+        }
+        
+
+        //entitiesPerVThingID is only considered if "isGroupingByType" == false
+        entitiesPerVThingID = parseInt(params.entitiesPerVThingID || '0')
+
+        if (entitiesPerVThingID < 0){
+            entitiesPerVThingID = 0
+        }
+
+        MQTTbrokerUsername = params.MQTTbrokerUsername || ''
+        MQTTbrokerPassword = params.MQTTbrokerPassword || ''
+
+        //Options MQTT connection
+        optionsControl = {
+            clean: false,
+            clientId: 'mqttjs_' + Math.random().toString(16).substr(2, 8), // Aleatorio
+            username: MQTTbrokerUsername, // Optional
+            password: MQTTbrokerPassword, // Optional
+        };
+
+        optionsData = {
+            clean: false,
+            clientId: 'mqttjs_' + Math.random().toString(16).substr(2, 8), // Aleatorio
+            username: MQTTbrokerUsername, // Optional
+            password: MQTTbrokerPassword, // Optional
+        };
+
+        return true
+        
+    } catch(e) {
+        console.error("settingConfiguration - Error: " + e.toString())
+        return false
+    }
+
+    // body...
+}
+
+setTimeout(async function() {
+
+    console.log("")
+    console.log(util.unixTime(Date.now()) + " - Try to obtain mapped TV port...")
+                
+    var MongoClient = require('mongodb').MongoClient;
+    var url = "mongodb://"+systemDatabaseIP+":"+systemDatabasePort;
+    const dbName = 'viriotDB';
+
+    console.info('Mongoose openning connection...'+url);
+
+    MongoClient.connect(url, { useNewUrlParser: true }, async function(err, client) {
+
+        const db = client.db(dbName);
+            
+        var query = {"thingVisorID": thingVisorID};
+
+        await db.collection("thingVisorC").findOne(query, async function(err, result) {
+            if (err) throw err;
+            
+            var notify_ipTV        
+            var paramsTV
+            var MQTTDataBrokerIPTV
+            var MQTTDataBrokerPortTV
+            var MQTTControlBrokerIPTV
+            var MQTTControlBrokerPortTV
+
+            try {
+
+                notify_ipTV = result.IP || params.notify_ip || ""
+                console.log("Gateway to Thingvisor: " + notify_ipTV)
+
+                mapped_port = result.port[notificacion_port_container+'/tcp'] || 0
+                console.log("Mapped port to Thingvisor: " + mapped_port)
+
+                //paramsTV = obtainParams(result.params) || obtainParams(config.providerParams) || {}
+                paramsTV = obtainParams(result.params) || {}
+                console.log("Params of Thingvisor: ")
+                console.log(paramsTV)
+
+                //MQTTDataBrokerIPTV = result.MQTTDataBroker.ip || config.MQTTDataBrokerIP || ""
+                MQTTDataBrokerIPTV = result.MQTTDataBroker.ip ||  ""
+                console.log("MQTT DataBroker IP: " + MQTTDataBrokerIPTV)
+
+                //MQTTDataBrokerPortTV = result.MQTTDataBroker.port || config.MQTTDataBrokerPort || 0
+                MQTTDataBrokerPortTV = result.MQTTDataBroker.port || 0
+                console.log("MQTT DataBroker Port: " + MQTTDataBrokerPortTV)
+
+                //MQTTControlBrokerIPTV = result.MQTTControlBroker.ip || config.MQTTControlBrokerIP || ""
+                MQTTControlBrokerIPTV = result.MQTTControlBroker.ip || ""
+                console.log("MQTT ControlBroker IP: " + MQTTControlBrokerIPTV)
+
+                //MQTTControlBrokerPortTV = result.MQTTControlBroker.port || config.MQTTControlBrokerPort || 0
+                MQTTControlBrokerPortTV = result.MQTTControlBroker.port || config.MQTTControlBrokerPort || 0
+                console.log("MQTT ControlBroker Port: " + MQTTControlBrokerPortTV)
+                    
+            } catch(e) {
+                console.error(e)
+                notify_ipTV = ""
+                mapped_port = 0
+                paramsTV = {}
+                MQTTDataBrokerIPTV = ""
+                MTTDataBrokerPortTV = 0
+                MQTTControlBrokerIPTV = ""
+                MQTTControlBrokerPortTV = 0
+            }
+
+            if(notify_ipTV != "" && mapped_port != 0 && isEmpty(paramsTV) == false && MQTTDataBrokerIPTV != "" &&  MQTTDataBrokerPortTV != 0 &&
+                MQTTControlBrokerIPTV != "" && MQTTControlBrokerPortTV != 0 ){
+
+                if(settingConfiguration(notify_ipTV, paramsTV, MQTTDataBrokerIPTV, MQTTDataBrokerPortTV, MQTTControlBrokerIPTV, MQTTControlBrokerPortTV)) {
+                    
+                    console.log("settingConfiguration : true")
+                
+                } else {
+
+                    console.log("settingConfiguration : false")
+
+                }
+            }
+
+        });
+
+        client.close();
+    }); 
+
+}, 5000); //Wait 5 seconds
+
+
+setTimeout(async function() {
+    //Connecting to MQTT-server...
+    try {
+
+        clientMosquittoMqttControl = mqtt.connect("mqtt://" + MQTTControlBrokerIP + ":" + MQTTControlBrokerPort,optionsControl);
+
+        clientMosquittoMqttData = mqtt.connect("mqtt://" + MQTTDataBrokerIP + ":" + MQTTDataBrokerPort,optionsData);
+
+    } catch(e) {
+        console.error("Error - connecting MQTT-server...: " + e.toString())
+        return 
+    }
+
+    //Mapping connect function
+    clientMosquittoMqttControl.on("connect", function() {
+        try {
+
+            console.log("")
+            console.log(util.unixTime(Date.now()) + " - MQTT Control Broker connected")
+            //Establishing topic's subscriptions
+            var topicArray = []
+            var topicElement = MQTTbrokerApiKeyThingVisor + "/" + thingVisorID + "/" + MQTTbrokerTopic_c_in_Control
+
+            //"/TV/thingVisorID/c_in" topic
+            //topicArray.push(MQTTbrokerApiKeyThingVisor + "/" + thingVisorID + "/" + MQTTbrokerTopic_c_in_Control)
+            topicArray.push(topicElement)
+
+            if (subscribeMQTT(topicArray,'0',thingVisorID) == false) {
+                console.error("Error - connecting MQTT-server: Can't subscribe topics.")
+                return
+            } else {
+
+                //Push into mqttSubscriptionList array new topic subscriptions array
+                if (findArrayElement(mqttSubscriptionList,topicElement) == false) {
+                    mqttSubscriptionList = mqttSubscriptionList.concat(topicArray)    
+                }
+                //mqttSubscriptionList = mqttSubscriptionList.concat(topicArray)
+
+                console.log("")
+                console.log("MQTT Subscription Topic List: ")
+                console.log(mqttSubscriptionList)
+                
+            }
+            return
+        } catch(e) {
+          //log.error(error.toString());
+          console.error(e.toString());
+          return;
+        }
+    })
+
+    //Mapping error function
+    clientMosquittoMqttControl.on("error", function(error) {
+        try {
+            clientMosquittoMqttControl.reconnect()
+            return;
+        } catch(e) {
+          console.error(e.toString());
+          return;
+        }
+    })
+
+    //Mapping reconnect function
+    clientMosquittoMqttControl.on("reconnect", function(a) {
+        try {
+            console.log(util.unixTime(Date.now()) + " - Reconnecting clientMosquittoMqttControl...")
+            return;
+        } catch(e) {
+          console.error(e.toString());
+          return;
+        }
+    })
+
+    //Mapping topic's subscriptions function
+    clientMosquittoMqttControl.on("message", async function(topic, payload) {
+        
+        try {
+            console.log("");
+            console.log(util.unixTime(Date.now()) + " - Received topic: " + topic + " ; payload: " + payload.toString());
+            
+            //Processing topic's message
+            var topicLevelLength = topic.split("/").length
+            var topicLevelElement = []
+
+            var centralElement = ""
+
+            for(var k = 0; k < topicLevelLength;k++) {
+                topicLevelElement[k]=topic.split("/")[k]
+            }
+
+            var centralElement = ""
+            
+            for(var k = 1; k < topicLevelLength-1;k++) {
+
+                if (centralElement.length==0) {
+                    centralElement = topic.split("/")[k]    
+                } else {
+                    centralElement = centralElement + "/" + topic.split("/")[k]    
+                }
+            }
+
+            if (topicLevelElement[0]==MQTTbrokerApiKeyThingVisor && centralElement==thingVisorID && topicLevelElement[topicLevelLength-1]==MQTTbrokerTopic_c_in_Control) {
+                //Handling "TV/thingVisorID/c_in" message
+                //console.log("Handling TV/thingVisorID/c_in message")
+                
+                //const payLoadObject = JSON.parse(payload.toString());
+                const payLoadObject = JSON.parse(payload.toString().replace(/'/g, '"'));
+
+                if (payLoadObject.command==commandDestroyTV) {
+                    //destroyTV command example {"command": "destroyTV", "thingVisorID": thingVisorID}
+                    //console.log("Destroying TV")
+
+                    const responseShutdown = await shutdown(0)
+
+                } else {
+                    console.error("invalid command (" + payLoadObject.command + ") in topic '" + topic + "'");                      
+                }
+
+            } else if (topicLevelElement[0]==MQTTbrokerApiKeyvThing && topicLevelElement[topicLevelLength-1]==MQTTbrokerTopic_c_in_Control) {
+                //Handling "vThing/vThingID/c_in" message
+                //console.log("Handling vThing/vThingID/c_in")
+
+                //const payLoadObject = JSON.parse(payload.toString());
+                const payLoadObject = JSON.parse(payload.toString().replace(/'/g, '"'));
+                
+                if (payLoadObject.command==commandGetContextRequest) {
+                    //getContextRequest command example {"command": "getContextRequest", "vSiloID": vSiloID, "vThingID": vThingID}
+                    //console.log("Handling getContextRequest.")
+
+                    const entities = get_context(payLoadObject.vThingID)
+                    
+                    //Send sendGetContextResponse
+                    const sendGetContextResponseResponse = await sendGetContextResponse(payLoadObject.vThingID,payLoadObject.vSiloID,entities)
+
+                    if (sendGetContextResponseResponse) {
+                        //console.log('Operation has been completed successfully');
+                    } else {
+                        console.error("Handling getContextRequest fails.")
+                    }
+
+                } else {
+                    console.error("invalid command (" + payLoadObject.command + ") in topic '" + topic + "'");                      
+                }   
+            } else {
+                console.error("invalid topic: '" + topic + "'");            
+            }
+            return;
+
+        } catch(e) {
+          console.error(e.toString());
+          return;
+        }
+    })
+
+    //Mapping connect function
+    clientMosquittoMqttData.on("connect", function() {
+        try {
+
+            console.log("")
+            console.log(util.unixTime(Date.now()) + " - MQTT Data Broker connected")
+
+            return
+        } catch(e) {
+          //log.error(error.toString());
+          console.error(e.toString());
+          return;
+        }
+    })
+
+    //Mapping error function
+    clientMosquittoMqttData.on("error", function(error) {
+        try {
+            clientMosquittoMqttData.reconnect()
+            return;
+        } catch(e) {
+          console.error(e.toString());
+          return;
+        }
+    })
+
+    //Mapping reconnect function
+    clientMosquittoMqttData.on("reconnect", function(a) {
+        try {
+            console.log(util.unixTime(Date.now()) + " - Reconnecting clientMosquittoMqttData...")
+            return;
+        } catch(e) {
+          console.error(e.toString());
+          return;
+        }
+    })
+
+}, 15000); //Wait 15 seconds
+
 
 //Obtain the param value of an specific entity.
 function obtainEntityDM(param) // min and max included
@@ -784,7 +881,9 @@ function obtainNGSILDPayload(service,dataBody){
                                         if ( dataBody[attr].type.toUpperCase() == "TEXT".toUpperCase() || 
                                             dataBody[attr].type.toUpperCase() == "STRING".toUpperCase() || 
                                             dataBody[attr].type.toUpperCase() == "NUMBER".toUpperCase() || 
-                                            dataBody[attr].type.toUpperCase() == "DATETIME".toUpperCase()) {
+                                            dataBody[attr].type.toUpperCase() == "STRUCTUREDVALUE".toUpperCase() ||
+                                            dataBody[attr].type.toUpperCase() == "GEO:JSON".toUpperCase() ||
+                                            dataBody[attr].type.toUpperCase() == "DATETIME".toUpperCase() ) {
                                                 
                                             entityDataModel[dest_ocb_attrList[serviceIndex][typeIndex][k]].value = dataBody[attr].value
             
@@ -924,13 +1023,7 @@ app.post(config.pathNotification, async function(req,res) {
         console.log("")
         console.log(util.unixTime(Date.now()) + " - POST /notification")
     
-        //var date = new Date();
-
-        //const timestampValue = util.ISODateString(date)
-
         const dataBody = req.body.data
-
-        //console.log(dataBody[i])
 
         var service=req.headers['fiware-service'] || ""
 
@@ -945,221 +1038,17 @@ app.post(config.pathNotification, async function(req,res) {
             }
         } else {
 
-            //console.log(req.body.data)
-
             for(var i = 0; i < dataBody.length; i++) {
+                 
+                const dataBodyLD = obtainNGSILDPayload(service,dataBody[i])
 
-/*
-                var entityv2TV = {}
-
-                entityv2TV.id = dataBody[i].id
-
-                //Changing entity type.
-                //1) Obtain service element index in ocb_service array
-                var serviceIndex
-                var typeIndex
-                var typeResult
-
-                serviceIndex = obtainArrayIndex(ocb_service,service)
-
-                if (serviceIndex!=-1) { //Found.
-                    var typeIndex = obtainArrayIndex(ocb_type[serviceIndex],dataBody[i].type)
-                    //2) Obtain type element index in ocb_type
-                    if (typeIndex!=-1) {
-                        //3) Assing new type from dest_ocb_type
-                        entityv2TV.type = dest_ocb_type[serviceIndex][typeIndex]
-                        typeResult = dest_ocb_type[serviceIndex][typeIndex]
+                if (isEmpty(dataBodyLD) == false){
+                    if (isAggregated) {
+                        const responseStoreData = await storeData(dataBody[i], dataBodyLD, service)
+                    } else {
+                        const responseSendDataMQTT = await sendDataMQTT(dataBody[i], dataBodyLD, service)
                     }
                 }
-
-                if(typeof entityv2TV.type === 'undefined' || typeof typeResult === 'undefined'){
-                    console.error('Notification error: Building type... not found.')
-                } else {
-
-                    var entity_template
-
-                    var entityDataModel = {}
-
-                    var mappedAttr = []
-
-                    var isEntityDataModel = false
-
-                    //isAggregated == false condition is needed because, if we use a type defined in entities.js in dest_ocb_type array, 
-                    //it fails when aggregated data model entities are different than the entities.js one. 
-                    //If we won't this condition, we need to be careful. We must define types, in dest_ocb_type, 
-                    //are not included in entities.js file.
-                    if((typeResult == 'parkingsite' || typeResult == 'parkingmeter') && isAggregated == false){
-                    //if(typeResult == 'parkingsite' || typeResult == 'parkingmeter'){
-                        entity_template = obtainEntityDM(typeResult)
-                        entityDataModel = JSON.parse(JSON.stringify(entity_template));
-                        entityDataModel.id = entityDataModel.id.replace("---",dataBody[i].id)
-                        isEntityDataModel = true
-
-                    }
-
-                    for(let attr in dataBody[i]){
-                        if ( attr != "id" && attr != "type"){
-                            //Can recover all attributes
-                            if (ocb_attrList[serviceIndex][typeIndex].length == 0 && isEntityDataModel == false) {
-                                entityv2TV[attr] = dataBody[i][attr]
-                            } else {
-                                
-                            //    //Recover only attributes was defined.
-                            //    for(var k = 0; k < ocb_attrList[serviceIndex][typeIndex].length; k++) {
-                            //        if (ocb_attrList[serviceIndex][typeIndex][k] == attr) {
-                            //            try {
-                            //                entityv2TV[dest_ocb_attrList[serviceIndex][typeIndex][k]] = dataBody[i][attr]
-                            //            } catch(e) {
-                            //                console.log("Mapping NGSI-LD attribute - not found for '" + attr + "'")
-                            //            }
-                            //            break;
-                            //        }
-                            //    }
-                            //}
-
-                                //Recover only attributes was defined.
-                                for(var k = 0; k < ocb_attrList[serviceIndex][typeIndex].length; k++) {
-                                    if (ocb_attrList[serviceIndex][typeIndex][k] == attr) {
-                                        try {
-
-                                            if (isEntityDataModel) {
-                                                if ( dataBody[i][attr].type.toUpperCase() == "TEXT".toUpperCase() || 
-                                                    dataBody[i][attr].type.toUpperCase() == "STRING".toUpperCase() || 
-                                                    dataBody[i][attr].type.toUpperCase() == "NUMBER".toUpperCase() || 
-                                                    dataBody[i][attr].type.toUpperCase() == "DATETIME".toUpperCase()) {
-                                                
-                                                    entityDataModel[dest_ocb_attrList[serviceIndex][typeIndex][k]].value = dataBody[i][attr].value
-            
-                                                } else if (dataBody[i][attr].type.toUpperCase() == "COORDS".toUpperCase() ||
-                                                            dataBody[i][attr].type.toUpperCase() == "POINT".toUpperCase()) {
-            
-                                                    entityDataModel[dest_ocb_attrList[serviceIndex][typeIndex][k]].value.coordinates = 
-                                                        [ parseFloat(dataBody[i][attr].value.split(",")[1]), parseFloat(dataBody[i][attr].value.split(",")[0]) ]
-                                                }
-                                            }
-
-                                            mappedAttr.push(attr)
-        
-                                            entityv2TV[dest_ocb_attrList[serviceIndex][typeIndex][k]] = dataBody[i][attr]
-
-       
-                                        } catch(e) {
-
-                                            console.log("Mapping NGSI-LD attribute - not found for '" + attr + "'")
-                                        }
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    var dataBodyLD
-
-                    if (isEntityDataModel == false) {
-                        //Obtain "@context"
-                        if (typeof dataBody[i]["@context"] !== 'undefined' && typeof entityv2TV["@context"] === "undefined") {
-                            entityv2TV["@context"] = dataBody[i]["@context"]
-                        }
-
-                        //Obtain "dateCreated"
-                        if (typeof dataBody[i].dateCreated !== 'undefined' && typeof entityv2TV.dateCreated === 'undefined') {
-                            entityv2TV.dateCreated = dataBody[i].dateCreated
-                        }
-
-                        //Obtain "dateModified"
-                        if (typeof dataBody[i].dateModified !== 'undefined' && typeof entityv2TV.dateModified === 'undefined') {
-                            entityv2TV.dateModified = dataBody[i].dateModified
-                        }
-
-                        //Obtain timestamp
-                        if (typeof dataBody[i].timestamp !== 'undefined' && typeof entityv2TV.timestamp === 'undefined') {
-                            entityv2TV.timestamp = dataBody[i].timestamp
-                        }
-
-                        //Obtain "location"
-                        if (typeof dataBody[i].location !== 'undefined' && typeof entityv2TV.location === 'undefined') {
-                            entityv2TV.location = dataBody[i].location
-                        }
-
-                        dataBodyLD = libfromNGSIv2.fromNGSIv2toNGSILD(entityv2TV,"")
-
-                    } else {
-                        //Additional information (config.js)
-                        if (typeResult.toUpperCase() == "parkingsite".toUpperCase()) {
-
-                            //Find "id" in "parkingsite_id"
-                            const idIndex = obtainArrayIndex(parkingsite_id,dataBody[i].id)
-
-                            //If it exists, it obtains the additional information only when it wasn't mapped previously (mappedAttr).
-                            if (idIndex!=-1) {
-
-                                const timestampIndex = obtainArrayIndex(mappedAttr,"timestamp")
-                                if (timestampIndex==-1) {
-                                    entityDataModel.timestamp.value = timestampValue
-                                }
-
-                                const disSpacePCCapacityIndex = obtainArrayIndex(mappedAttr,"disSpacePCCapacity")
-                                if (disSpacePCCapacityIndex==-1) {
-                                    entityDataModel.disSpacePCCapacity.value = parkingsite_disSpacePCCapacity[idIndex]
-                                }
-
-                                const maxHeightIndex = obtainArrayIndex(mappedAttr,"maxHeight")
-                                if (maxHeightIndex==-1) {
-                                    entityDataModel.maxHeight.value = parkingsite_maxHeight[idIndex]
-                                }
-
-                                const carWashIndex = obtainArrayIndex(mappedAttr,"carWash")
-                                if (carWashIndex==-1) {
-                                    entityDataModel.carWash.value = parkingsite_carWash[idIndex]
-                                }
-
-                                const valetIndex = obtainArrayIndex(mappedAttr,"valet")
-                                if (valetIndex==-1) {
-                                    entityDataModel.valet.value = parkingsite_valet[idIndex]
-                                }
-
-                                const phoneNumberIndex = obtainArrayIndex(mappedAttr,"phoneNumber")
-                                if (phoneNumberIndex==-1) {
-                                    entityDataModel.phoneNumber.value = parkingsite_phoneNumber[idIndex]
-                                }
-
-                                const webSiteIndex = obtainArrayIndex(mappedAttr,"webSite")
-                                if (webSiteIndex==-1) {
-                                    entityDataModel.webSite.value = parkingsite_webSite[idIndex]
-                                }
-
-                                const mailIndex = obtainArrayIndex(mappedAttr,"mail")
-                                if (mailIndex==-1) {
-                                    entityDataModel.mail.value = parkingsite_mail[idIndex]
-                                }
-                                
-                                const addressIndex = obtainArrayIndex(mappedAttr,"address")
-                                if (addressIndex==-1) {
-                                    entityDataModel.address.value = parkingsite_address[idIndex]
-                                }
-
-                            }
-                        }
-
-                        dataBodyLD = libfromNGSIv2.fromNGSIv2toNGSILD(entityDataModel,"")
-
-                    }
-
-*/                    
-                    const dataBodyLD = obtainNGSILDPayload(service,dataBody[i])
-
-                    //console.log("dataBodyLD")
-                    //console.log(dataBodyLD)
-
-                    if (isEmpty(dataBodyLD) == false){
-                        if (isAggregated) {
-                            const responseStoreData = await storeData(dataBody[i], dataBodyLD, service)
-                        } else {
-                            const responseSendDataMQTT = await sendDataMQTT(dataBody[i], dataBodyLD, service)
-                        }
-                    }
-//                }
             }
         }
         res.status(200).send({description: 'Operation has been completed successfully'})
@@ -1171,72 +1060,38 @@ app.post(config.pathNotification, async function(req,res) {
 
 // Launch service.
 app.listen(notificacion_port_container,() => {        
-    console.log(util.unixTime(Date.now()) + ` - API running, port: ${notificacion_port_container}`)
 
-    //var obtainMappedTVPort = false
-    //while (obtainMappedTVPort == false) {
+    setTimeout(async function() {
+        console.log(util.unixTime(Date.now()) + ` - API running, port: ${notificacion_port_container}`)
 
-        //console.log("(1)Try to obtain mapped TV port: " + util.unixTime(Date.now()))
+        var responseStartThingVisor = await startThingVisor()                                    
 
-        setTimeout(function() {
-
-            console.log("")
-            console.log(util.unixTime(Date.now()) + " - Try to obtain mapped TV port...")
-                
-            var MongoClient = require('mongodb').MongoClient;
-            var url = "mongodb://"+systemDatabaseIP+":"+systemDatabasePort;
-            const dbName = 'viriotDB';
-
-            console.info('Mongoose openning connection...'+url);
-
-            MongoClient.connect(url, { useNewUrlParser: true }, async function(err, client) {
-
-                const db = client.db(dbName);
-            
-                var query = {"thingVisorID": thingVisorID};
-
-                await db.collection("thingVisorC").findOne(query, async function(err, result) {
-                    if (err) throw err;
-                    
-                    //console.log(typeof result)
-                    //console.log(result)
-                    //console.log(result.port[notificacion_port_container+'/tcp'])
-
-                    mapped_port = result.port[notificacion_port_container+'/tcp']
-
-                    console.log("Mapped port to Thingvisor: " + mapped_port)
-                    
-                    var responseStartThingVisor = await startThingVisor()
-
-    //                console.log("responseStartThingVisor")
-    //                console.log(responseStartThingVisor)
-
-                    //TODO: process responseStartThingVisor value (true or false) send topic message¿?¿?
-
-    //                obtainMappedTVPort = true
-                });
-
-                client.close();
-            }); 
-        }, 5000); //Wait 5 seconds before access database system.
-    //}
+    }, 25000); //Wait 25 seconds
 
 })
+
+function obtainParams(paramsString) {
+
+    var paramsJSON = {}
+
+    try {
+        paramsJSON = JSON.parse(paramsString)
+    } catch(e) {
+        try {
+            paramsJSON = JSON.parse(paramsString.replace(/'/g,'"'))
+        } catch(e1) {
+            paramsJSON = {}
+        }
+    }
+
+    return paramsJSON
+}
 
 async function startThingVisor() {
     try {
         //console.log("startThingVisor")
 
         var responseInitProces = await initProcess()
-
-        //if (isGreedy) {
-        //    responseInitProces = await greedyProcess()
-        //} else {
-        //    responseInitProces = await noGreedyProcess()
-        //}
-
-//        console.log("responseInitProces")
-//        console.log(responseInitProces)
 
         //TODO: process responseInitProces value (true or false) send topic message¿?¿?
 
@@ -1297,7 +1152,6 @@ async function initProcess() {
                         //Processing response,
                         for(var i = 0; i < responseCBEntities.length;i++) {
 
-                            //const valuevThingLocalID = Date.now() + "-" + i
                             var valuevThingLocalID
 
                             if (isGroupingByType) {
@@ -1402,9 +1256,6 @@ async function initProcess() {
         //STEP 4: Send createVThings topic message to Master-Controller.
         const responseInitProcessAux = await initProcessAux()
 
-//        console.log("responseInitProcessAux")
-//        console.log(responseInitProcessAux)
-
         //TODO: process responseInitProcessAux value (true or false) send topic message¿?¿?
 
         return true
@@ -1414,38 +1265,6 @@ async function initProcess() {
         return false
     }
 }
-
-/*
-//To subscribe to all Orion Context Broker entities NO Greedy TV.
-async function noGreedyProcess() {
-    try{
-        //console.log("noGreedyProcess")
-
-        //STEP 1: Obtain all Orion Context Broker entities, the request are limited by a register fixed number (100). This process store the
-        //traceability between NGSI-v2 id and NGSI-LD id.
-
-        //TODO: --> podria necesitarse para esto la función "obtainDataProvider" ya que en este punto tenemos que saber id y type
-        //de la entidad ya que tenemos que crear vThingList como se hace en "greedyProcess", si tenemos el id y type por params entonces no necesitamos
-        //este paso porque podremos crear el array directamente. Si va por params, habría que poner la validación al arrancar el proceso.
-        
-        //STEP 2: Establishing topic's subscriptions using vThingID of vThingList array.
-        //STEP 3: Subscribe to Orion Context Broker.
-        //STEP 4: Send createVThings topic message to Master-Controller.
-        const responseInitProcessAux = await initProcessAux()
-
-//        console.log("responseInitProcessAux")
-//        console.log(responseInitProcessAux)
-
-        //TODO: process responseInitProcessAux value (true or false) send topic message¿?¿?
-
-        return true
-        
-    } catch(e) {
-        console.error("noGreedyProcess: " + e.toString())
-        return false
-    }
-}
-*/
 
 function findArrayElement(array,element) {
     try {
@@ -1520,9 +1339,7 @@ async function initProcessAux() {
         } else {
             responseOrionSubscription = await orionSubscription()    
         }
-//        console.log("responseOrionSubscription")
-//        console.log(responseOrionSubscription)
-       
+      
         //TODO: process responseOrionSubscription value (true or false) send topic message¿?¿?
 
         //console.log("ThingVisor subscribed to all Orion Context Broker entities.")
@@ -1530,9 +1347,6 @@ async function initProcessAux() {
         //STEP 4: Send createVThings topic message to Master-Controller.
         var responseSendCreateVThingMessages
         responseSendCreateVThingMessages = await sendCreateVThingMessages()
-               
-//        console.log("responseSendCreateVThingMessages")
-//        console.log(responseSendCreateVThingMessages)
                
         //TODO: process responseSendCreateVThingMessages value (true or false) send topic message¿?¿?
 
@@ -1620,17 +1434,12 @@ async function sendDataMQTT_AggregatedValue(){
 
             if (vThingIDValue != "") {
 
-                //const vThingIDValue = libWrapperUtils.format_uri(dataBody.type,dataBody.id)
-                //const topic = MQTTbrokerApiKeyvThing + "/" + vThingIDValue + "/" + MQTTbrokerTopicData;
-
                 const topic = MQTTbrokerApiKeyvThing + "/" + vThingIDValue + "/" + MQTTbrokerTopicDataOut;
                     
-                //const topicMessage = {"data": [dataBodyLD], "meta": {"vThingID": vThingIDValue}}
                 const topicMessage = {"data": [vThingListAggValueContext[0].data], "meta": {"vThingID": vThingIDValue}}
 
                 console.log("Sending message... " + topic + " " + JSON.stringify(topicMessage));
 
-                //await clientMosquittoMqttData.publish(topic, JSON.stringify(dataBodyLD), {qos: 0}, function (err) {
                 await clientMosquittoMqttData.publish(topic, JSON.stringify(topicMessage), {qos: 0}, function (err) {
                     if (!err) {
                         //console.log("Message has been sent correctly.")
@@ -2214,18 +2023,8 @@ async function sendDataMQTT(dataBody, dataBodyLD, service) {
 
         var vThingIDValue = await storeData(dataBody, dataBodyLD, service)
 
-        //for(var k = 0; k < vThingList.length;k++) {
-        //    if (dataBody.type==vThingList[k].rThingType && dataBody.id==vThingList[k].rThingID) {
-        //        vThingIDValue = vThingList[k].vThingID
-        //        vThingList[k].data = dataBodyLD //Updating data_context
-        //        break;
-        //    }
-        //}
-
         //If we find it
         if (vThingIDValue!="") {
-            //const vThingIDValue = libWrapperUtils.format_uri(dataBody.type,dataBody.id)
-            //const topic = MQTTbrokerApiKeyvThing + "/" + vThingIDValue + "/" + MQTTbrokerTopicData;
 
             const topic = MQTTbrokerApiKeyvThing + "/" + vThingIDValue + "/" + MQTTbrokerTopicDataOut;
                 
@@ -2233,7 +2032,6 @@ async function sendDataMQTT(dataBody, dataBodyLD, service) {
 
             console.log("Sending message... " + topic + " " + JSON.stringify(topicMessage));
 
-            //await clientMosquittoMqttData.publish(topic, JSON.stringify(dataBodyLD), {qos: 0}, function (err) {
             await clientMosquittoMqttData.publish(topic, JSON.stringify(topicMessage), {qos: 0}, function (err) {
                 if (!err) {
                     //console.log("Message has been sent correctly.")
@@ -2290,7 +2088,7 @@ async function orionUnsubscription(subscriptionCBArray) {
 
         var test = true
 
-        //Definimos baseURL de axios según la URl de OCB source.
+        //Define baseURL --> URL of OCB source.
         const instance = axios.create({
                 baseURL: 'http://' + ocb_ip + ':' + ocb_port
         })
@@ -2383,71 +2181,6 @@ async function sendDeleteMessages() {
     }
 }
 
-/*
-//Obtain entities from Orion Context Broker.
-async function obtainDataProvider(vThingArray,ocb_ip,ocb_port,ocb_service,ocb_servicePath) {
-    try {
-        var entitiesOCB = []
-
-        for(var i = 0; i < vThingArray.length;i++) {
-
-            var responseOCB
-            try {
-                //Launch Orion Context Broker request
-                responseOCB = await orion.obtainCBEntity(vThingArray[i],ocb_service, ocb_servicePath, ocb_ip, ocb_port);    
-
-                if (responseOCB.id == vThingArray[i]) {
-                    entitiesOCB.push(responseOCB)
-                }
-
-            } catch(e) {
-                if(e.message.indexOf("statusCode=404") <= -1) {
-                    console.error("Error Entity: " + vThingArray[i] + " : " + e.toString())
-                }
-            }
-        }
-        return entitiesOCB
-
-    } catch(e) {
-        console.error("obtainDataProvider: " + e.toString())
-        return []
-    }
-}
-*/
-
-/*
-//Publish mqtt.
-async function processDataProvider(vThingDataProvider, MQTTbrokerIP, MQTTbrokerPort, thingVisorID, MQTTbrokerUsername, MQTTbrokerPassword,
-                            MQTTbrokerApiKeyvThing, MQTTbrokerTopicData) {
-
-    try {
-        for(var i = 0; i < vThingDataProvider.length; i++) {
-
-            //Obtain entity data body
-            const dataBody = vThingDataProvider[i] 
-
-            const topic = MQTTbrokerApiKeyvThing + "/" + dataBody.id + "/" + MQTTbrokerTopicData;
-        
-            console.log("Sending message... " + topic + " " + JSON.stringify(dataBody));
-        
-            await clientMosquittoMqttControl.publish(topic, JSON.stringify(dataBody), {qos: 0}, async function (err) {
-                if (!err) {
-                    console.log("Message has been sent correctly.")
-                    } else {
-                    console.error("ERROR: Sending MQTT message (publish): ",err)
-                }
-            })
-        }
-
-        return true
-
-    } catch(e) {
-        console.error("processDataProvider: " + e.toString())
-        return false
-    }
-}
-*/
-
 async function shutdown(param) {
 
     try {
@@ -2537,7 +2270,6 @@ function sleep(ms) {
 
 //--> Signals values
 https://stackoverflow.com/questions/16338884/what-does-exited-abnormally-with-signal-9-killed-9-mean/27989874
-
 */
 
 //TODO: remove or update?

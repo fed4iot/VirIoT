@@ -13,7 +13,7 @@ module.exports = {
                     "id" : "urn:ngsi-ld:parkingmeter:---",
                     "type" : "parkingmeter",
                     "name": { "type": "Text", "value":"" },
-                    "location": { "type": "geo:json", "value": { "type": "Point",  "coordinates": [] } },
+                    "location": { "type": "geo:json", "value": { "type": "Point",  "coordinates": [0,0] } },
                     "@context" : {
                         "type" : "StructuredValue",
                         "value" : [

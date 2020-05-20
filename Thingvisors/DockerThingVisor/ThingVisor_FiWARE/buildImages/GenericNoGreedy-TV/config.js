@@ -168,8 +168,6 @@ module.exports = {
     */
 
     smartParkingStandardDM_Service: [''],
-    smartParkingStandardDM_ListTypes: [['']],
-    smartParkingStandardDM_Attributes: [ [['']] ],
     
     "parkingsite_id": ["Aparcamiento:101","Aparcamiento:102","Aparcamiento:103","Aparcamiento:104","Aparcamiento:105"],
     "parkingsite_disSpacePCCapacity": [14,20,7,0,0],

@@ -71,12 +71,34 @@ module.exports = {
                         "value": "0"
                     },
 */
-                    "phoneNumber": { "type": "StructuredValue", "value": { } },
+                    //"phoneNumber": { "type": "StructuredValue", "value": { } },
+                    "phoneNumber": { "type": "StructuredValue", 
+                                    "value": [ 
+                                               {
+                                                "phoneType": "",
+                                                "countryCode": "",
+                                                "areaCode": "",
+                                                "contactNumber": ""
+                                                }
+                                           ] 
+                                    },
                     "webSite": { "type": "Text", "value": "" },
                    
                     "mail": { "type": "Text", "value": "" },
-                    "address": { "type": "StructuredValue", "value": { } },
-                    "location": { "type": "geo:json", "value": { "type": "Point",  "coordinates": [] } },
+                    //"address": { "type": "StructuredValue", "value": { } },
+                    "address": { "type": "StructuredValue", 
+                                "value": {  
+                                            "country": "",
+                                            "state": "",
+                                            "city": "",
+                                            "citySection": "",
+                                            "streetType": "",
+                                            "streetDirection": "",
+                                            "streetNumber": "",
+                                            "postalCode": ""
+                                        } 
+                                },
+                    "location": { "type": "geo:json", "value": { "type": "Point",  "coordinates": [0,0] } },
 
                     "@context" : {
                         "type" : "StructuredValue",
@@ -164,7 +186,7 @@ module.exports = {
                     "id" : "urn:ngsi-ld:parkingmeter:---",
                     "type" : "parkingmeter",
                     "name": { "type": "Text", "value":"" },
-                    "location": { "type": "geo:json", "value": { "type": "Point",  "coordinates": [] } },
+                    "location": { "type": "geo:json", "value": { "type": "Point",  "coordinates": [0,0] } },
                     "@context" : {
                         "type" : "StructuredValue",
                         "value" : [
@@ -175,7 +197,8 @@ module.exports = {
                                 "name": "http://purl.org/goodrelations/v1#name" ,
                                 "location": "https://schema.org/location"
                             }
-*/                      ]
+*/                            
+                        ]
                     }
-    }   
+    }     
 }

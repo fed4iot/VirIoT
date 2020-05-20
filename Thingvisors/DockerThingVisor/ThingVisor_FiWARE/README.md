@@ -14,7 +14,7 @@ The [Test.md](./Test.md) describe how to test the ThingVisor.
 Use the VirIoT CLI as admin and run the following command, you must define OCB endpoint and notification endpoint (protocol and public IP where this ThingVisor is deployed).
 
 ```bash  
-python3 f4i.py add-thingvisor -i fed4iot/fiware-parkingsite-tv -n thingVisorID_ParkingSite -d "thingVisorID_ParkingSite" -p "{'ocb_ip':'[OCB_Public_IP]', 'ocb_port':'[OCB_Port]', 'notificacion_protocol':'[notification_Protocol]', 'notify_ip':'[notification_public_ip]'}"
+python3 f4i.py add-thingvisor -i fed4iot/fiware-parkingsite-tv -n thingVisorID_ParkingSite -d "thingVisorID_ParkingSite" -p "{'ocb_ip':'[OCB_Public_IP]', 'ocb_port':'[OCB_Port]'}"
 ```
 
 ### Kubernetes deployment
@@ -22,7 +22,7 @@ python3 f4i.py add-thingvisor -i fed4iot/fiware-parkingsite-tv -n thingVisorID_P
 Use the VirIoT CLI as admin and run the following command, you must define OCB endpoint and notification endpoint (protocol and public IP where this ThingVisor is deployed).
 
 ```bash  
-python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n thingVisorID_ParkingSite -d "thingVisorID_ParkingSite" -p "{'ocb_ip':'[OCB_Public_IP]', 'ocb_port':'[OCB_Port]', 'notificacion_protocol':'[notification_Protocol]', 'notify_ip':'[notification_public_ip]'}" -y "yaml/thingVisor-fiWARE.yaml"
+python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n thingVisorID_ParkingSite -d "thingVisorID_ParkingSite" -p "{'ocb_ip':'[OCB_Public_IP]', 'ocb_port':'[OCB_Port]'}" -y "yaml/thingVisor-fiWARE.yaml"
 ```
 
 ## NGSI-LD data model

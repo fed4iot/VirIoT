@@ -15,4 +15,4 @@ Inside of buildImages's folder, you can find a subfolder per ThingVisor type. Ea
 - [ParkingSite](./buildImages/ParkingSite-TV): obtains parking sites information.
 - [Regulated Parking Zone (RPZ)](./buildImages/RPZ-TV): obtains regulated parking zones information (RPZ).
 
-Optionally, if you want to build all different ThingVisors images in one step, you can run [build-all-images.sh](./build-all-images.sh) and read the corresponding README.md and Test.md files.
+Optionally, if you want to build all different ThingVisors images in one step, you can run [build-all-images.sh](./build-All-Images.sh) and read the corresponding README.md and Test.md files.

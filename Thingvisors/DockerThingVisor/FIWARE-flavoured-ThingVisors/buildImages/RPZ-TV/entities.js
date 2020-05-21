@@ -18,7 +18,7 @@ module.exports = {
                         "type" : "StructuredValue",
                         "value" : [
                             "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
-                            "https://odins.es/smartParkingOntology/parkingsite-context.jsonld"
+                            "https://odins.es/smartParkingOntology/rpz-context.jsonld"
 /*  Can replace "https://odins.es/smartParkingOntology/parkingsite-context.jsonld" link
                             {
                                 "name": "http://purl.org/goodrelations/v1#name" ,

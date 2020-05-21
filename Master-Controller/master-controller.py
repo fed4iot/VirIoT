@@ -81,6 +81,8 @@ flavour_collection = "flavourC"
 thing_visor_collection = "thingVisorC"
 user_collection = "userC"
 
+settings_collection = "settingsC"
+
 USER_ROLE_USER = "user"
 USER_ROLE_ADMIN = "admin"
 
@@ -1705,7 +1707,14 @@ if __name__ == '__main__':
             print("ERROR: database is not running... exit")
             sys.exit(0)
         mongo_IP = mongocnt.attrs['NetworkSettings']['Networks']['bridge']['IPAddress']
+
         mongo_client = MongoClient('mongodb://' + mongo_IP + ':' + str(mongo_port) + '/')
+
+        # Trick to obtain master-controller IP
+        master_IP = (mongo_IP.split(".")[:-1])
+        master_IP.append("1")
+        master_IP = ".".join(master_IP)
+        master_port = flask_port
 
     elif container_manager == "KUBERNETES":
         # Set Kubernetes configuration
@@ -1739,9 +1748,17 @@ if __name__ == '__main__':
                 print("ERROR: database is not running in k8s cluster... exit")
                 sys.exit(0)
             mongo_client = MongoClient('mongodb://' + "localhost" + ':' + str(mongo_port_local) + '/')
+
+            # Get master-controller's IP
+            master_IP = k8s.get_master_node_ip()
+            master_port = flask_port
+
         else:
             mongo_client = MongoClient('mongodb://' + mongo_IP + ':' + str(mongo_port) + '/')
 
+            # Get master-controller's IP
+            master_IP = settings.master_IP
+            master_port = flask_port
 
     else:
         print("Error: Unsupported container manager")
@@ -1752,6 +1769,14 @@ if __name__ == '__main__':
     if not db[user_collection].find().count() > 0:
         print("Inserted DB_setup information")
         db[user_collection].insert(db_setup.mongo_db_setup)
+
+    # Create the collection settingsC with IP and PORT of master-controller
+    settings_entry = {"container_manager": container_manager, "master_IP": master_IP, "master_port": master_port}
+    if db[settings_collection].find({"container_manager": container_manager}).count() > 0:
+        print("Inserted DB_setup information")
+        db[settings_collection].update_one({"container_manager": container_manager}, {"$set": settings_entry})
+    else:
+        db[settings_collection].insert(settings_entry)
 
     database_integrity()
 

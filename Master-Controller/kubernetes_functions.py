@@ -160,3 +160,18 @@ def list_available_node_zone():
         print("Error: in list_available_node_zone", e)
         return False
 
+
+def get_master_node_ip():
+    api_instance = kubernetes.client.CoreV1Api()
+    try:
+        api_response = api_instance.list_node()
+        for node in api_response.items:
+            if "node-role.kubernetes.io/master" in node.metadata.labels.keys():
+                # print(node.metadata)
+                address = node.status.addresses[0].address
+                return address
+        return False
+    except ApiException as e:
+        # print("Exception when calling AppsV1Api->read_namespaced_deployment_status: %s\n" % e)
+        print("Error: in get_master_node_ip", e)
+        return False

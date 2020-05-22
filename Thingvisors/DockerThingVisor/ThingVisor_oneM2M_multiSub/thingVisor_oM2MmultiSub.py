@@ -59,30 +59,41 @@ class httpThread(Thread):
         vtype = "None"
         ngsiLdEntities = []
         for cnt_arn in cnt_arns:
-            status, cin = F4Im2m.get_cin_latest("Mobius/"+cnt_arn, origin, CSE_url)
-            if status == 200:
-                try:
-                    value = cin['m2m:cin']['con']
-                except:
-                    print("No CIN in the container "+cnt_arn)
-            else:
-                 print("No CIN in the container "+cnt_arn)
+            try:
+                status, cin = F4Im2m.get_cin_latest("Mobius/" + cnt_arn, origin, CSE_url)
 
-            status, cnt = F4Im2m.container_get("Mobius/"+cnt_arn,origin,CSE_url)
-            if status == 200:
-                try:
-                    lbl=cnt['m2m:cnt']['lbl']
-                    vtype=lbl[0]
-                    for i in range(1,len(lbl)):
-                        vtype=vtype+","+lbl[i]
-                except:
+                if status == 200:
+                    try:
+                        value = cin['m2m:cin']['con']
+                    except:
+                        print("No CIN in the container " + cnt_arn)
+                else:
+                    print("HTTP status code:", status)
+                    print("No CIN in the container " + cnt_arn)
+            except Exception as err:
+                print("Error in F4Im2m.get_cin_latest:", err)
+
+            try:
+                status, cnt = F4Im2m.container_get("Mobius/" + cnt_arn, origin, CSE_url)
+                if status == 200:
+                    try:
+                        lbl = cnt['m2m:cnt']['lbl']
+                        vtype = lbl[0]
+                        for i in range(1, len(lbl)):
+                            vtype = vtype + "," + lbl[i]
+                    except:
+                        print("No labels for the container "+cnt_arn)
+                else:
                     print("No labels for the container "+cnt_arn)
-            else:
-                print("No labels for the container "+cnt_arn)
+            except Exception as err:
+                print("Error in F4Im2m.container_get:", err)
 
-            ngsiLdEntity1 = {"id": "urn:ngsi-ld:"+v_thing_name,
-                                     "type": vtype,
-                                     cnt_arn.replace('/', ':'): {"type": "Property", "value": value}}
+            ngsildentity_id = "urn:ngsi-ld:"+v_thing_name+':'+cnt_arn.replace('/', ':')
+            ngsildentity_cnt_arn = cnt_arn.replace('/', ':')
+
+            ngsiLdEntity1 = {"id": ngsildentity_id,
+                             "type": vtype,
+                             ngsildentity_cnt_arn: {"type": "Property", "value": value}}
             ngsiLdEntities.append(ngsiLdEntity1)
 
         data = ngsiLdEntities
@@ -101,23 +112,27 @@ class httpThread(Thread):
                 sur = str(jres['m2m:sgn']['sur'])
                 cnt_arn = '/'.join(sur.split('/')[:-1]).replace('Mobius/', '')
                 value = jres['m2m:sgn']['nev']['rep']['m2m:cin']['con']  # TODO could be a list?
-                ngsiLdEntity1 = {"id": "urn:ngsi-ld:" + v_thing_name,
+
+                ngsildentity_id = "urn:ngsi-ld:" + v_thing_name + ':' + cnt_arn.replace('/', ':')
+                ngsildentity_cnt_arn = cnt_arn.replace('/', ':')
+
+                ngsiLdEntity1 = {"id": ngsildentity_id,
                                  "type": vtype,
-                                 cnt_arn.replace('/', ':'): {"type": "Property", "value": value}}
+                                 ngsildentity_cnt_arn: {"type": "Property", "value": value}}
+
                 context_vThing.update([ngsiLdEntity1])
                 message = {"data": [ngsiLdEntity1], "meta": {"vThingID": v_thing_ID}}
                 print("topic name: " + v_thing_topic + '/' + v_thing_data_suffix + " ,message: " + json.dumps(message))
                 mqtt_data_client.publish(v_thing_topic + '/' + v_thing_data_suffix,
                                          json.dumps(message))  # publish received data to data topic by using neutral format
-                                         # str(message).replace("\'", "\""))  # publish received data to data topic by using neutral format
                 return 'OK', 201
 
             else:
                 print("Bad notification format")
                 return 'Bad notification format', 401
 
-        except:
-            print("Bad notification format")
+        except Exception as err:
+            print("Bad notification format, error:", err)
             return 'Bad notification format', 401
 
 
@@ -139,18 +154,15 @@ class mqttControlThread(Thread):
     def on_message_get_thing_context(self, jres):
         silo_id = jres["vSiloID"]
         message = {"command": "getContextResponse", "data": context_vThing.get_all(), "meta": {"vThingID": v_thing_ID}}
-        # mqtt_control_client.publish(v_silo_prefix + "/" + silo_id + "/" + in_control_suffix, str(message).replace("\'", "\""))
         mqtt_control_client.publish(v_silo_prefix + "/" + silo_id + "/" + in_control_suffix, json.dumps(message))
 
     def send_destroy_v_thing_message(self):
         msg = {"command": "deleteVThing", "vThingID": v_thing_ID, "vSiloID": "ALL"}
-        # mqtt_control_client.publish(v_thing_prefix + "/" + v_thing_ID + "/" + out_control_suffix, str(msg).replace("\'", "\""))
         mqtt_control_client.publish(v_thing_prefix + "/" + v_thing_ID + "/" + out_control_suffix, json.dumps(msg))
         return
 
     def send_destroy_thing_visor_ack_message(self):
         msg = {"command": "destroyTVAck", "thingVisorID": thing_visor_ID}
-        # mqtt_control_client.publish(tv_control_prefix + "/" + thing_visor_ID + "/" + out_control_suffix, str(msg).replace("\'", "\""))
         mqtt_control_client.publish(tv_control_prefix + "/" + thing_visor_ID + "/" + out_control_suffix, json.dumps(msg))
         return
 
@@ -169,7 +181,6 @@ class mqttControlThread(Thread):
     def on_message_in_control_vThing(self, mosq, obj, msg):
         payload = msg.payload.decode("utf-8", "ignore")
         print(msg.topic + " " + str(payload))
-        # jres = json.loads(payload.replace("\'", "\""))
         jres = json.loads(payload)
         try:
             command_type = jres["command"]
@@ -182,7 +193,6 @@ class mqttControlThread(Thread):
     def on_message_in_control_TV(self, mosq, obj, msg):
         payload = msg.payload.decode("utf-8", "ignore")
         print(msg.topic + " " + str(payload))
-        # jres = json.loads(payload.replace("\'", "\""))
         jres = json.loads(payload)
         try:
             command_type = jres["command"]
@@ -203,7 +213,6 @@ class mqttControlThread(Thread):
                            "vThing": v_thing}
         mqtt_control_client.publish(tv_control_prefix + "/" + thing_visor_ID + "/" + out_control_suffix,
                                     json.dumps(v_thing_message))
-                                    # str(v_thing_message).replace("\'", "\""))
 
         # Add message callbacks that will only trigger on a specific subscription match
         mqtt_control_client.message_callback_add(v_thing_topic + "/" + in_control_suffix,
@@ -219,8 +228,8 @@ class mqttControlThread(Thread):
 def add_mobius_sub():
     global cnt_arns, v_thing_ID, notification_URI, CSE_url, origin, sub_rn
     for cnt_arn in cnt_arns:
-        print("Mobius subscription" + " "+origin+" "+str(notification_URI)+" "+cnt_arn+" "+CSE_url)
-        status, sub = F4Im2m.sub_create(sub_rn, origin, notification_URI, "Mobius/"+cnt_arn, CSE_url)
+        print("Mobius subscription" + " " + origin + " " + str(notification_URI) + " " + cnt_arn + " " + CSE_url)
+        status, sub = F4Im2m.sub_create(sub_rn, origin, notification_URI, "Mobius/" + cnt_arn, CSE_url)
         if status == 404:
             print(sub)
             sys.exit()
@@ -240,11 +249,30 @@ def clean():
 # main
 if __name__ == '__main__':
 
+    # For debugging purposes
+    # os.environ = {'MQTTDataBrokerIP': '172.17.0.1',
+    #                 'MQTTDataBrokerPort': 1883,
+    #                 'MQTTControlBrokerIP': '172.17.0.1',
+    #                 'MQTTControlBrokerPort': 1883,
+    #                 'params': {
+    #                            # 'CSEurl': 'https://fed4iot.eglobalmark.com',
+    #                            'CSEurl': 'http://172.17.0.1:32793',
+    #                            'origin': 'Superman',
+    #                            # 'cntArns': 'weather:Tokyo_temp/Tokyo:temp/thermometer',
+    #                            'cntArns': ['weather:Tokyo_temp/Tokyo:temp/thermometer'],
+    #                            # 'cntArns': ["Abbas123456/humidity/value","Abbas123456/temperature/value"],
+    #                            'vThingName': 'mobius_weather/Tokyo_temp',
+    #                            # 'vThingName': 'EGM-Abbas123456',
+    #                            'vThingDescription': 'OneM2M temp'
+    #                             },
+    #                 'thingVisorID': 'test-oneM2M',
+    #                 'systemDatabaseIP': '172.17.0.1',
+    #                 'systemDatabasePort': 32768}
+
     thing_visor_ID = os.environ["thingVisorID"]
     parameters = os.environ["params"]
     if parameters:
         try:
-            # params = json.loads(parameters.replace("'", '"'))
             params = json.loads(parameters)
             CSE_url = params['CSEurl']
             cnt_arns = params['cntArns']  # array of source container absolute resource names

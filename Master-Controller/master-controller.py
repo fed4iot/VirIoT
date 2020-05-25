@@ -81,6 +81,8 @@ flavour_collection = "flavourC"
 thing_visor_collection = "thingVisorC"
 user_collection = "userC"
 
+settings_collection = "settingsC"
+
 USER_ROLE_USER = "user"
 USER_ROLE_ADMIN = "admin"
 
@@ -132,8 +134,13 @@ def create_virtual_silo_on_docker(v_silo_id, v_silo_name, tenant_id, flavour_par
             ip_address = "127.0.0.1"
             exposed_ports = {"none": "none"}
         # registering silo in system database
+
+        mqtt_data_broker = {"ip": MQTT_data_broker_IP, "port": MQTT_data_broker_port}
+        mqtt_control_broker = {"ip": MQTT_control_broker_IP, "port": MQTT_control_broker_port}
+
         silo_entry = {"creationTime": datetime.datetime.now().isoformat(), "tenantID": tenant_id,
                       "flavourParams": flavour_params, "containerName": container_name, "containerID": container_id,
+                      "MQTTDataBroker": mqtt_data_broker, "MQTTControlBroker": mqtt_control_broker,
                       "ipAddress": ip_address, "port": exposed_ports, "vSiloID": v_silo_id,
                       "vSiloName": v_silo_name, "status": STATUS_RUNNING, "flavourID": flavour_id}
         db[v_silo_collection].update_one({"vSiloID": v_silo_id}, {"$set": silo_entry})
@@ -172,7 +179,7 @@ def create_virtual_silo_on_kubernetes(v_silo_id, v_silo_name, tenant_id, flavour
                     yaml["spec"]["template"]["metadata"]["labels"]["siloID"] = label_app
                     yaml["spec"]["template"]["spec"]["containers"][0]["env"] = k8s.convert_env(env)
                     if deploy_zone is not None and deploy_zone:
-                        yaml["spec"]["template"]["spec"]["nodeSelector"] = {"zone": deploy_zone["zone"]}
+                        yaml["spec"]["template"]["spec"]["nodeSelector"] = {"viriot-zone": deploy_zone["zone"]}
                         gateway_IP = deploy_zone["gw"] if "gw" in deploy_zone.keys() else default_gateway_IP
                     else:
                         # This variable set the node anti affinity to deploy the resources in the default zone,
@@ -213,11 +220,15 @@ def create_virtual_silo_on_kubernetes(v_silo_id, v_silo_name, tenant_id, flavour
             ip_address = "127.0.0.1"
             exposed_ports = {"none": "none"}
 
+        mqtt_data_broker = {"ip": MQTT_data_broker_IP, "port": MQTT_data_broker_port}
+        mqtt_control_broker = {"ip": MQTT_control_broker_IP, "port": MQTT_control_broker_port}
+
         # registering silo in system database
         silo_entry = {"creationTime": datetime.datetime.now().isoformat(), "tenantID": tenant_id,
                       "flavourParams": flavour_params, "containerName": container_name, "containerID": container_id,
                       "deploymentName": deployment_name, "serviceName": service_name,
                       # "ipAddress": ip_address, "port": exposed_ports, "vSiloID": v_silo_id,
+                      "MQTTDataBroker": mqtt_data_broker, "MQTTControlBroker": mqtt_control_broker,
                       "ipAddress": gateway_IP, "port": exposed_ports, "vSiloID": v_silo_id,
                       "vSiloName": v_silo_name, "status": STATUS_RUNNING, "flavourID": flavour_id}
         db[v_silo_collection].update_one({"vSiloID": v_silo_id}, {"$set": silo_entry})
@@ -352,7 +363,7 @@ def create_thing_visor_on_kubernetes(tv_img_name, debug_mode, tv_id, tv_params, 
 
                     if deploy_zone is not None and deploy_zone:
 
-                        yaml["spec"]["template"]["spec"]["nodeSelector"] = {"zone": deploy_zone["zone"]}
+                        yaml["spec"]["template"]["spec"]["nodeSelector"] = {"viriot-zone": deploy_zone["zone"]}
                         gateway_IP = deploy_zone["gw"] if "gw" in deploy_zone.keys() else default_gateway_IP
                     else:
                         # This variable set the node anti affinity to deploy the resources in the default zone,
@@ -395,6 +406,7 @@ def create_thing_visor_on_kubernetes(tv_img_name, debug_mode, tv_id, tv_params, 
                              "debug_mode": debug_mode, "vThings": [], "params": tv_params,
                              "MQTTDataBroker": mqtt_data_broker,
                              "MQTTControlBroker": mqtt_control_broker,
+                             "yamlFiles": yaml_files,
                              "port": exposed_ports,
                              "IP": gateway_IP,
                              "status": STATUS_RUNNING
@@ -986,7 +998,7 @@ class httpThread(Thread):
             if db[thing_visor_collection].count({"thingVisorID": tv_id}) != 0:
                 # already exists
                 return json.dumps({"message": "Add fails - thingVisor " + tv_id + " already exists"}), 409
-            thing_visor_entry = {"thingVisorID": tv_id, "status": STATUS_PENDING, "yamlFiles": yaml_files}
+            thing_visor_entry = {"thingVisorID": tv_id, "status": STATUS_PENDING}
 
 
             deploy_zone = {}
@@ -1719,7 +1731,14 @@ if __name__ == '__main__':
             print("ERROR: database is not running... exit")
             sys.exit(0)
         mongo_IP = mongocnt.attrs['NetworkSettings']['Networks']['bridge']['IPAddress']
+
         mongo_client = MongoClient('mongodb://' + mongo_IP + ':' + str(mongo_port) + '/')
+
+        # Trick to obtain master-controller IP
+        master_IP = (mongo_IP.split(".")[:-1])
+        master_IP.append("1")
+        master_IP = ".".join(master_IP)
+        master_port = flask_port
 
     elif container_manager == "KUBERNETES":
         # Set Kubernetes configuration
@@ -1753,9 +1772,17 @@ if __name__ == '__main__':
                 print("ERROR: database is not running in k8s cluster... exit")
                 sys.exit(0)
             mongo_client = MongoClient('mongodb://' + "localhost" + ':' + str(mongo_port_local) + '/')
+
+            # Get master-controller's IP
+            master_IP = k8s.get_master_node_ip()
+            master_port = flask_port
+
         else:
             mongo_client = MongoClient('mongodb://' + mongo_IP + ':' + str(mongo_port) + '/')
 
+            # Get master-controller's IP
+            master_IP = settings.master_IP
+            master_port = flask_port
 
     else:
         print("Error: Unsupported container manager")
@@ -1766,6 +1793,14 @@ if __name__ == '__main__':
     if not db[user_collection].find().count() > 0:
         print("Inserted DB_setup information")
         db[user_collection].insert(db_setup.mongo_db_setup)
+
+    # Create the collection settingsC with IP and PORT of master-controller
+    settings_entry = {"container_manager": container_manager, "master_IP": master_IP, "master_port": master_port}
+    if db[settings_collection].find({"container_manager": container_manager}).count() > 0:
+        print("Inserted DB_setup information")
+        db[settings_collection].update_one({"container_manager": container_manager}, {"$set": settings_entry})
+    else:
+        db[settings_collection].insert(settings_entry)
 
     database_integrity()
 

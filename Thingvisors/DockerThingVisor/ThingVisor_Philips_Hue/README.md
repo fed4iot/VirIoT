@@ -1,6 +1,6 @@
-# README
+# Philips Hue ThingVisor
 
-This ThingVisor controls the lights connected to a Philips Hue bridge. It works both with a real bridge and with the Hue emularor (<https://steveyo.github.io/Hue-Emulator)> in the Extra folder.
+This ThingVisor controls the lights connected to a Philips Hue bridge. It works both with a real bridge and with the Hue emulator (<https://steveyo.github.io/Hue-Emulator)> in the [Extra](../../../Extra) folder.
 The [Test.md](./Test.md) describe how to test the ThingVisor.
 
 ## How To Run
@@ -9,7 +9,7 @@ The [Test.md](./Test.md) describe how to test the ThingVisor.
 
 Use the VirIoT CLI and run the following command in case of a Hue Bridge whose IP address and port are 172.17.0.1:8080 (this is the case when using the emulator and a VirIoT Docker-base deployment).  
 
-```bash  
+```bash
 python3 f4i.py add-thingvisor -i fed4iot/phue-actuator-tv -n pHueActuator -d "pHue actuator" -p "{'bridgeIP':'172.17.0.1', 'bridgePort':'8000'}"
 ```
 
@@ -17,7 +17,7 @@ python3 f4i.py add-thingvisor -i fed4iot/phue-actuator-tv -n pHueActuator -d "pH
 
 Use the VirIoT CLI and run the following command in case of a Hue Bridge whose IP address and port are 172.17.0.1:8080 (this is the case when using the emulator and a VirIoT k8s-base deployment).
 
-```bash  
+```bash
 python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n pHueActuator -d "pHue actuator" -p "{'bridgeIP':'172.17.0.1', 'bridgePort':'8000'}" -y "yaml/thingVisor-Philips-Hue.yaml"
 ```
 

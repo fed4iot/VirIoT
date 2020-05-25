@@ -32,11 +32,11 @@ def init_args(parser):
     parser.add_argument('-n', action='store', dest='name',
                         help='ThingVisor ID (default: helloWorld)', default='helloWorld')
     parser.add_argument('-p', action='store', dest='params',
-                        help='ThingVisor params, JSON object (default: "") ', default="")
+                        help='ThingVisor params, JSON object (default: "") ', default='""')
     parser.add_argument('-d', action='store', dest='description',
                         help='ThingVisor description (default: \'hello thingVisor\')', default='hello thingVisor')
     parser.add_argument('-u', action='store', dest='update_info',
-                        help='ThingVisor update_info: ephemeral information for the ThingVisit (default: "")', default="")
+                        help='ThingVisor update_info: ephemeral information for the ThingVisor (default: "")', default='""')
     parser.set_defaults(func=run)
 
 
@@ -44,12 +44,20 @@ def run(args):
     url = args.controllerUrl+"/updateThingVisor"
     print("Updating Thing Visor, please wait ....")
 
+    try:
+        payload = {"thingVisorID": args.name,
+                   "params": json.loads(args.params),
+                   "description": args.description,
+                   "update_info": json.loads(args.update_info),
+                   }
+    except ValueError as err:
+        print("Error in JSON argument:", err)
+        print("The syntax of the arguments \"-p\" and \"-u\" must be like: \'{\"key1\":\"value\", \"key2\":[\"value1\", \"value2\"]}\'")
+        exit()
+    except Exception as err:
+        print("Error:", err)
+        exit()
 
-    payload = {"thingVisorID": args.name,
-               "params": json.loads(args.params),
-               "description": args.description,
-               "update_info": args.update_info,
-               }
 
     pprint(payload)
     token = get_token()
@@ -63,7 +71,6 @@ def run(args):
         }
 
     response = requests.request("POST", url, data=json.dumps(payload), headers=headers)
-    # print("AFTER POST >>>>> ", response.json().get('message'))
     print(response.json().get('message')+"\n")
 
 

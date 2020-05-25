@@ -237,11 +237,25 @@ def clean():
 
 # main
 if __name__ == '__main__':
-    # Solo per test, aggiungo l'env a mano in pratica
-    environ_test = {'MQTTDataBrokerIP': '192.168.3.8', 'MQTTDataBrokerPort': 1883, 'MQTTControlBrokerIP': '192.168.3.8', 'MQTTControlBrokerPort': 1883, 'params': "{'CSEurl':'http://160.80.82.44:32769','origin':'Superman', 'poaPort':'8089','cntArn':'weather:Tokyo_temp/Tokyo:temp/thermometer','poaIP':'127.0.0.1','vThingName':'Tokyo-temp','vThingDescription':'OneM2M temp'}", 'thingVisorID': 'test-oneM2M', 'systemDatabaseIP': '13.80.153.4', 'systemDatabasePort': 31950}
-
-    thing_visor_ID = environ_test["thingVisorID"]
-    parameters = environ_test["params"]
+    # Only for test
+    '''
+    os.environ = {'MQTTDataBrokerIP': '172.17.0.1',
+                    'MQTTDataBrokerPort': 1883,
+                    'MQTTControlBrokerIP': '172.17.0.1',
+                    'MQTTControlBrokerPort': 1883,
+                    'params': {
+                               'CSEurl': 'http://160.80.82.44:32769',
+                               'origin': 'Superman',
+                               'cntArn': 'weather:Tokyo_temp/Tokyo:temp/thermometer',
+                               'vThingName': 'Tokyo-temp',
+                               'vThingDescription': 'OneM2M temp'
+                                },
+                    'thingVisorID': 'test-oneM2M',
+                    'systemDatabaseIP': '172.17.0.1',
+                    'systemDatabasePort': 31950}
+    '''
+    thing_visor_ID = os.environ["thingVisorID"]
+    parameters = os.environ["params"]
     if parameters:
         try:
             params = json.loads(parameters)
@@ -265,10 +279,10 @@ if __name__ == '__main__':
                "id": v_thing_ID,
                "description": v_thing_description}
 
-    MQTT_data_broker_IP = environ_test["MQTTDataBrokerIP"]
-    MQTT_data_broker_port = int(environ_test["MQTTDataBrokerPort"])
-    MQTT_control_broker_IP = environ_test["MQTTControlBrokerIP"]
-    MQTT_control_broker_port = int(environ_test["MQTTControlBrokerPort"])
+    MQTT_data_broker_IP = os.environ["MQTTDataBrokerIP"]
+    MQTT_data_broker_port = int(os.environ["MQTTDataBrokerPort"])
+    MQTT_control_broker_IP = os.environ["MQTTControlBrokerIP"]
+    MQTT_control_broker_port = int(os.environ["MQTTControlBrokerPort"])
 
     sub_rn = v_thing_ID.replace("/",":") + "_subF4I"
     vtype = ""
@@ -290,8 +304,8 @@ if __name__ == '__main__':
     time.sleep(1.5)  # wait before query the system database
     db_name = "viriotDB"  # name of system database
     thing_visor_collection = "thingVisorC"
-    db_IP = environ_test['systemDatabaseIP']  # IP address of system database
-    db_port = environ_test['systemDatabasePort']  # port of system database
+    db_IP = os.environ['systemDatabaseIP']  # IP address of system database
+    db_port = os.environ['systemDatabasePort']  # port of system database
     db_client = MongoClient('mongodb://' + db_IP + ':' + str(db_port) + '/')
     db = db_client[db_name]
     port_mapping = db[thing_visor_collection].find_one({"thingVisorID": thing_visor_ID}, {"port": 1, "_id": 0})

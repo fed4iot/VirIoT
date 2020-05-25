@@ -1,3 +1,9 @@
+#
+#Copyright Odin Solutions S.L. All Rights Reserved.
+#
+#SPDX-License-Identifier: Apache-2.0
+#
+
 FROM centos:centos7.6.1810
 
 #Installing utils.
@@ -163,7 +169,8 @@ RUN yum clean all
 RUN yum -y install gcc-c++
 RUN yum clean all
 
-COPY package*.json config.js index.js util.js run.sh first_run.sh fromNGSILD.js wrapperUtils.js ./
+#COPY package*.json config.js index.js util.js run.sh first_run.sh fromNGSILD.js wrapperUtils.js ./
+COPY package.json config.js index.js util.js run.sh first_run.sh fromNGSILD.js wrapperUtils.js ./
 ENV NODE_ENV=production
 RUN npm install --only=production
 RUN chmod +x ./*.sh

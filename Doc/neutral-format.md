@@ -8,8 +8,8 @@ These messages are tranferred as MQTT payload on specific data and control topic
 
 ```json
 {
-    "data":NGSI-LD Entity Array,
-    "meta": {"vThingID":vThingID, ....}
+    "data":"<NGSI-LD Entity Array>",
+    "meta": {"vThingID":"<vThingID>", "<otherMetadata>":"<value>"}
 }
 ```
 
@@ -22,8 +22,8 @@ For instance, the ThingVisor [HelloWorldTV](../Thingvisors/DockerThingVisor/Thin
     "data":
         [
             {
-                "id": "urn:ngsi-ld:HelloSensor1", 
-                "type": "my-counter", 
+                "id": "urn:ngsi-ld:HelloSensor1",
+                "type": "my-counter",
                 "counter": {"type": "Property", "value": 497}
             },
             {
@@ -43,10 +43,10 @@ The neutral format includes the name of the command in the `command` key and oth
 
 ```json
 {
-    "command":Command name,
-    arg1-key: arg1-value,
-    ...
-    arg#n-key: arg#n-value
+    "command":"<Command name>",
+    "<arg1-key>": "<arg1-value>",
+    
+    "<arg#n-key>": "<arg#n-value>"
 }
 ```
 

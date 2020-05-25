@@ -15,7 +15,7 @@ python3 f4i.py add-flavour -f Mobius-base-actuator-f -s Mobius -i fed4iot/mobius
 To create a vSilo run the following command (use "f4i.py create-vsilo --help" for CLI parameters).
 
 ```bash  
-python3 f4i.py create-vsilo -f Mobius-base-actuator-f -t tenant1
+python3 f4i.py create-vsilo -f Mobius-base-actuator-f -t tenant1 -s Silo1
 ```
 
 ### Kubernetes deployment

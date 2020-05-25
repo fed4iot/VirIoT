@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: f4i-systemvsilo-f
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: f4i-systemvsilo
+  template:
+    metadata:
+      labels:
+        app: f4i-systemvsilo
+    spec:
+      containers:
+      - name: ngsild-silocontroller
+        image: fed4iot/ngsild-silocontroller:3.0
+        imagePullPolicy: Always
+      - name: systemvsilo-backend
+        image: fed4iot/systemvsilobackend:3.0
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 9090
+      - name: systemvsilo-mongodb
+        image: mongo
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: f4i-systemvsilo-svc
+  labels:
+    app: f4i-systemvsilo
+spec:
+  type: NodePort
+  selector:
+    app: f4i-systemvsilo
+  ports:
+  - port: 9090
+    nodePort:

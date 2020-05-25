@@ -1,4 +1,11 @@
 #!/bin/bash
+
+#
+#Copyright Odin Solutions S.L. All Rights Reserved.
+#
+#SPDX-License-Identifier: Apache-2.0
+#
+
 exit_script() {
     echo "Printing something special!"
     echo "Maybe executing other commands!"

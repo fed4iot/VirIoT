@@ -93,11 +93,6 @@ def delete_service(namespace, name):
         return False, err
 
 
-
-def get_target_ip():
-    return "13.80.153.4"
-
-
 def dictSearch(key, dictionary):
     for k, v in dictionary.items():
         if k == key:
@@ -150,16 +145,14 @@ def list_available_node_zone():
     zones = {}
     try:
         api_response = api_instance.list_node()
-        # pprint(api_response)
         for node in api_response.items:
-            if "zone" in node.metadata.labels.keys():
-                if "gw" in node.metadata.labels.keys():
-                    zones[node.metadata.labels["zone"]] = node.metadata.labels["gw"]
+            if "viriot-zone" in node.metadata.labels.keys():
+                if "viriot-gw" in node.metadata.labels.keys():
+                    zones[node.metadata.labels["viriot-zone"]] = node.metadata.labels["viriot-gw"]
                 else:
-                    # Alredy have an entry {"zone": "gw"} so do nothing
-                    if node.metadata.labels["zone"] not in zones.keys():
-                        zones[node.metadata.labels["zone"]] = ""
-                #zones.append(node.metadata.labels["zone"])
+                    # Alredy have an entry {"zone": "gw"}
+                    if node.metadata.labels["viriot-zone"] not in zones.keys():
+                        zones[node.metadata.labels["viriot-zone"]] = ""
         return zones
 
     except ApiException as e:
@@ -167,3 +160,18 @@ def list_available_node_zone():
         print("Error: in list_available_node_zone", e)
         return False
 
+
+def get_master_node_ip():
+    api_instance = kubernetes.client.CoreV1Api()
+    try:
+        api_response = api_instance.list_node()
+        for node in api_response.items:
+            if "node-role.kubernetes.io/master" in node.metadata.labels.keys():
+                # print(node.metadata)
+                address = node.status.addresses[0].address
+                return address
+        return False
+    except ApiException as e:
+        # print("Exception when calling AppsV1Api->read_namespaced_deployment_status: %s\n" % e)
+        print("Error: in get_master_node_ip", e)
+        return False

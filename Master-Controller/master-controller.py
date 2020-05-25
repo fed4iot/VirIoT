@@ -306,7 +306,7 @@ def create_thing_visor_on_docker(tv_img_name, debug_mode, tv_id, tv_params, tv_d
         thing_visor_entry = {"creationTime": datetime.datetime.now().isoformat(),
                              "tvDescription": tv_description, "containerID": container_id,
                              "thingVisorID": tv_id, "imageName": tv_img_name, "ipAddress": ip_address,
-                             "debug_mode": debug_mode, "vThings": [], "params": tv_params,
+                             "debug_mode": debug_mode, "vThings": [], "params": json.dumps(tv_params),
                              "MQTTDataBroker": mqtt_data_broker,
                              "MQTTControlBroker": mqtt_control_broker,
                              "port": exposed_ports,
@@ -819,8 +819,6 @@ class httpThread(Thread):
 
             # Send destroy command to vSilo
             destroy_cmd = {"command": "destroyVSilo", "vSiloID": v_silo_id}
-            # TODO replace json OK
-            # mqttc.publish(v_silo_prefix + "/" + v_silo_id + "/" + in_control_suffix, str(destroy_cmd).replace("\'", "\""))
             mqttc.publish(v_silo_prefix + "/" + v_silo_id + "/" + in_control_suffix, json.dumps(destroy_cmd))
             return json.dumps({"message": 'Destroying virtual silo ' + v_silo_id}), 201
         except Exception as ex:
@@ -884,8 +882,6 @@ class httpThread(Thread):
             print(traceback.format_exc())
             return json.dumps({"message": 'Add fails'}), 401
 
-        # TODO replace json OK
-        # mqttc.publish(v_silo_prefix + "/" + v_silo_id + "/" + in_control_suffix, str(mqtt_msg).replace("\'", "\""))
         mqttc.publish(v_silo_prefix + "/" + v_silo_id + "/" + in_control_suffix, json.dumps(mqtt_msg))
 
         # update system database
@@ -924,8 +920,7 @@ class httpThread(Thread):
                         "vSiloID": v_silo_id,
                         "vThingID": v_thing_id}
             global mqttc
-            # TODO replace json OK
-            # mqttc.publish(v_silo_prefix + "/" + v_silo_id + "/" + in_control_suffix, str(mqtt_msg).replace("\'", "\""))
+
             mqttc.publish(v_silo_prefix + "/" + v_silo_id + "/" + in_control_suffix, json.dumps(mqtt_msg))
             return json.dumps({"message": 'deleted virtual thing: ' + v_thing_id}), 200
         else:
@@ -1051,8 +1046,7 @@ class httpThread(Thread):
                             msg = {"command": "deleteVThing",
                                    "vThingID": v_thing['id'],
                                    "vSiloID": "ALL"}
-                            # TODO replace json OK
-                            # mqttc.publish(v_thing_prefix + "/" + v_thing['id'] + "/" + out_control_suffix, str(msg).replace("\'", "\""))
+
                             mqttc.publish(v_thing_prefix + "/" + v_thing['id'] + "/" + out_control_suffix, json.dumps(msg))
                     tv_entry = db[thing_visor_collection].find_one_and_delete({"thingVisorID": tv_id})
                     # container_id = tv_entry["containerID"]
@@ -1070,8 +1064,7 @@ class httpThread(Thread):
                 # Send destroy command to TV
                 destroy_cmd = {"command": "destroyTV",
                                "thingVisorID": tv_id}
-                # TODO replace json OK
-                # mqttc.publish(thing_visor_prefix + "/" + tv_id + "/" + in_control_suffix, str(destroy_cmd).replace("\'", "\""))
+
                 mqttc.publish(thing_visor_prefix + "/" + tv_id + "/" + in_control_suffix, json.dumps(destroy_cmd))
 
                 if tv_entry["debug_mode"]:
@@ -1462,8 +1455,6 @@ def on_tv_out_control_message(mosq, obj, msg):
         print("on_tv_out_control_message")
         payload = msg.payload.decode("utf-8", "ignore")
         print(msg.topic + " " + str(payload))
-        # TODO replace json OK
-        # jres = json.loads(payload.replace("\'", "\""))
         jres = json.loads(payload)
         command = jres["command"]
         if command == "createVThing":
@@ -1480,8 +1471,6 @@ def on_silo_out_control_message(mosq, obj, msg):
         print("on_silo_out_control_message")
         payload = msg.payload.decode("utf-8", "ignore")
         print(msg.topic + " " + str(payload))
-        # TODO replace json OK
-        # jres = json.loads(payload.replace("\'", "\""))
         jres = json.loads(payload)
         command = jres["command"]
         if command == "destroyVSiloAck":
@@ -1492,7 +1481,6 @@ def on_silo_out_control_message(mosq, obj, msg):
 
 def on_master_controller_in_message(mosq, obj, msg):
     try:
-        # TODO replace json OK
         payload = msg.payload.decode("utf-8", "ignore")
         print(msg.topic + " " + str(payload))
         # jres = json.loads(payload.replace("\'", "\""))
@@ -1503,7 +1491,6 @@ def on_master_controller_in_message(mosq, obj, msg):
 
 def on_v_thing_out_control_message(mosq, obj, msg):
     try:
-        # TODO replace json OK
         payload = msg.payload.decode("utf-8", "ignore")
         print(msg.topic + " " + str(payload))
         jres = json.loads(payload)

@@ -2,7 +2,7 @@
 
 After the initial configuration, it is possible to interact with the VirIoT platform using the Command Line Interface (CLI) or Postman.
 
-To activate python3 and bash autocomplete:  
+To activate `python3` and bash autocomplete:  
 
 ```bash  
 sudo apt-get install python3-argcomplete   
@@ -137,7 +137,7 @@ python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n weather -p '
 Add thingVisor for oneM2M container on oneM2M of EGM in Grasse: 
 
 ```bash  
-python3 f4i.py add-thingvisor -c http://[master_controller_ip]:[master_controller_port] -i fed4iot/onem2m-tv:2.2 -n EGM-Abbass -d "OneM2M data from EGM Abbass sensor" -p '{"CSEurl":"https://fed4iot.eglobalmark.com","origin":"Superman","cntArn":"Abbas123456/humidity/value","vThingName":"EGM-Abbas123456-humidity","vThingDescription":"OneM2M humidity data from EGM Abbass sensor"}'  
+python3 f4i.py add-thingvisor -c http://[master_controller_ip]:[master_controller_port] -i fed4iot/onem2m-multisub-tv:2.2 -n EGM-Abbass-multiple -d "OneM2M data from EGM Abbass sensor (temperature and humidity)" -p '{"CSEurl":"https://fed4iot.eglobalmark.com","origin":"Superman","cntArns":["Abbas123456/humidity/value","Abbas123456/temperature/value"],"vThingName":"EGM-Abbas123456","vThingDescription":"OneM2M data from multiple EGM Abbass sensors"}'
 # Kubernetes: add the flavour yaml argument using -y and the optional zone to deploy the pod -z  
 python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n EGM-Abbass -d "OneM2M data from EGM Abbass sensor" -p '{"CSEurl":"https://fed4iot.eglobalmark.com","origin":"Superman","cntArn":"Abbas123456/humidity/value","vThingName":"EGM-Abbas123456-humidity","vThingDescription":"OneM2M humidity data from EGM Abbass sensor"}' -y "../yaml/thingVisor-oneM2M.yaml" -z Japan  
 ```  

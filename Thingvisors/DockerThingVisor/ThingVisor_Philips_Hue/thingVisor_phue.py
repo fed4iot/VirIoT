@@ -194,7 +194,6 @@ class DataThread(Thread):
         payload = msg.payload.decode("utf-8", "ignore")
         print("Message received on "+msg.topic + "\n" + payload+"\n")
         try:
-            # jres = json.loads(payload.replace("\'", "\""))
             jres = json.loads(payload)
             data = jres["data"]
             for entity in data:
@@ -290,7 +289,6 @@ class ControlThread(Thread):
     def on_message_control_in_vThing(self, mosq, obj, msg):
         payload = msg.payload.decode("utf-8", "ignore")
         print(msg.topic + " " + str(payload)+"\n")
-        # jres = json.loads(payload.replace("\'", "\""))
         jres = json.loads(payload)
         try:
             command_type = jres["command"]
@@ -303,7 +301,6 @@ class ControlThread(Thread):
     def on_message_control_in_TV(self, mosq, obj, msg):
         payload = msg.payload.decode("utf-8", "ignore")
         print(msg.topic + " " + str(payload)+"\n")
-        # jres = json.loads(payload.replace("\'", "\""))
         jres = json.loads(payload)
         try:
             command_type = jres["command"]
@@ -398,7 +395,6 @@ def initHue():
                                       "topic": v_thing_prefix+"/"+v_thing_ID}
 
 def publish(mqtt_client, message, out_topic):
-    # msg = str(message).replace("\'", "\"")
     msg = json.dumps(message)
     print("Message sent on "+out_topic + "\n" + msg+"\n")
     # publish data to out_topic
@@ -423,7 +419,6 @@ if __name__ == '__main__':
     v_silo_prefix = "vSilo"
 
     # import paramenters from environments
-    # parameters = str(os.environ.get("params")).replace("'", '"')
     parameters = os.environ.get("params")
     params=[]
     if parameters:

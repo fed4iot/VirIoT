@@ -13,6 +13,15 @@ the "Abbas123456/humidity/value" and "Abbas123456/temperature/value" oneM2M cont
 python3 f4i.py add-thingvisor -i fed4iot/onem2m-multisub-tv:2.2 -n EGM-Abbass-multiple -d "OneM2M data from EGM Abbass sensor (temperature and humidity)" -p '{"CSEurl":"https://fed4iot.eglobalmark.com","origin":"Superman","cntArns":["Abbas123456/humidity/value","Abbas123456/temperature/value"],"vThingName":"EGM-Abbas123456","vThingDescription":"OneM2M data from multiple EGM Abbass sensors"}'
 ```
 
+## Kubernetes deployment
+Use the [VirIoT CLI](../../../Doc/CLI%20Usage%20Example.md) and run the following command to run the ThingVisor example.  
+The `-z` argument is optional, it can be used to specify the deployment zone. If not specified,   
+Kubernetes will randomly choose a node inside the default zone.
+
+```bash
+python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n EGM-Abbass-multiple -d "OneM2M data from EGM Abbass sensor (temperature and humidity)" -p '{"CSEurl":"https://fed4iot.eglobalmark.com","origin":"Superman","cntArns":["Abbas123456/humidity/value","Abbas123456/temperature/value"],"vThingName":"EGM-Abbas123456","vThingDescription":"OneM2M data from multiple EGM Abbass sensors"}' -y "../yaml/thingVisor-oneM2M.yaml" -z Japan  
+```
+
 ## NGSI-LD data model
 The vThing of the ThingVisor internally publishes a NGSI-LD entity whose name is equal to the `vThingName`. When a content instance is created in a container, a NGSI-LD neutral-formt packet is internally published. The packet contains a NGSI-LD entity whose ID is equal to `urn:ngsi-ld:vThingName:cntArn` (with ":" instead of "/"). The NGSI-LD `type` is equal to the oneM2M name. The entity has a single property, whose name is equal to the  cntArn (with ":" instead of "/") and whose value contains the latest content instance as JSON.
 

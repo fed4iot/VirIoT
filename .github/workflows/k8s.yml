@@ -27,7 +27,7 @@ jobs:
         kubectl apply -f ./yaml/viriot-configmap-setup.yaml
         kubectl apply -f ./yaml/mongo-statefulset-noauth.yaml
         kubectl apply -f ./yaml/vernemq-affinity.yaml
-        sleep 5
+        sleep 15
         kubectl apply -f ./yaml/master-controller.yaml
         sleep 50
         MC_PORT=`kubectl get svc -o wide  |grep master-contro | awk '{print $5}' | cut -d':' -f2 | cut -d'/' -f1`

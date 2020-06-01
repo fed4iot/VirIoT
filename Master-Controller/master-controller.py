@@ -102,7 +102,23 @@ container_manager = settings.container_manager
 
 def create_virtual_silo_on_docker(v_silo_id, v_silo_name, tenant_id, flavour_params,
                                   debug_mode, flavour_image_name, flavour_id, yaml_files=None, deploy_zone=None):
+
     try:
+
+        mqtt_data_broker = {"ip": MQTT_data_broker_IP, "port": MQTT_data_broker_port}
+        mqtt_control_broker = {"ip": MQTT_control_broker_IP, "port": MQTT_control_broker_port}
+
+        silo_entry = {"creationTime": datetime.datetime.now().isoformat(),
+                      "tenantID": tenant_id,
+                      "flavourParams": flavour_params,
+                      "MQTTDataBroker": mqtt_data_broker,
+                      "MQTTControlBroker": mqtt_control_broker,
+                      "vSiloID": v_silo_id,
+                      "vSiloName": v_silo_name,
+                      "flavourID": flavour_id}
+
+        db[v_silo_collection].update_one({"vSiloID": v_silo_id}, {"$set": silo_entry})
+
         # Add mqtt subscription to silo control topics
         mqttc.message_callback_add(v_silo_prefix + '/' + v_silo_id + '/' + out_control_suffix,
                                    on_silo_out_control_message)
@@ -112,6 +128,8 @@ def create_virtual_silo_on_docker(v_silo_id, v_silo_name, tenant_id, flavour_par
                "MQTTDataBrokerIP": MQTT_data_broker_IP, "MQTTDataBrokerPort": MQTT_data_broker_port,
                "MQTTControlBrokerIP": MQTT_control_broker_IP, "MQTTControlBrokerPort": MQTT_control_broker_port,
                "vSiloID": v_silo_id, "systemDatabaseIP": mongo_IP, "systemDatabasePort": mongo_port}
+
+        # env = {"vSiloID": v_silo_id, "systemDatabaseIP": mongo_IP, "systemDatabasePort": mongo_port}
 
         if not debug_mode:
             # run Docker container for Mobius broker
@@ -135,14 +153,21 @@ def create_virtual_silo_on_docker(v_silo_id, v_silo_name, tenant_id, flavour_par
             exposed_ports = {"none": "none"}
         # registering silo in system database
 
-        mqtt_data_broker = {"ip": MQTT_data_broker_IP, "port": MQTT_data_broker_port}
-        mqtt_control_broker = {"ip": MQTT_control_broker_IP, "port": MQTT_control_broker_port}
+        # mqtt_data_broker = {"ip": MQTT_data_broker_IP, "port": MQTT_data_broker_port}
+        # mqtt_control_broker = {"ip": MQTT_control_broker_IP, "port": MQTT_control_broker_port}
 
-        silo_entry = {"creationTime": datetime.datetime.now().isoformat(), "tenantID": tenant_id,
-                      "flavourParams": flavour_params, "containerName": container_name, "containerID": container_id,
-                      "MQTTDataBroker": mqtt_data_broker, "MQTTControlBroker": mqtt_control_broker,
-                      "ipAddress": ip_address, "port": exposed_ports, "vSiloID": v_silo_id,
-                      "vSiloName": v_silo_name, "status": STATUS_RUNNING, "flavourID": flavour_id}
+        # silo_entry = {"creationTime": datetime.datetime.now().isoformat(), "tenantID": tenant_id,
+        #               "flavourParams": flavour_params, "containerName": container_name, "containerID": container_id,
+        #               "MQTTDataBroker": mqtt_data_broker, "MQTTControlBroker": mqtt_control_broker,
+        #               "ipAddress": ip_address, "port": exposed_ports, "vSiloID": v_silo_id,
+        #               "vSiloName": v_silo_name, "status": STATUS_RUNNING, "flavourID": flavour_id}
+
+        silo_entry = {"creationTime": datetime.datetime.now().isoformat(),
+                      "containerName": container_name,
+                      "containerID": container_id,
+                      "ipAddress": ip_address, "port": exposed_ports,
+                      "status": STATUS_RUNNING}
+
         db[v_silo_collection].update_one({"vSiloID": v_silo_id}, {"$set": silo_entry})
 
     except Exception:
@@ -157,6 +182,21 @@ def create_virtual_silo_on_kubernetes(v_silo_id, v_silo_name, tenant_id, flavour
     global working_namespace
     try:
 
+        mqtt_data_broker = {"ip": MQTT_data_broker_IP, "port": MQTT_data_broker_port}
+        mqtt_control_broker = {"ip": MQTT_control_broker_IP, "port": MQTT_control_broker_port}
+
+        silo_entry = {"creationTime": datetime.datetime.now().isoformat(),
+                      "tenantID": tenant_id,
+                      "flavourParams": flavour_params,
+                      "MQTTDataBroker": mqtt_data_broker,
+                      "MQTTControlBroker": mqtt_control_broker,
+                      "vSiloID": v_silo_id,
+                      "vSiloName": v_silo_name,
+                      "flavourID": flavour_id}
+
+        db[v_silo_collection].update_one({"vSiloID": v_silo_id}, {"$set": silo_entry})
+
+
         # Add mqtt subscription to silo control topics
         mqttc.message_callback_add(v_silo_prefix + '/' + v_silo_id + '/' + out_control_suffix,
                                    on_silo_out_control_message)
@@ -166,6 +206,9 @@ def create_virtual_silo_on_kubernetes(v_silo_id, v_silo_name, tenant_id, flavour
                "MQTTDataBrokerIP": MQTT_data_broker_IP, "MQTTDataBrokerPort": MQTT_data_broker_port,
                "MQTTControlBrokerIP": MQTT_control_broker_IP, "MQTTControlBrokerPort": MQTT_control_broker_port,
                "vSiloID": v_silo_id, "systemDatabaseIP": mongo_IP, "systemDatabasePort": mongo_port}
+
+        # env = {"vSiloID": v_silo_id, "systemDatabaseIP": mongo_IP, "systemDatabasePort": mongo_port}
+
 
         service_name = "error"
         deployment_name = "error"
@@ -224,13 +267,14 @@ def create_virtual_silo_on_kubernetes(v_silo_id, v_silo_name, tenant_id, flavour
         mqtt_control_broker = {"ip": MQTT_control_broker_IP, "port": MQTT_control_broker_port}
 
         # registering silo in system database
-        silo_entry = {"creationTime": datetime.datetime.now().isoformat(), "tenantID": tenant_id,
-                      "flavourParams": flavour_params, "containerName": container_name, "containerID": container_id,
+        silo_entry = {"creationTime": datetime.datetime.now().isoformat(),
+                      "containerName": container_name,
+                      "containerID": container_id,
                       "deploymentName": deployment_name, "serviceName": service_name,
-                      # "ipAddress": ip_address, "port": exposed_ports, "vSiloID": v_silo_id,
-                      "MQTTDataBroker": mqtt_data_broker, "MQTTControlBroker": mqtt_control_broker,
-                      "ipAddress": gateway_IP, "port": exposed_ports, "vSiloID": v_silo_id,
-                      "vSiloName": v_silo_name, "status": STATUS_RUNNING, "flavourID": flavour_id}
+                      "ipAddress": gateway_IP, "port": exposed_ports,
+                      "status": STATUS_RUNNING
+                      }
+
         db[v_silo_collection].update_one({"vSiloID": v_silo_id}, {"$set": silo_entry})
 
     except Exception:
@@ -266,23 +310,22 @@ def destroy_virtual_silo_on_kubernetes(silo_entry):
 
 
 def create_thing_visor_on_docker(tv_img_name, debug_mode, tv_id, tv_params, tv_description, yaml_files=None, deploy_zone=None):
+
     try:
-
-
         mqtt_data_broker = {"ip": MQTT_data_broker_IP, "port": MQTT_data_broker_port}
         mqtt_control_broker = {"ip": MQTT_control_broker_IP, "port": MQTT_control_broker_port}
 
         thing_visor_entry = {"creationTime": datetime.datetime.now().isoformat(),
                              "tvDescription": tv_description,
-                             "thingVisorID": tv_id, "imageName": tv_img_name,
+                             "imageName": tv_img_name,
                              "debug_mode": debug_mode, "vThings": [], "params": tv_params,
                              "MQTTDataBroker": mqtt_data_broker,
                              "MQTTControlBroker": mqtt_control_broker,
                              "IP": default_gateway_IP,
-                             "status": STATUS_PENDING
                              }
 
-        db[thing_visor_collection].insert_one(thing_visor_entry)
+        # db[thing_visor_collection].insert_one(thing_visor_entry)
+        db[thing_visor_collection].update_one({"thingVisorID": tv_id}, {"$set": thing_visor_entry})
 
 
         if not dockerImageExist(tv_img_name) and not debug_mode:
@@ -362,15 +405,15 @@ def create_thing_visor_on_kubernetes(tv_img_name, debug_mode, tv_id, tv_params, 
 
         thing_visor_entry = {"creationTime": datetime.datetime.now().isoformat(),
                              "tvDescription": tv_description,
-                             "thingVisorID": tv_id, "imageName": tv_img_name,
+                             "imageName": tv_img_name,
                              "debug_mode": debug_mode, "vThings": [], "params": tv_params,
                              "MQTTDataBroker": mqtt_data_broker,
                              "MQTTControlBroker": mqtt_control_broker,
                              "yamlFiles": yaml_files,
-                             "status": STATUS_PENDING
                              }
 
-        db[thing_visor_collection].insert_one(thing_visor_entry)
+        # db[thing_visor_collection].insert_one(thing_visor_entry)
+        db[thing_visor_collection].update_one({"thingVisorID": tv_id}, {"$set": thing_visor_entry})
 
         # Add mqtt subscription to TV control topics
         mqttc.message_callback_add(thing_visor_prefix + '/' + tv_id + '/' + out_control_suffix, on_tv_out_control_message)
@@ -812,6 +855,7 @@ class httpThread(Thread):
             if "yamlFiles" in flavour_entry:
                 yaml_files = flavour_entry["yamlFiles"]
 
+
             silo_entry = {"vSiloID": v_silo_id, "status": STATUS_PENDING}
 
             db[v_silo_collection].insert_one(silo_entry)
@@ -1036,7 +1080,7 @@ class httpThread(Thread):
             if db[thing_visor_collection].count({"thingVisorID": tv_id}) != 0:
                 # already exists
                 return json.dumps({"message": "Add fails - thingVisor " + tv_id + " already exists"}), 409
-            # thing_visor_entry = {"thingVisorID": tv_id, "status": STATUS_PENDING}
+
             # db[thing_visor_collection].insert_one(thing_visor_entry)
 
             deploy_zone = {}
@@ -1049,7 +1093,8 @@ class httpThread(Thread):
                 if deploy_zone["gw"] == "":
                     return json.dumps({"message": 'ThingVisor create fails, gateway for zone ' + tv_zone + ' is not defined!'}), 401
 
-            # db[thing_visor_collection].insert_one(thing_visor_entry)
+            thing_visor_entry = {"thingVisorID": tv_id, "status": STATUS_PENDING}
+            db[thing_visor_collection].insert_one(thing_visor_entry)
 
             Thread(target=create_thing_visor,
                    args=(tv_img_name, debug_mode, tv_id, tv_params, tv_description, yaml_files, deploy_zone)).start()

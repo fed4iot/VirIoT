@@ -267,6 +267,24 @@ def destroy_virtual_silo_on_kubernetes(silo_entry):
 
 def create_thing_visor_on_docker(tv_img_name, debug_mode, tv_id, tv_params, tv_description, yaml_files=None, deploy_zone=None):
     try:
+
+
+        mqtt_data_broker = {"ip": MQTT_data_broker_IP, "port": MQTT_data_broker_port}
+        mqtt_control_broker = {"ip": MQTT_control_broker_IP, "port": MQTT_control_broker_port}
+
+        thing_visor_entry = {"creationTime": datetime.datetime.now().isoformat(),
+                             "tvDescription": tv_description,
+                             "thingVisorID": tv_id, "imageName": tv_img_name,
+                             "debug_mode": debug_mode, "vThings": [], "params": tv_params,
+                             "MQTTDataBroker": mqtt_data_broker,
+                             "MQTTControlBroker": mqtt_control_broker,
+                             "IP": default_gateway_IP,
+                             "status": STATUS_PENDING
+                             }
+
+        db[thing_visor_collection].insert_one(thing_visor_entry)
+
+
         if not dockerImageExist(tv_img_name) and not debug_mode:
             docker_client.images.pull(tv_img_name)
         # Add mqtt subscription to TV control topics
@@ -277,10 +295,12 @@ def create_thing_visor_on_docker(tv_img_name, debug_mode, tv_id, tv_params, tv_d
         # Sleep 1 sec before run container (delay for the creation of mqtt callback)
         time.sleep(1)
 
-        env = {"MQTTDataBrokerIP": MQTT_data_broker_IP, "MQTTDataBrokerPort": MQTT_data_broker_port,
-               "MQTTControlBrokerIP": MQTT_control_broker_IP, "MQTTControlBrokerPort": MQTT_control_broker_port,
-               "params": json.dumps(tv_params), "thingVisorID": tv_id, "systemDatabaseIP": mongo_IP,
-               "systemDatabasePort": mongo_port}
+        # env = {"MQTTDataBrokerIP": MQTT_data_broker_IP, "MQTTDataBrokerPort": MQTT_data_broker_port,
+        #        "MQTTControlBrokerIP": MQTT_control_broker_IP, "MQTTControlBrokerPort": MQTT_control_broker_port,
+        #        "params": json.dumps(tv_params), "thingVisorID": tv_id, "systemDatabaseIP": mongo_IP,
+        #        "systemDatabasePort": mongo_port}
+
+        env = {"thingVisorID": tv_id, "systemDatabaseIP": mongo_IP, "systemDatabasePort": mongo_port}
 
         exposed_ports = {}
         if not debug_mode:
@@ -299,20 +319,27 @@ def create_thing_visor_on_docker(tv_img_name, debug_mode, tv_id, tv_params, tv_d
             container_id = "debug_mode"
             ip_address = "127.0.0.1"
 
-        mqtt_data_broker = {"ip": MQTT_data_broker_IP, "port": MQTT_data_broker_port}
-        mqtt_control_broker = {"ip": MQTT_control_broker_IP, "port": MQTT_control_broker_port}
+        # mqtt_data_broker = {"ip": MQTT_data_broker_IP, "port": MQTT_data_broker_port}
+        # mqtt_control_broker = {"ip": MQTT_control_broker_IP, "port": MQTT_control_broker_port}
 
         # registering thingVisor in system database
         thing_visor_entry = {"creationTime": datetime.datetime.now().isoformat(),
-                             "tvDescription": tv_description, "containerID": container_id,
-                             "thingVisorID": tv_id, "imageName": tv_img_name, "ipAddress": ip_address,
-                             "debug_mode": debug_mode, "vThings": [], "params": json.dumps(tv_params),
-                             "MQTTDataBroker": mqtt_data_broker,
-                             "MQTTControlBroker": mqtt_control_broker,
+                             "containerID": container_id,
+                             "ipAddress": ip_address,
                              "port": exposed_ports,
-                             "IP": default_gateway_IP,
                              "status": STATUS_RUNNING
                              }
+
+        # thing_visor_entry = {"creationTime": datetime.datetime.now().isoformat(),
+        #                      "tvDescription": tv_description, "containerID": container_id,
+        #                      "thingVisorID": tv_id, "imageName": tv_img_name, "ipAddress": ip_address,
+        #                      "debug_mode": debug_mode, "vThings": [], "params": json.dumps(tv_params),
+        #                      "MQTTDataBroker": mqtt_data_broker,
+        #                      "MQTTControlBroker": mqtt_control_broker,
+        #                      "port": exposed_ports,
+        #                      "IP": default_gateway_IP,
+        #                      "status": STATUS_RUNNING
+        #                      }
 
         db[thing_visor_collection].update_one({"thingVisorID": tv_id}, {"$set": thing_visor_entry})
 
@@ -330,6 +357,21 @@ def create_thing_visor_on_kubernetes(tv_img_name, debug_mode, tv_id, tv_params, 
     try:
         print("Creation of ThingVisor on k8s")
 
+        mqtt_data_broker = {"ip": MQTT_data_broker_IP, "port": MQTT_data_broker_port}
+        mqtt_control_broker = {"ip": MQTT_control_broker_IP, "port": MQTT_control_broker_port}
+
+        thing_visor_entry = {"creationTime": datetime.datetime.now().isoformat(),
+                             "tvDescription": tv_description,
+                             "thingVisorID": tv_id, "imageName": tv_img_name,
+                             "debug_mode": debug_mode, "vThings": [], "params": tv_params,
+                             "MQTTDataBroker": mqtt_data_broker,
+                             "MQTTControlBroker": mqtt_control_broker,
+                             "yamlFiles": yaml_files,
+                             "status": STATUS_PENDING
+                             }
+
+        db[thing_visor_collection].insert_one(thing_visor_entry)
+
         # Add mqtt subscription to TV control topics
         mqttc.message_callback_add(thing_visor_prefix + '/' + tv_id + '/' + out_control_suffix, on_tv_out_control_message)
         mqttc.subscribe(thing_visor_prefix + '/' + tv_id + '/' + out_control_suffix)
@@ -337,10 +379,13 @@ def create_thing_visor_on_kubernetes(tv_img_name, debug_mode, tv_id, tv_params, 
         # Sleep 1 sec before run container (delay for the creation of mqtt callback)
         time.sleep(1)
 
-        env = {"MQTTDataBrokerIP": MQTT_data_broker_IP, "MQTTDataBrokerPort": MQTT_data_broker_port,
-               "MQTTControlBrokerIP": MQTT_control_broker_IP, "MQTTControlBrokerPort": MQTT_control_broker_port,
-               "params": tv_params, "thingVisorID": tv_id, "systemDatabaseIP": mongo_IP,
-               "systemDatabasePort": mongo_port}
+        # env = {"MQTTDataBrokerIP": MQTT_data_broker_IP, "MQTTDataBrokerPort": MQTT_data_broker_port,
+        #        "MQTTControlBrokerIP": MQTT_control_broker_IP, "MQTTControlBrokerPort": MQTT_control_broker_port,
+        #        "params": tv_params, "thingVisorID": tv_id, "systemDatabaseIP": mongo_IP,
+        #        "systemDatabasePort": mongo_port}
+
+        env = {"thingVisorID": tv_id, "systemDatabaseIP": mongo_IP, "systemDatabasePort": mongo_port}
+
 
         exposed_ports = {}
         deployment_name = "error"
@@ -382,6 +427,7 @@ def create_thing_visor_on_kubernetes(tv_img_name, debug_mode, tv_id, tv_params, 
                     # print(api_response_service)
                 else:
                     print("Error: yaml kind not supported (thingVisor)")
+                    return json.dumps({"message": 'Error: yaml kind not supported (thingVisor): ' + tv_id}), 401
 
             time.sleep(1)  # need new get because network is assigned a bit later
 
@@ -394,19 +440,16 @@ def create_thing_visor_on_kubernetes(tv_img_name, debug_mode, tv_id, tv_params, 
         else:
             container_id = "debug_mode"
             ip_address = "127.0.0.1"
+            gateway_IP = "127.0.0.1"
 
         mqtt_data_broker = {"ip": MQTT_data_broker_IP, "port": MQTT_data_broker_port}
         mqtt_control_broker = {"ip": MQTT_control_broker_IP, "port": MQTT_control_broker_port}
 
         # registering thingVisor in system database
         thing_visor_entry = {"creationTime": datetime.datetime.now().isoformat(),
-                             "tvDescription": tv_description, "containerID": container_id,
-                             "thingVisorID": tv_id, "imageName": tv_img_name, "ipAddress": ip_address,
+                             "containerID": container_id,
+                             "ipAddress": ip_address,
                              "deploymentName": deployment_name, "serviceName": service_name,
-                             "debug_mode": debug_mode, "vThings": [], "params": tv_params,
-                             "MQTTDataBroker": mqtt_data_broker,
-                             "MQTTControlBroker": mqtt_control_broker,
-                             "yamlFiles": yaml_files,
                              "port": exposed_ports,
                              "IP": gateway_IP,
                              "status": STATUS_RUNNING
@@ -993,8 +1036,8 @@ class httpThread(Thread):
             if db[thing_visor_collection].count({"thingVisorID": tv_id}) != 0:
                 # already exists
                 return json.dumps({"message": "Add fails - thingVisor " + tv_id + " already exists"}), 409
-            thing_visor_entry = {"thingVisorID": tv_id, "status": STATUS_PENDING}
-
+            # thing_visor_entry = {"thingVisorID": tv_id, "status": STATUS_PENDING}
+            # db[thing_visor_collection].insert_one(thing_visor_entry)
 
             deploy_zone = {}
             if tv_zone is not None and tv_zone != "":
@@ -1006,10 +1049,12 @@ class httpThread(Thread):
                 if deploy_zone["gw"] == "":
                     return json.dumps({"message": 'ThingVisor create fails, gateway for zone ' + tv_zone + ' is not defined!'}), 401
 
-            db[thing_visor_collection].insert_one(thing_visor_entry)
+            # db[thing_visor_collection].insert_one(thing_visor_entry)
+
             Thread(target=create_thing_visor,
                    args=(tv_img_name, debug_mode, tv_id, tv_params, tv_description, yaml_files, deploy_zone)).start()
 
+            time.sleep(1)
             msg = "ThingVisor is starting. Please wait... \n\n" \
                   "Check process status with inspectThingVisor API, \n" \
                   "POST parameters: {'thingVisorID': " + tv_id + "}"

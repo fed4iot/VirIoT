@@ -111,6 +111,7 @@ From then on, whenever a ThingVisor produces a "create VThing" message because i
 *  Subscribes to the internal TV/+/c_out MQTT channel, in order to grab all commands from ThingVisors
 *  For each MQTT.createVThing message, it invokes an /addVThing command on the MasterController, after performing a /login as "admin"
 
+![System vSilo architecture](Extra/vsilo_architecture.jpg)
 
 Each newly created vThing is automatically added to the System vSilo, making its data available through the System vSilo's data broker, as seen above.
 

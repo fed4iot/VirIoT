@@ -338,12 +338,12 @@ def create_thing_visor_on_docker(tv_img_name, debug_mode, tv_id, tv_params, tv_d
         # Sleep 1 sec before run container (delay for the creation of mqtt callback)
         time.sleep(1)
 
-        # env = {"MQTTDataBrokerIP": MQTT_data_broker_IP, "MQTTDataBrokerPort": MQTT_data_broker_port,
-        #        "MQTTControlBrokerIP": MQTT_control_broker_IP, "MQTTControlBrokerPort": MQTT_control_broker_port,
-        #        "params": json.dumps(tv_params), "thingVisorID": tv_id, "systemDatabaseIP": mongo_IP,
-        #        "systemDatabasePort": mongo_port}
+        env = {"MQTTDataBrokerIP": MQTT_data_broker_IP, "MQTTDataBrokerPort": MQTT_data_broker_port,
+               "MQTTControlBrokerIP": MQTT_control_broker_IP, "MQTTControlBrokerPort": MQTT_control_broker_port,
+               "params": json.dumps(tv_params), "thingVisorID": tv_id, "systemDatabaseIP": mongo_IP,
+               "systemDatabasePort": mongo_port}
 
-        env = {"thingVisorID": tv_id, "systemDatabaseIP": mongo_IP, "systemDatabasePort": mongo_port}
+        # env = {"thingVisorID": tv_id, "systemDatabaseIP": mongo_IP, "systemDatabasePort": mongo_port}
 
         exposed_ports = {}
         if not debug_mode:
@@ -422,12 +422,12 @@ def create_thing_visor_on_kubernetes(tv_img_name, debug_mode, tv_id, tv_params, 
         # Sleep 1 sec before run container (delay for the creation of mqtt callback)
         time.sleep(1)
 
-        # env = {"MQTTDataBrokerIP": MQTT_data_broker_IP, "MQTTDataBrokerPort": MQTT_data_broker_port,
-        #        "MQTTControlBrokerIP": MQTT_control_broker_IP, "MQTTControlBrokerPort": MQTT_control_broker_port,
-        #        "params": tv_params, "thingVisorID": tv_id, "systemDatabaseIP": mongo_IP,
-        #        "systemDatabasePort": mongo_port}
+        env = {"MQTTDataBrokerIP": MQTT_data_broker_IP, "MQTTDataBrokerPort": MQTT_data_broker_port,
+               "MQTTControlBrokerIP": MQTT_control_broker_IP, "MQTTControlBrokerPort": MQTT_control_broker_port,
+               "params": tv_params, "thingVisorID": tv_id, "systemDatabaseIP": mongo_IP,
+               "systemDatabasePort": mongo_port}
 
-        env = {"thingVisorID": tv_id, "systemDatabaseIP": mongo_IP, "systemDatabasePort": mongo_port}
+        # env = {"thingVisorID": tv_id, "systemDatabaseIP": mongo_IP, "systemDatabasePort": mongo_port}
 
 
         exposed_ports = {}

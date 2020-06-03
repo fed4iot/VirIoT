@@ -76,8 +76,8 @@ def mqtt_control_on_connect(client, userdata, flags, rc):
     # Add message callback and subscription for receiving control messages from all TVs
     # But only if we are a System vSilo
     if is_this_vsilo_systemvsilo == True:
-      client.message_callback_add(out_generic_thingvisor_control_topic, mqtt_on_out_generic_thingvisor_controltopic_message)
-      client.subscribe(out_generic_thingvisor_control_topic)
+        client.message_callback_add(out_generic_thingvisor_control_topic, mqtt_on_out_generic_thingvisor_controltopic_message)
+        client.subscribe(out_generic_thingvisor_control_topic)
 
     print("MQTT control channel connected with result code "+str(rc))
     global connected_clients
@@ -191,18 +191,18 @@ def login_as_admin_and_get_token():
         'accept': "application/json",
         'content-type': "application/json",
         'cache-control': "no-cache",
-        }
+    }
 
     response = requests.request("POST", url, data=json.dumps(payload), headers=headers)
 
     if response.status_code in [201, 200]:
-      token = response.json()["access_token"]
-      return token
+        token = response.json()["access_token"]
+        return token
     else:
-      print("    System vSilo could NOT login as admin to mastercontroller url: " + controllerurl)
-      print("    " + response.text + "\n")
-      # this empty return is crucial to signal a bad thing has occurred
-      return ""
+        print("    System vSilo could NOT login as admin to mastercontroller url: " + controllerurl)
+        print("    " + response.text + "\n")
+        # this empty return is crucial to signal a bad thing has occurred
+        return ""
 
 
 # the following method is basically a copy of f4i_add_vthing.py
@@ -215,8 +215,8 @@ def invoke_REST_add_vthing(token, v_thing_id):
     print("  System vSilo " + v_silo_name + " adding vThing " + v_thing_id + " to itself via mastercontroller url: " + controllerurl)
 
     payload = "{\n\t\"tenantID\":\"" + tenant_id + "\",\n" \
-                "\t\"vThingID\":\"" + v_thing_id + "\",\n" \
-                "\t\"vSiloName\":\"" + v_silo_name + "\"}"
+                                                   "\t\"vThingID\":\"" + v_thing_id + "\",\n" \
+                                                                                      "\t\"vSiloName\":\"" + v_silo_name + "\"}"
 
     headers = {
         'Authorization': "Bearer " + token,
@@ -308,7 +308,7 @@ def control_delete_vThing(v_thing_id):
     try:
         # Lets do a safety check that the vthing is active in the hashmap
         if check_if_vThing_is_in_hashmap(v_thing_id) == False:
-          print("STRANGE WARNING that you want to delete vThing " + v_thing_id + " that i dont have in hashmap")
+            print("STRANGE WARNING that you want to delete vThing " + v_thing_id + " that i dont have in hashmap")
         deactivate_vThing_in_hashmap(v_thing_id)
         # removing mqtt subscriptions and callbacks
         out_vthing_datatopic = v_thing_prefix + '/' + v_thing_id + '/' + out_data_suffix
@@ -327,11 +327,11 @@ def control_delete_vThing(v_thing_id):
         print("... trying to delete vthing " + v_thing_id + " from broker")
         result2 = brokerspecific.remove_vThing_from_Broker(v_thing_id)
         if result1 and result2:
-          print("... deleting vthing " + v_thing_id + " SUCCESS")
-          return 'OK'
+            print("... deleting vthing " + v_thing_id + " SUCCESS")
+            return 'OK'
         else:
-          print("... delete vthing " + v_thing_id + " FAIL!!")
-          return 'Delete vThing fails'
+            print("... delete vthing " + v_thing_id + " FAIL!!")
+            return 'Delete vThing fails'
     except Exception:
         traceback.print_exc()
         return 'ERROR'
@@ -401,25 +401,25 @@ def restore_virtual_things():
 
 # ========== HASHMAP
 def check_if_vThing_is_in_hashmap(v_thing_id):
-  key = v_thing_id.encode()
-  if leveldb.get(key) == None:
-    return False
-  else:
-    return True
+    key = v_thing_id.encode()
+    if leveldb.get(key) == None:
+        return False
+    else:
+        return True
 
 
 def activate_vThing_in_hashmap(v_thing_id):
-  print("-> activating vthing " + v_thing_id + " in hashmap")
-  # by inserting the vthingID as key, and a dummy value as value
-  key = v_thing_id.encode()
-  value = b'dummy'
-  leveldb.put(key, value)
+    print("-> activating vthing " + v_thing_id + " in hashmap")
+    # by inserting the vthingID as key, and a dummy value as value
+    key = v_thing_id.encode()
+    value = b'dummy'
+    leveldb.put(key, value)
 
 
 def deactivate_vThing_in_hashmap(v_thing_id):
-  print("-> deactivating vthing " + v_thing_id + " in hashmap")
-  key = v_thing_id.encode()
-  leveldb.delete(key)
+    print("-> deactivating vthing " + v_thing_id + " in hashmap")
+    key = v_thing_id.encode()
+    leveldb.delete(key)
 
 
 # ========== HASHMAP + BROKER
@@ -435,13 +435,13 @@ def remove_entities_under_vThing(v_thing_id):
     prfx = v_thing_id.encode()
     # then we prepare to batch remove the set of keys from the hashmap
     with leveldb.write_batch() as b:
-      for key, value in leveldb.iterator(prefix=prfx):
-        # lets now delete the entity from the Broker
-        if brokerspecific.delete_entity_under_vThing_on_Broker(v_thing_id, value.decode()):
-          b.delete(key)
-        else:
-          print("Exception while REST DELETE of Entity " + value.decode())
-      # here we exit the "with" context and the batch.write() is automatically executed
+        for key, value in leveldb.iterator(prefix=prfx):
+            # lets now delete the entity from the Broker
+            if brokerspecific.delete_entity_under_vThing_on_Broker(v_thing_id, value.decode()):
+                b.delete(key)
+            else:
+                print("Exception while REST DELETE of Entity " + value.decode())
+        # here we exit the "with" context and the batch.write() is automatically executed
     print("    finished physically removing on Broker Scorpio vthing " + v_thing_id)
     return True
 
@@ -453,28 +453,28 @@ def data_insert_entities_under_vThing(jres):
     # (in this method we should track what NGSI-LD entities are under the same vThing)
     # We receive jres as a dictionary.
     if leveldb.get(v_thing_id.encode()) != None:
-      data = jres['data']
-      # data is the array of NGSI-LD entities, that has now become a python list which we loop
-      for entity in data:
-        # first of all try to add the NGSI-LD entity in the broker
-        if brokerspecific.add_entity_under_vThing_on_Broker(v_thing_id, entity):
-          # then track what NGSI-LD entities are under the same vThing:
-          # We now better do it with the hashmap, by creating a key composed of
-          # a prefix and a suffix. Prefix is the vthingid, suffix is the entity id
-          # so that keys are different, but have a common prefix to fetch them as a group.
-          # We then redund the entity id also as a value to speed things up when we get it back
-          # and he @@ separator is just to visually separate, not to call a string.split()
-          # The prefixed vthingid is used to group and fast-get just the elements of
-          # one specific vthingid, because the leveldb hashmap is ordered lexicographycally, and
-          # we can jump to a set of keys which begin_with() something.
-          key = (v_thing_id + "@@" + entity['id']).encode()
-          value = entity['id'].encode()
-          leveldb.put(key, value)
-        else:
-          print("Exception while REST ADD of Entity " + entity['id'] + " under vThing " + v_thing_id)
+        data = jres['data']
+        # data is the array of NGSI-LD entities, that has now become a python list which we loop
+        for entity in data:
+            # first of all try to add the NGSI-LD entity in the broker
+            if brokerspecific.add_entity_under_vThing_on_Broker(v_thing_id, entity):
+                # then track what NGSI-LD entities are under the same vThing:
+                # We now better do it with the hashmap, by creating a key composed of
+                # a prefix and a suffix. Prefix is the vthingid, suffix is the entity id
+                # so that keys are different, but have a common prefix to fetch them as a group.
+                # We then redund the entity id also as a value to speed things up when we get it back
+                # and he @@ separator is just to visually separate, not to call a string.split()
+                # The prefixed vthingid is used to group and fast-get just the elements of
+                # one specific vthingid, because the leveldb hashmap is ordered lexicographycally, and
+                # we can jump to a set of keys which begin_with() something.
+                key = (v_thing_id + "@@" + entity['id']).encode()
+                value = entity['id'].encode()
+                leveldb.put(key, value)
+            else:
+                print("Exception while REST ADD of Entity " + entity['id'] + " under vThing " + v_thing_id)
     else:
-      print(" DATA HAS ARRIVED FOR NON ACTIVE vThing " + v_thing_id + ". Skipping it.")
-    
+        print(" DATA HAS ARRIVED FOR NON ACTIVE vThing " + v_thing_id + ". Skipping it.")
+
     # return ok in any case
     return 'OK'
 # ========== END HASHMAP + BROKER
@@ -495,153 +495,198 @@ def clean_close():
 
 
 def start_silo_controller(broker_specific_module_name):
-  global v_silo_prefix
-  global v_thing_prefix
-  global in_control_suffix
-  global out_control_suffix
-  global out_data_suffix
-  global in_vsilo_control_topic
-  global out_vsilo_control_topic
-  global out_generic_thingvisor_control_topic
-  global mqtt_control_client
-  global mqtt_data_client
-  global connected_clients
-  global leveldb
-  global db_IP
-  global db_port
-  global db_name
-  global v_thing_collection
-  global thing_visor_collection
-  global v_silo_id
-  global brokerspecific
-  global tenant_id
-  global is_this_vsilo_systemvsilo
-  global controllerurl
-  global adminpassword
+    global v_silo_prefix
+    global v_thing_prefix
+    global in_control_suffix
+    global out_control_suffix
+    global out_data_suffix
+    global in_vsilo_control_topic
+    global out_vsilo_control_topic
+    global out_generic_thingvisor_control_topic
+    global mqtt_control_client
+    global mqtt_data_client
+    global connected_clients
+    global leveldb
+    global db_IP
+    global db_port
+    global db_name
+    global v_thing_collection
+    global thing_visor_collection
+    global v_silo_id
+    global brokerspecific
+    global tenant_id
+    global is_this_vsilo_systemvsilo
+    global controllerurl
+    global adminpassword
 
-  # lets import the silo-controller-specific functions and bind them into us 
-  print("importing module: " + broker_specific_module_name)
-  brokerspecific = import_module(broker_specific_module_name)
+    # lets import the silo-controller-specific functions and bind them into us
+    print("importing module: " + broker_specific_module_name)
+    brokerspecific = import_module(broker_specific_module_name)
 
-  signal.signal(signal.SIGINT, handler)
+    signal.signal(signal.SIGINT, handler)
 
-  # connect to the on-disk hashmap
-  shutil.rmtree('plyvelhashmap', ignore_errors=True)
-  leveldb = plyvel.DB('plyvelhashmap', create_if_missing=True)
+    # connect to the on-disk hashmap
+    shutil.rmtree('plyvelhashmap', ignore_errors=True)
+    leveldb = plyvel.DB('plyvelhashmap', create_if_missing=True)
 
-  # If you run this silo controller MANUALLY for DEBUG PURPOSES,
-  # then you may access the -d parameter to set a local address of the mongo DB
-  # and a local MQTT. This parameter is never visible when this silo
-  # is run via docker automatism (or similar) via the master controller.    
-  parser = argparse.ArgumentParser(description='A vSilo Controller.')
-  parser.add_argument('-d', '--debug_mongo_ip', dest='debug_mongo_ip', help='run in debug mode and use the given IP address of the system MongoDB (usually 172.17.0.2)')
-  args = parser.parse_args()
+    # If you run this silo controller MANUALLY for DEBUG PURPOSES,
+    # then you may access the -d parameter to set a local address of the mongo DB
+    # and a local MQTT. This parameter is never visible when this silo
+    # is run via docker automatism (or similar) via the master controller.
+    parser = argparse.ArgumentParser(description='A vSilo Controller.')
+    parser.add_argument('-d', '--debug_mongo_ip', dest='debug_mongo_ip', help='run in debug mode and use the given IP address of the system MongoDB (usually 172.17.0.2)')
+    args = parser.parse_args()
 
-  # flavour_params must be a string
-  if args.debug_mongo_ip != None:
-    # -------------- DEBUG PARAMETERS --------------
-    #tenant_id = "tenant1"
-    #flavour_params = ""
-    #v_silo_id = "tenant1_Silo1"
-    tenant_id = os.environ["tenantID"]
-    v_silo_id = os.environ["vSiloID"]
-    flavour_params = os.environ["flavourParams"]
-    virIoT_mqtt_data_broker_IP = "127.0.0.1"
-    virIoT_mqtt_data_broker_port = 1883
-    virIoT_mqtt_control_broker_IP = "127.0.0.1"
-    virIoT_mqtt_control_broker_port = 1883
-    db_IP = args.debug_mongo_ip
-    db_port = 27017
-    print("starting silo controller in DEBUG mode to " + db_IP)
-  else:
-    tenant_id = os.environ["tenantID"]
-    v_silo_id = os.environ["vSiloID"]
-    flavour_params = os.environ["flavourParams"]
-    virIoT_mqtt_data_broker_IP = os.environ["MQTTDataBrokerIP"]
-    virIoT_mqtt_data_broker_port = int(os.environ["MQTTDataBrokerPort"])
-    virIoT_mqtt_control_broker_IP = os.environ["MQTTControlBrokerIP"]
-    virIoT_mqtt_control_broker_port = int(os.environ["MQTTControlBrokerPort"])
-    db_IP = os.environ['systemDatabaseIP']  # IP address of system database
-    db_port = os.environ['systemDatabasePort']  # port of system database
-    print("starting silo controller")
+    # flavour_params must be a string
+    if args.debug_mongo_ip != None:
+        # -------------- DEBUG PARAMETERS --------------
+        #tenant_id = "tenant1"
+        #flavour_params = ""
+        #v_silo_id = "tenant1_Silo1"
+        tenant_id = os.environ["tenantID"]
+        v_silo_id = os.environ["vSiloID"]
+        flavour_params = os.environ["flavourParams"]
+        virIoT_mqtt_data_broker_IP = "127.0.0.1"
+        virIoT_mqtt_data_broker_port = 1883
+        virIoT_mqtt_control_broker_IP = "127.0.0.1"
+        virIoT_mqtt_control_broker_port = 1883
+        db_IP = args.debug_mongo_ip
+        db_port = 27017
+        print("starting silo controller in DEBUG mode to " + db_IP)
+    else:
+        MAX_RETRY = 3
+        v_silo_id = os.environ["vSiloID"]
+        db_IP = os.environ['systemDatabaseIP']  # IP address of system database
+        db_port = os.environ['systemDatabasePort']  # port of system database
 
-  print("This silo's tenant ID is: " + tenant_id)
-  # in this flavour, param is the silo type (Raw, Mobius, FiWare, ..., or SystemvSilo)
-  # and in case this is a System vSilo, the admin password and the master controller
-  # urlshall be issued, too,
-  # because this silo needs to talk to the master controller and
-  # programmatically add each and every vThing that enters the platform
-  # via a POST to /addVThing REST interfce of master controller 
-  print(v_silo_id + " got flavour params: " + flavour_params)
-  try: 
-    params = json.loads(flavour_params.replace("'", '"'))
-    flavourtype = params['flavourtype']
-    adminpassword = params['adminpassword']
-    controllerurl = params['controllerurl']
-    if flavourtype == "systemvsilo":
-      if tenant_id == "admin":
-        is_this_vsilo_systemvsilo = True
-      else:
-        print("You have created a System vSilo, but you are not admin, sorry!")
-        os._exit(1)
-  except (json.decoder.JSONDecodeError, KeyError):
-    print("  ...that cannot be decoded to JSON. Assuming this vSilo is NOT a System vSilo")
-    is_this_vsilo_systemvsilo = False
-  print("Is this silo a System vSilo?: " + str(is_this_vsilo_systemvsilo))
+        # Mongodb settings
+        time.sleep(1.5)  # wait before query the system database
+        db_name = "viriotDB"  # name of system database
+        v_thing_collection = "vThingC"
+        v_silo_collection = "vSiloC"
+        db_client = MongoClient('mongodb://' + db_IP + ':' + str(db_port) + '/')
+        db = db_client[db_name]
+        silo_entry = db[v_silo_collection].find_one({"vSiloID": v_silo_id})
 
-  # Mongodb settings
-  db_name = "viriotDB"  # name of system database
-  v_thing_collection = "vThingC"
-  thing_visor_collection = "thingVisorC"
+        ##############################
+        ##############################
+        valid_silo_entry = False
+        for x in range(MAX_RETRY):
+            if silo_entry is not None:
+                valid_silo_entry = True
+                break
+            time.sleep(3)
 
-  # initialize whatever broker we have, before receiving messages!
-  brokerspecific.init_Broker()
+        if not valid_silo_entry:
+            print("Error: Virtual Silo entry not found for v_silo_id:", v_silo_id)
+            exit()
 
-  # MQTT settings
-  v_silo_prefix = "vSilo"  # prefix name for virtual IoT System communication topic
-  v_thing_prefix = "vThing"  # prefix name for virtual Thing data and control topics
-  thing_visor_prefix = "TV"  # prefix name for ThingVisor communication topic
-  in_control_suffix = "c_in"
-  out_control_suffix = "c_out"
-  out_data_suffix = "data_out"
-  # useful strings setup:
-  # the following topic is used by us to subscribe to control commands directed to us
-  in_vsilo_control_topic = v_silo_prefix + "/" + v_silo_id + "/" + in_control_suffix
-  # the following topic is just used by us to publish ACK messages coming from us
-  out_vsilo_control_topic = v_silo_prefix + "/" + v_silo_id + "/" + out_control_suffix
-  # generic TV, single-level wildcard: TV/+/c_out
-  out_generic_thingvisor_control_topic = thing_visor_prefix + "/+/" + out_control_suffix
-  # create and start two clients for MQTT
-  mqtt_control_client = mqtt.Client()
-  mqtt_data_client = mqtt.Client()
-  connected_clients = 0
-  mqtt_data_client.on_disconnect = mqtt_data_on_disconnect
-  mqtt_data_client.on_connect = mqtt_data_on_connect
-  mqtt_control_client.on_disconnect = mqtt_control_on_disconnect
-  mqtt_control_client.on_connect = mqtt_control_on_connect
-  mqtt_data_client.connect(virIoT_mqtt_data_broker_IP, virIoT_mqtt_data_broker_port)
-  mqtt_control_client.connect(virIoT_mqtt_control_broker_IP, virIoT_mqtt_control_broker_port)
+        try:
+            # import paramenters from DB
+            tenant_id = os.environ["tenantID"]
+            flavourParams = os.environ["flavourParams"]  # in this flavour, param is the silo type (Raw, Mobius, FiWare)
 
-  # enter the connect loop
-  print("Entering connect loop")
-  while connected_clients < 2:
-      mqtt_data_client.loop()
-      mqtt_control_client.loop()
+            virIoT_mqtt_data_broker_IP = os.environ["MQTTDataBrokerIP"]
+            virIoT_mqtt_data_broker_port = int(os.environ["MQTTDataBrokerPort"])
+            virIoT_mqtt_control_broker_IP = os.environ["MQTTControlBrokerIP"]
+            virIoT_mqtt_control_broker_port = int(os.environ["MQTTControlBrokerPort"])
 
-  print("Restoring virtual things")
-  restore_virtual_things()
-  print("Restored and init finished")
+        except Exception as e:
+            print("Error: Parameters not found in silo_entry", e)
+            exit()
 
-  # enter the main network loop
-  print("Entering main network loop")
-  rcd = 0
-  rcc = 0
-  while rcd == 0 and rcc == 0:
-      rcd = mqtt_data_client.loop()
-      rcc = mqtt_control_client.loop()
-      if connected_clients < 2:
-        print("WARNING CC " + str(connected_clients))
+        ##############################
+        ##############################
 
-  clean_close()
+        # tenant_id = os.environ["tenantID"]
+        # v_silo_id = os.environ["vSiloID"]
+        # flavour_params = os.environ["flavourParams"]
+        # virIoT_mqtt_data_broker_IP = os.environ["MQTTDataBrokerIP"]
+        # virIoT_mqtt_data_broker_port = int(os.environ["MQTTDataBrokerPort"])
+        # virIoT_mqtt_control_broker_IP = os.environ["MQTTControlBrokerIP"]
+        # virIoT_mqtt_control_broker_port = int(os.environ["MQTTControlBrokerPort"])
+        # db_IP = os.environ['systemDatabaseIP']  # IP address of system database
+        # db_port = os.environ['systemDatabasePort']  # port of system database
+        db_client.close()   # Close DB connection
+        print("starting silo controller")
+
+    print("This silo's tenant ID is: " + tenant_id)
+    # in this flavour, param is the silo type (Raw, Mobius, FiWare, ..., or SystemvSilo)
+    # and in case this is a System vSilo, the admin password and the master controller
+    # urlshall be issued, too,
+    # because this silo needs to talk to the master controller and
+    # programmatically add each and every vThing that enters the platform
+    # via a POST to /addVThing REST interfce of master controller
+    print(v_silo_id + " got flavour params: " + str(flavour_params))
+    try:
+        params = json.loads(flavour_params.replace("'", '"'))
+        flavourtype = params['flavourtype']
+        adminpassword = params['adminpassword']
+        controllerurl = params['controllerurl']
+        if flavourtype == "systemvsilo":
+            if tenant_id == "admin":
+                is_this_vsilo_systemvsilo = True
+            else:
+                print("You have created a System vSilo, but you are not admin, sorry!")
+                os._exit(1)
+    except (json.decoder.JSONDecodeError, KeyError):
+        print("  ...that cannot be decoded to JSON. Assuming this vSilo is NOT a System vSilo")
+        is_this_vsilo_systemvsilo = False
+    print("Is this silo a System vSilo?: " + str(is_this_vsilo_systemvsilo))
+
+    # Mongodb settings
+    db_name = "viriotDB"  # name of system database
+    v_thing_collection = "vThingC"
+    thing_visor_collection = "thingVisorC"
+
+    # initialize whatever broker we have, before receiving messages!
+    brokerspecific.init_Broker()
+
+    # MQTT settings
+    v_silo_prefix = "vSilo"  # prefix name for virtual IoT System communication topic
+    v_thing_prefix = "vThing"  # prefix name for virtual Thing data and control topics
+    thing_visor_prefix = "TV"  # prefix name for ThingVisor communication topic
+    in_control_suffix = "c_in"
+    out_control_suffix = "c_out"
+    out_data_suffix = "data_out"
+    # useful strings setup:
+    # the following topic is used by us to subscribe to control commands directed to us
+    in_vsilo_control_topic = v_silo_prefix + "/" + v_silo_id + "/" + in_control_suffix
+    # the following topic is just used by us to publish ACK messages coming from us
+    out_vsilo_control_topic = v_silo_prefix + "/" + v_silo_id + "/" + out_control_suffix
+    # generic TV, single-level wildcard: TV/+/c_out
+    out_generic_thingvisor_control_topic = thing_visor_prefix + "/+/" + out_control_suffix
+    # create and start two clients for MQTT
+    mqtt_control_client = mqtt.Client()
+    mqtt_data_client = mqtt.Client()
+    connected_clients = 0
+    mqtt_data_client.on_disconnect = mqtt_data_on_disconnect
+    mqtt_data_client.on_connect = mqtt_data_on_connect
+    mqtt_control_client.on_disconnect = mqtt_control_on_disconnect
+    mqtt_control_client.on_connect = mqtt_control_on_connect
+    mqtt_data_client.connect(virIoT_mqtt_data_broker_IP, virIoT_mqtt_data_broker_port)
+    mqtt_control_client.connect(virIoT_mqtt_control_broker_IP, virIoT_mqtt_control_broker_port)
+
+    # enter the connect loop
+    print("Entering connect loop")
+    while connected_clients < 2:
+        mqtt_data_client.loop()
+        mqtt_control_client.loop()
+
+    print("Restoring virtual things")
+    restore_virtual_things()
+    print("Restored and init finished")
+
+    # enter the main network loop
+    print("Entering main network loop")
+    rcd = 0
+    rcc = 0
+    while rcd == 0 and rcc == 0:
+        rcd = mqtt_data_client.loop()
+        rcc = mqtt_control_client.loop()
+        if connected_clients < 2:
+            print("WARNING CC " + str(connected_clients))
+
+    clean_close()
 
 

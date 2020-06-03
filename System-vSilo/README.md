@@ -87,21 +87,21 @@ GET /ngsi-ld/v1/types
 ```
 
 Will return an array of Entity Type Information comprising
-* id: URI/name of entity type being described
+* id: URI/name of entity type being described
 * type: "EntityType“
 * attributeNames: array of attributes that entities of this type have
-* entityCount: number of entity instancesthat have this type
+* entityCount: number of entity instances that have this type
 
 ```bash
 GET /ngsi-ld/v1/attributes
 ```
 
 Will return an array of EntityAttribute Information comprising
-* id: URI/name of attribute being described
+* id: URI/name of attribute being described
 * type: "EntityAttribute"
-* attributeTypes: array of attribute typeswith which attribute instances exist (e.g. whether this attribute is a Property, a GeoProperty, a Relationship, etc...)
-* typeNames: array of entity typesthat have an attribute of this name
-* attributeCount: number of attribute instancesthat have this name
+* attributeType: (whether this attribute is a Property, a GeoProperty, a Relationship, etc...)
+* typeNames: array of entity types that have this attribute
+* attributeCount: number of attribute instances that have this attribute
 
 
 ## How System vSilo Captures Data from ThingVisors

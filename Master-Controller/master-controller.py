@@ -1702,11 +1702,7 @@ if __name__ == '__main__':
         docker_client = docker.from_env()
 
         # Database connection
-        mongocnt = docker_client.containers.get("mongo-container")
-        if mongocnt.status != "running":
-            print("ERROR: database is not running... exit")
-            sys.exit(0)
-        mongo_IP = mongocnt.attrs['NetworkSettings']['Networks']['bridge']['IPAddress']
+        mongo_IP = settings.mongo_IP
 
         mongo_client = MongoClient('mongodb://' + mongo_IP + ':' + str(mongo_port) + '/')
 

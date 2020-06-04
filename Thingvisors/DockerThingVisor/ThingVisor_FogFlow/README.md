@@ -8,35 +8,37 @@ The HelloWorld ThingVisor exports one vThing named `hello` where it publishes da
 
 ## How To Run
 
-### Local Docker deployment
-
-Use the VirIoT CLI and run the following command to run the ThingVisor example.
+### build the docker image of FogFlow ThingVisor 
 
 ```bash
-python3 f4i.py add-thingvisor -i fed4iot/fogflow-tv:latest -n helloWorld -d "hello thingVisor"
+./build
 ```
 
-### Kubernetes deployment
-
-Use the VirIoT CLI and run the following command to run the ThingVisor example.  
-The `-z` argument is optional, it can be used to specify the deployment zone. If not specified,   
-Kubernetes will randomly choose a node in the default zone.
+### start the fed4iot system
 
 ```bash
-python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n helloWorldTV -d "hello thingVisor" -y "yaml/thingVisor-helloWorld.yaml"
+docker-compose -f fed4iot.yml up -d 
+cd ../../Master-Controller
+python3 master-controller.py
 ```
 
-## NGSI-LD data model
- 
-The NGSI-LD entity of the generic `HelloSensorX is the following:
+### start the FogFlow thingVisor
 
-```json
-{
-    "id": "urn:ngsi-ld:HelloSensorX",
-    "type": "my-counter",
-    "counter": {
-        "type": "Property",
-        "value": 313
-    }
-}
+```bash
+cd ./CLI
+python3 f4i.py add-thingvisor -i fed4iot/fogflow-tv:latest -n fogflow -d "FogFlow thingVisor"
+```
+
+### update the FogFlow thingVisor
+
+Update the FogFlow ThingVisor to start or stop a service topology
+```bash
+python3 f4i.py update-thingvisor -i fed4iot/fogflow-tv:latest -n fogflow -d "FogFlow thingVisor"  -p '{"service_topology": "test", "command": "start"}'
+```
+
+### stop the FogFlow thingVisor
+
+```bash
+cd ./CLI
+python3 f4i.py del-thingvisor -i fed4iot/fogflow-tv:latest -n fogflow -d "FogFlow thingVisor"
 ```

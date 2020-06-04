@@ -1,0 +1,19 @@
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: f4i-tv-fogflow
+spec:
+  selector:
+    matchLabels:
+      app: f4i-fogflow
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: f4i-fogflow
+    spec:
+      containers:
+      - name: f4i-fogflow
+        image: fed4iot/fogflow-tv:1.0
+        ports:
+        - containerPort: 80 

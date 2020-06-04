@@ -1,0 +1,5 @@
+jsonmerge
+paho-mqtt
+pymongo
+requests
+python-socketio

@@ -22,6 +22,7 @@ import paho.mqtt.client as mqtt
 from threading import Thread
 from pymongo import MongoClient
 from context import Context
+from fogflowclient import FogFlowClient, ContextEntity
 
 # -*- coding: utf-8 -*-
 
@@ -256,10 +257,43 @@ if __name__ == '__main__':
 
     mqtt_data_thread = mqttDataThread()  # mqtt data thread
     mqtt_data_thread.start()
+    
+    ffclient = FogFlowClient()
+    
+    ffclient.init("http://localhost")
+
+    #create the input data
+    deviceID = "Device.Car.0" 
+    
+    tempSensor = ContextEntity()                
+    tempSensor.id = deviceID
+    tempSensor.type = "Car"              
+    tempSensor.attributes["temperature"] =  {'type': 'integer', 'value': 30}
+    tempSensor.metadata["location"] = {
+        "type":"point",
+        "value":{
+            "latitude":35.97800618085566,
+            "longitude":139.41650390625003
+        }
+    }
+    
+    #push to the FogFlow system    
+    ffclient.put(tempSensor)
+
+    #call a fogflow function
+    ffclient.remoteCall("test")
+    
+    #trigger a fogflow function and then subscribe to the generated result
+    ffclient.start("test", onResult)
+
     while True:
         try:
             time.sleep(3)
         except:
-            print("KeyboardInterrupt")
-            time.sleep(1)
-            os._exit(1)
+            print("exit")
+                        
+            #stop a fogflow function
+            ffclient.stop("test")            
+            
+            os._exit(1)    
+

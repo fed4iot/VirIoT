@@ -117,10 +117,8 @@ class FogFlowClient:
             print('update context')        
             return True
 
-    def get(self, entityID):
-    
-        print(entityID)
-        
+    def get(self, entityID):    
+        print(entityID)        
         return True  
         
                 

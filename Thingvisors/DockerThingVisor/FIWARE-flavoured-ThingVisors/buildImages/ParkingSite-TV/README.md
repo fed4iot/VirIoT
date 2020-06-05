@@ -14,7 +14,7 @@ The [Test.md](./Test.md) describe how to test the ThingVisor.
 Use the VirIoT CLI as admin and run the following command, you must define OCB endpoint.
 
 ```bash  
-python3 f4i.py add-thingvisor -i fed4iot/fiware-parkingsite-tv -n thingVisorID_ParkingSite -d "thingVisorID_ParkingSite" -p "{'ocb_ip':'[OCB_Public_IP]', 'ocb_port':'[OCB_Port]'}"
+python3 f4i.py add-thingvisor -i fed4iot/fiware-parkingsite-tv -n thingVisorID_ParkingSite -d "thingVisorID_ParkingSite" -p "{'ocb_ip':'<OCB_Public_IP>', 'ocb_port':'<OCB_Port>'}"
 ```
 
 ### Kubernetes deployment
@@ -22,7 +22,7 @@ python3 f4i.py add-thingvisor -i fed4iot/fiware-parkingsite-tv -n thingVisorID_P
 Use the VirIoT CLI as admin and run the following command, you must define OCB endpoint.
 
 ```bash  
-python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n thingVisorID_ParkingSite -d "thingVisorID_ParkingSite" -p "{'ocb_ip':'[OCB_Public_IP]', 'ocb_port':'[OCB_Port]'}" -y "yaml/thingVisor-murcia-parkingsite.yaml"
+python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n thingVisorID_ParkingSite -d "thingVisorID_ParkingSite" -p "{'ocb_ip':'<OCB_Public_IP>', 'ocb_port':'<OCB_Port>'}" -y "yaml/thingVisor-murcia-parkingsite.yaml"
 ```
 
 ## NGSI-LD data model

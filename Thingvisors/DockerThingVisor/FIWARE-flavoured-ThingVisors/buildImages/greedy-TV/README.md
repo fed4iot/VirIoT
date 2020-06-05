@@ -16,7 +16,7 @@ Use the VirIoT CLI as admin and run the following command, you must define OCB e
 In this case, ThingVisor is configured to recover all entities from the next Fiware-Services: bicis, aparcamiento and ora.
 
 ```bash  
-python3 f4i.py add-thingvisor -i fed4iot/fiware-greedy-tv -n thingVisorID_Greedy -d "thingVisorID_Greedy" -p "{'ocb_ip':'[OCB_Public_IP]', 'ocb_port':'[OCB_Port]','ocb_service':['bicis','aparcamiento','ora']}"
+python3 f4i.py add-thingvisor -i fed4iot/fiware-greedy-tv -n thingVisorID_Greedy -d "thingVisorID_Greedy" -p "{'ocb_ip':'<OCB_Public_IP>', 'ocb_port':'<OCB_Port>','ocb_service':['<service',...]}"
 ```
 
 ### Kubernetes deployment
@@ -24,14 +24,12 @@ python3 f4i.py add-thingvisor -i fed4iot/fiware-greedy-tv -n thingVisorID_Greedy
 Use the VirIoT CLI as admin and run the following command, you must define OCB endpoint.
 
 ```bash  
-python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n thingVisorID_Greedy -d "thingVisorID_Greedy" -p "{'ocb_ip':'[OCB_Public_IP]', 'ocb_port':'[OCB_Port]','ocb_service':['bicis','aparcamiento','ora']}" -y "yaml/thingVisor-fiWARE.yaml"
+python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n thingVisorID_Greedy -d "thingVisorID_Greedy" -p "{'ocb_ip':'<OCB_Public_IP>', 'ocb_port':'<OCB_Port>','ocb_service':['<service>',...]}" -y "yaml/thingVisor-fiWARE.yaml"
 ```
 
 ## NGSI-LD data model
 
 Each entity obtained from OCB is represented by an NGSI-LD entity, in the case of bicis' service, will obtain entities like the following one:
-
-VOY POR AQUIIIII
 
 ```json
 {

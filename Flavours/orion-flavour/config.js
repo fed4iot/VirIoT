@@ -39,7 +39,18 @@ module.exports = {
 
     MQTTbrokerTopicData: 'data',
     MQTTbrokerTopicDataOut: 'data_out',
-    MQTTbrokerTopicDataIn: 'data_in'
+    MQTTbrokerTopicDataIn: 'data_in',
+
+    protocolCB: 'http',
+    hostCB: 'localhost', 
+    portCB: 1026, 
+    serviceCB: '',
+    servicePathCB: '/',
+
+    portNotification: 1030,
+    pathNotification: '/notification',
+   
+    frecuency_mseg: 10000
 }
 
 

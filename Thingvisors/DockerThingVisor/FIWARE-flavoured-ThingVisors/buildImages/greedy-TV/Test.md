@@ -104,7 +104,7 @@ docker build -t fed4iot/fiware-greedy-tv -f buildImages/greedy-TV/Dockerfile  ./
 Use the terminal with the CLI and execute
   
 ```bash  
-python3 f4i.py add-thingvisor -i fed4iot/fiware-greedy-tv -n thingVisorID_Greedy -d "thingVisorID_Greedy" -p "{'ocb_ip':'[OCB_Public_IP]', 'ocb_port':'[OCB_Port]','ocb_service':['bicis','aparcamiento','ora']}"
+python3 f4i.py add-thingvisor -i fed4iot/fiware-greedy-tv -n thingVisorID_Greedy -d "thingVisorID_Greedy" -p "{'ocb_ip':'<OCB_Public_IP>', 'ocb_port':'<OCB_Port>','ocb_service':['bicis','aparcamiento','ora']}"
 ```  
 
 JSON parameters are: 
@@ -159,7 +159,7 @@ If ThingVisor is properly connected you should see `vThings` information in the 
                 "description": ""
             }
         ],
-        "params": "{'ocb_ip':'[OCB_Public_IP]', 'ocb_port':'[OCB_Port]','ocb_service':['bicis','aparcamiento','ora']}",
+        "params": "{'ocb_ip':'<OCB_Public_IP>', 'ocb_port':'<OCB_Port>','ocb_service':['bicis','aparcamiento','ora']}",
         "MQTTDataBroker": {
             "ip": "172.17.0.1",
             "port": 1883
@@ -221,5 +221,5 @@ vSilo/tenant1_Silo1/c_in {"command":"getContextResponse","data":[ ... ],,"meta":
 Finally, if you are using Orion vSilo, you can access to vSilo Broker (Orion Context Broker) to recover greedy information, using NGSIv2 API:
 
 ```bash
-curl --location --request GET 'http://[vSiloPublicIP]:[vSiloBrokerExposePort]/v2/entities?limit=100&options=count' --header 'Accept: application/json'
+curl --location --request GET 'http://<vSiloPublicIP>:<vSiloBrokerExposePort>/v2/entities?limit=100&options=count' --header 'Accept: application/json'
 ```

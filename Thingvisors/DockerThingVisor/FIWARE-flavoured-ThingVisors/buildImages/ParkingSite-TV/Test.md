@@ -104,7 +104,7 @@ docker build -t fed4iot/fiware-parkingsite-tv -f buildImages/ParkingSite-TV/Dock
 Use the terminal with the CLI and execute
   
 ```bash  
-python3 f4i.py add-thingvisor -i fed4iot/fiware-parkingsite-tv -n thingVisorID_ParkingSite -d "thingVisorID_ParkingSite" -p "{'ocb_ip':'[OCB_Public_IP]', 'ocb_port':'[OCB_Port]'}"
+python3 f4i.py add-thingvisor -i fed4iot/fiware-parkingsite-tv -n thingVisorID_ParkingSite -d "thingVisorID_ParkingSite" -p "{'ocb_ip':'<OCB_Public_IP>', 'ocb_port':'<OCB_Port>'}"
 ```  
 
 JSON parameters are: 
@@ -138,7 +138,7 @@ If ThingVisor is properly connected you should see `vThings` information in the 
         "debug_mode": false,
         "imageName": "fed4iot/fiware-parkingsite-tv",
         "ipAddress": "172.17.0.3",
-        "params": "{'ocb_ip':'[OCB_Public_IP]', 'ocb_port':'[OCB_Port]'}",
+        "params": "{'ocb_ip':'<OCB_Public_IP>', 'ocb_port':'<OCB_Port>'}",
         "port": {
             "1030/tcp": "32803"
         },
@@ -202,5 +202,5 @@ vSilo/tenant1_Silo1/c_in {"command":"getContextResponse","data":[ ... ],"meta":{
 Finally, if you are using Orion vSilo, you can access to vSilo Broker (Orion Context Broker) to recover parking sites information, using NGSIv2 API:
 
 ```bash
-curl --location --request GET 'http://[vSiloPublicIP]:[vSiloBrokerExposePort]/v2/entities?limit=100&options=count' --header 'Accept: application/json'
+curl --location --request GET 'http://<vSiloPublicIP>:<vSiloBrokerExposePort>/v2/entities?limit=100&options=count' --header 'Accept: application/json'
 ```

@@ -59,4 +59,4 @@ A Property/Relationship of an NGSI-LD entity is represented as an attribute in N
 
 Additional properties/relationship are considered metadata in NGSIv2.
 
-
+The NGSI-LD property named `commands` is considered as a special case. This property contains an array with all the commands the entity supports. This property doesn't create an attribute `commands` in NGSIv2 entity. But three NGSIv2 attributes are created by each element of the array (<commands[i]>, <command[i]-result> and <commands[i]-status>.

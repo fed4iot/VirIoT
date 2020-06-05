@@ -8,7 +8,11 @@ SPDX-License-Identifier: Apache-2.0
 
 'use strict'
 
+const app = require('./app')
+
 const config = require('./config')
+
+var orion = require("./orion");
 
 const axios = require('axios');
 
@@ -40,6 +44,15 @@ var MQTTbrokerTopicData
 var MQTTbrokerTopicDataOut
 var MQTTbrokerTopicDataIn
 
+var protocolCB
+var hostCB
+var portCB
+var serviceCB
+var servicePathCB
+
+var portNotification
+var pathNotification
+
 var MQTTbrokerUsername
 var MQTTbrokerPassword
 
@@ -62,7 +75,10 @@ var optionsControl
 var clientMosquittoMqttData
 var clientMosquittoMqttControl
 
-var urlCB = 'http://localhost:1026'
+var subscriptionIdOCBCommandAttributeList = []
+
+var urlCB
+var urlConsumerServerNotification
 
 console.log("")
 console.log("")
@@ -89,6 +105,18 @@ try {
     MQTTbrokerTopicData = config.MQTTbrokerTopicData
     MQTTbrokerTopicDataOut = config.MQTTbrokerTopicDataOut
     MQTTbrokerTopicDataIn = config.MQTTbrokerTopicDataIn
+
+    protocolCB = config.protocolCB
+    hostCB = config.hostCB
+    portCB = config.portCB
+    serviceCB = config.serviceCB
+    servicePathCB = config.servicePathCB
+
+    portNotification = config.portNotification
+    pathNotification = config.pathNotification
+
+    urlCB = protocolCB + '://' + hostCB + ':' + portCB
+    urlConsumerServerNotification = protocolCB + '://' + hostCB + ':' + portNotification + pathNotification
 
     MQTTbrokerUsername = config.MQTTbrokerUsername || ''
     MQTTbrokerPassword = config.MQTTbrokerPassword || ''
@@ -136,7 +164,6 @@ try {
         password: MQTTbrokerPassword, //optional
     };
 
-
 } catch(e) {
     console.error("Error - processing Silos's environment variables: " + e)
     return
@@ -164,9 +191,8 @@ clientMosquittoMqttControl.on("connect", async function() {
 
         var topicArray = []
         var topicElement = MQTTbrokerApiKeySilo + "/" + vSiloID + "/" + MQTTbrokerTopic_c_in_Control
-
+        
         //"/vSilo/tenantID_vSiloID/c_in" topic
-        //topicArray.push(MQTTbrokerApiKeySilo + "/" + vSiloID + "/" + MQTTbrokerTopic_c_in_Control)
         topicArray.push(topicElement)
 
         const response_subscribeMQTT = await subscribeMQTT(topicArray,'0',vSiloID,"control")
@@ -368,7 +394,19 @@ clientMosquittoMqttControl.on("message", async function(topic, payload) {
 
                 for(var j = 0; j < payLoadObject.data.length;j++) {
                     try {
-                        const append_vThingResponse = await appendCBEntity(libfromNGSILD.fromNGSILDtoNGSI(payLoadObject.data[j],"v2",""),urlCB,payLoadObject.meta.vThingID)
+                        //const append_vThingResponse = await appendCBEntity(libfromNGSILD.fromNGSILDtoNGSI(payLoadObject.data[j],"v2",""),urlCB,payLoadObject.meta.vThingID)
+
+                        var payLoadObjectNGSIv2 = {}
+
+                        var payLoadObjectNGSIv2 = libfromNGSILD.fromNGSILDtoNGSI(payLoadObject.data[j],"v2","")
+
+                        console.log(payLoadObjectNGSIv2)
+
+                        const processedEntities = await processNGSIv2Payload(payLoadObjectNGSIv2)
+
+                        //console.log(processedEntities)
+
+                        const append_vThingResponse = await appendCBEntity(processedEntities,urlCB,payLoadObject.meta.vThingID)
         
                         if (append_vThingResponse) {
                             //console.log('Operation has been completed successfully');
@@ -420,8 +458,7 @@ clientMosquittoMqttControl.on("message", async function(topic, payload) {
                 console.error("invalid command (" + payLoadObject.command + ") in topic '" + topic + "'");            
             }
 
-        }
-        else {
+        } else {
             console.error("invalid topic: '" + topic + "'");            
         }
         return;
@@ -433,10 +470,35 @@ clientMosquittoMqttControl.on("message", async function(topic, payload) {
 
 
 //Mapping connect function
-clientMosquittoMqttControl.on("connect", async function() {
+clientMosquittoMqttData.on("connect", async function() {
     try {
         console.log("")
         console.log(util.unixTime(Date.now()) + " - MQTT Data Broker connected")
+        //Establishing topic's subscriptions
+
+        var topicArray = []
+        var topicElement = MQTTbrokerApiKeySilo + "/" + vSiloID + "/" + MQTTbrokerTopicDataIn
+        
+        //"/vSilo/tenantID_vSiloID/data_in" topic
+        topicArray.push(topicElement)
+
+        const response_subscribeMQTT = await subscribeMQTT(topicArray,'0',vSiloID,"data")
+
+        if (response_subscribeMQTT == false) {
+            console.error("Error - connecting MQTT-server: Can't subscribe topics.")
+            return
+        } else {
+
+            //Push into mqttSubscriptionListData array new topic subscriptions array
+            if (findArrayElement(mqttSubscriptionListData,topicElement) == false) {
+                mqttSubscriptionListData = mqttSubscriptionListData.concat(topicArray)    
+            }
+            //mqttSubscriptionListData = mqttSubscriptionListData.concat(topicArray)
+
+            console.log("")
+            console.log("MQTT Data Subscription Topic List: ")
+            console.log(mqttSubscriptionListData)
+        }
 
     } catch (error) {
       console.error(error.toString());
@@ -523,7 +585,15 @@ clientMosquittoMqttData.on("message", async function(topic, payload) {
 
                 for(var j = 0; j < payLoadObject.data.length;j++) {
 
-                    const append_vThingResponse = await appendCBEntity(libfromNGSILD.fromNGSILDtoNGSI(payLoadObject.data[j],"v2",""),urlCB,vThingID)
+                    //const append_vThingResponse = await appendCBEntity(libfromNGSILD.fromNGSILDtoNGSI(payLoadObject.data[j],"v2",""),urlCB,vThingID)
+
+                    var payLoadObjectNGSIv2 = {}
+
+                    var payLoadObjectNGSIv2 = libfromNGSILD.fromNGSILDtoNGSI(payLoadObject.data[j],"v2","")
+
+                    const processedEntities = await processNGSIv2Payload(payLoadObjectNGSIv2)
+
+                    const append_vThingResponse = await appendCBEntity(processedEntities,urlCB,vThingID)
 
                     if (append_vThingResponse) {
                         //console.log('Operation has been completed successfully');
@@ -535,6 +605,71 @@ clientMosquittoMqttData.on("message", async function(topic, payload) {
             } catch(e) {
                 console.error("Create/Update: " + e.toString());
             }
+
+        } else if (topicLevelElement[0]==MQTTbrokerApiKeySilo && centralElement==vSiloID && topicLevelElement[topicLevelLength-1]==MQTTbrokerTopicDataIn) {
+            //Handling /vSilo/vSiloID/data_in
+            /*
+                {
+                    "data":[
+                            {
+                                "id":"urn:ngsi-ld:Device:001",
+                                "type":"Device",
+                                "start-result":{
+                                                "type":"Property",
+                                                "value":{
+                                                            "cmd-value":"",
+                                                            "cmd-qos":"0",
+                                                            "cmd-id":"001",
+                                                            "cmd-nuri":["viriot:vSilo/tenantID_orionv2/data_in"],
+                                                            "cmd-result":"OK"
+                                                }
+                                },
+                                "start-status":{
+                                                "type":"Property",
+                                                "value":{
+                                                            "cmd-value":"",
+                                                            "cmd-qos":"0",
+                                                            "cmd-id":"001",
+                                                            "cmd-nuri":["viriot:vSilo/tenantID_orionv2/data_in"],
+                                                            "cmd-status":"OK"
+                                                }
+                                }
+                            }
+                    ],
+                    "meta":{
+                            "vThingID":"thingVisorID_Actuator/Device"
+                    }
+                }
+            */
+
+
+            const payLoadObject = JSON.parse(payload.toString().replace(/'/g, '"'));
+
+            for(var j = 0; j < payLoadObject.data.length;j++) {
+                try {
+                    //const append_vThingResponse = await appendCBEntity(libfromNGSILD.fromNGSILDtoNGSI(payLoadObject.data[j],"v2",""),urlCB,payLoadObject.meta.vThingID)
+
+                    var payLoadObjectNGSIv2 = {}
+
+                    var payLoadObjectNGSIv2 = libfromNGSILD.fromNGSILDtoNGSI(payLoadObject.data[j],"v2","")
+
+                    const processedEntities = await processNGSIv2PayloadDataIn(payLoadObjectNGSIv2)
+
+                    //console.log("processedEntities")
+                    //console.log(processedEntities)
+                    
+                    const append_vThingResponse = await appendCBEntity(processedEntities,urlCB,payLoadObject.meta.vThingID)
+        
+                    if (append_vThingResponse) {
+                        //console.log('Operation has been completed successfully');
+                    } else {
+                        console.error("Create/Update fails.")
+                    }
+        
+                } catch(e) {
+                    console.error("Create/Update: " + e.toString());
+                }
+            }
         } else {
             console.error("invalid topic: '" + topic + "'");            
         }
@@ -545,6 +680,308 @@ clientMosquittoMqttData.on("message", async function(topic, payload) {
     }
 })
 
+function addCommandToSubcriptionList(serviceArg, servicePathArg, typeArg, keyArg) {
+    try {
+
+        //["service","servicePath", "type", "command", ""subscriptionID"]
+        
+        if (subscriptionIdOCBCommandAttributeList.length == 0) {
+            subscriptionIdOCBCommandAttributeList.push({IdOCB: "", Service: serviceArg, ServicePath: servicePathArg, Type: typeArg, Command: keyArg, delete: false})
+            console.log("Add new subscription to create(1): " + typeArg)
+        } else {
+            var addCommand = true
+            for(var i = 0; i < subscriptionIdOCBCommandAttributeList.length;i++) {
+                if ( serviceArg == subscriptionIdOCBCommandAttributeList[i].Service && servicePathArg == subscriptionIdOCBCommandAttributeList[i].ServicePath && 
+                    typeArg == subscriptionIdOCBCommandAttributeList[i].Type && keyArg == subscriptionIdOCBCommandAttributeList[i].Command) {
+                    if (subscriptionIdOCBCommandAttributeList[i].IdOCB == "" && subscriptionIdOCBCommandAttributeList[i].delete) {
+                        subscriptionIdOCBCommandAttributeList[i].delete = false
+                    }
+                    addCommand = false
+                    break;
+                }
+            }  
+            if (addCommand)  {
+                subscriptionIdOCBCommandAttributeList.push({IdOCB: "", Service: serviceArg, ServicePath: servicePathArg, Type: typeArg, Command: keyArg, delete: false})
+                console.log("Add new subscription to create(2): " + typeArg) 
+            }
+        }
+
+        return true
+
+    } catch(e) {
+        console.error("addCommandToSubcriptionList: " + e.toString())
+        return false
+    }
+
+}
+
+//Create Orion Context Broker subscriptions.
+async function orionSubscriptionByTypeCommands() {
+    try {
+
+        //console.log("orionSubscriptionByTypeCommands")
+
+        for(var h = 0; h < subscriptionIdOCBCommandAttributeList.length;h++) {
+
+            if(subscriptionIdOCBCommandAttributeList[h].IdOCB == "") {
+
+
+                //Obtain all Orion Context Broker Subscriptions, the request are limited by a register fixed number (100).
+                var obtainMore = true
+                var offset = 100
+                var actualOffset = 0
+                var limit = 100
+
+                //console.log("urlConsumerServerNotification: " + urlConsumerServerNotification)
+
+                while (obtainMore) {
+
+                    var responseCBSubscriptions
+
+                    try {
+                        //Obtain actual subscriptions in Context Broker
+                        responseCBSubscriptions = await orion.obtainCBSubscriptions(actualOffset, limit, hostCB, portCB, 
+                                                                                    subscriptionIdOCBCommandAttributeList[h].Service, 
+                                                                                    subscriptionIdOCBCommandAttributeList[h].ServicePath)
+                    } catch(e){
+                        console.error(e)
+                        if(e.message.indexOf("statusCode=404") <= -1) {
+                            obtainMore=false
+                            return false
+                        }
+                    }
+                    
+                    if (obtainMore && responseCBSubscriptions.length>0) {
+                        //Processing response
+                        var foundSubscritionID = false
+                        for(var i = 0; i < responseCBSubscriptions.length;i++) {
+                            //Compare notification URL subscription and urlConsumerServerNotification variable value.
+
+                            if (responseCBSubscriptions[i].notification.http.url == urlConsumerServerNotification && 
+                                    responseCBSubscriptions[i].description.startsWith("vSilo:"+ subscriptionIdOCBCommandAttributeList[h].Command +":") &&
+                                    responseCBSubscriptions[i].subject.entities[0].type == subscriptionIdOCBCommandAttributeList[h].Type) {
+                                
+                                subscriptionIdOCBCommandAttributeList[h].IdOCB = responseCBSubscriptions[i].id
+                                foundSubscritionID = true
+                                break;
+                            }
+                        }
+
+                        // responseCBSubscriptions.length<limit --> No more subscriptions in Orion Context Broker
+                        // arrayObjectServiceTypes.length --> All virtual things types was found
+                        if (responseCBSubscriptions.length<limit || foundSubscritionID == false) {
+                            obtainMore=false
+                        } else {
+                            actualOffset = actualOffset + offset
+                        }
+                    } else {
+                        obtainMore=false
+                    }
+                }
+            }
+        }
+
+        var counter = 0
+        for(var h = 0; h < subscriptionIdOCBCommandAttributeList.length;h++) {
+
+            if(subscriptionIdOCBCommandAttributeList[h].IdOCB == "") {
+                counter = counter + 1
+            }
+        }
+
+        if(counter>0){
+            console.log("")
+            console.log("Command Subscriptions number to create in Orion Context Broker: " + counter)
+    
+            for(var h = 0; h < subscriptionIdOCBCommandAttributeList.length;h++) {
+
+                if(subscriptionIdOCBCommandAttributeList[h].IdOCB == "") {
+
+
+                    //Defining subscription body
+                    var subscriptionOCB = {}
+                    subscriptionOCB.description = "vSilo:" + subscriptionIdOCBCommandAttributeList[h].Command + ": subscription."
+                    subscriptionOCB.subject = {
+                                                entities: [
+                                                            {
+                                                                idPattern: ".*", 
+                                                                type: subscriptionIdOCBCommandAttributeList[h].Type
+                                                            }
+                                                ],
+                                                condition: {
+                                                    attrs: [ 
+                                                                subscriptionIdOCBCommandAttributeList[h].Command
+                                                    ]
+                                                }
+                                            };  
+                    subscriptionOCB.notification = {}
+                    subscriptionOCB.notification.http = {url: urlConsumerServerNotification}
+                    subscriptionOCB.notification.attrs = [ 
+                                                            subscriptionIdOCBCommandAttributeList[h].Command
+                                                        ]
+                    //Preparing subscription command.
+                    const instance = axios.create({
+                        baseURL: urlCB
+                    })
+
+                    var headersPost = {}
+
+                    headersPost["Content-Type"] = 'application/json';
+
+                    if (subscriptionIdOCBCommandAttributeList[h].Service.length != 0) {
+                        headersPost["fiware-service"] = subscriptionIdOCBCommandAttributeList[h].Service;
+                    }
+            
+                    if (subscriptionIdOCBCommandAttributeList[h].ServicePath.length != 0) {
+                        headersPost["fiware-servicepath"] = subscriptionIdOCBCommandAttributeList[h].ServicePath;
+                    }
+
+                    const optionsAxios = {
+                        headers: headersPost
+                        //,params: { options : 'skipInitialNotification' }
+                    }
+            
+                    var responsePost
+
+                    //console.log(JSON.stringify(subscriptionOCB))
+            
+                    try {
+                        //Creamos la suscripción en OCB
+                        responsePost = await instance.post(`/v2/subscriptions`, subscriptionOCB, optionsAxios)
+
+                        const location=responsePost.headers['location']
+                        const subscriptionIdOCB = location.split('/')[3]
+
+                        if (typeof subscriptionIdOCB === 'undefined' || subscriptionIdOCB.length == 0 ) {
+                            console.error("Error - connecting Orion Context Broker: Can't obtain information - subscriptionId.")
+                            return false
+                        } else {
+
+                            subscriptionIdOCBCommandAttributeList[h].IdOCB = subscriptionIdOCB
+                        }
+
+                    } catch(e) {
+                        console.error("Error - connecting Orion Context Broker: Can't subscribe '" + subscriptionOCB.description + "': " + e.toString())
+                        return false
+                    }
+                }
+            }
+        }
+        
+        //Only to logs when new subscriptions are created
+        if(counter>0){
+            console.log("")
+            console.log("All Command Subscriptions list created in Orion Context Broker: ")
+            console.log(subscriptionIdOCBCommandAttributeList)
+        }
+
+        return true
+
+    } catch(e) {
+        console.error("orionSubscriptionByTypeCommands: " + e.toString())
+        return false
+    }
+}
+
+//Delete Orion Context Broker subscriptions.
+async function orionUnsubscription() {
+    try {
+
+        //console.log("orionUnsubscription")
+
+        var test = true
+
+        //Define baseURL --> URL of OCB source.
+        const instance = axios.create({
+                baseURL: urlCB
+        })
+
+        for(var i = 0; i < subscriptionIdOCBCommandAttributeList.length;i++) {
+
+            if (subscriptionIdOCBCommandAttributeList[i].IdOCB != "" && subscriptionIdOCBCommandAttributeList[i].delete) {
+
+                var headersDelete = {}
+                headersDelete["Accept"] = 'application/json';
+
+                if (subscriptionIdOCBCommandAttributeList[i].Service.length != 0) {
+                    headersDelete["fiware-service"] = subscriptionIdOCBCommandAttributeList[i].Service;
+                }
+
+                if (subscriptionIdOCBCommandAttributeList[i].ServicePath.length != 0) {
+                    headersDelete["fiware-servicepath"] = subscriptionIdOCBCommandAttributeList[i].ServicePath;
+                }
+
+                try {
+                    console.log("Deleting: " + subscriptionIdOCBCommandAttributeList[i].IdOCB)
+                    const responseDel = await instance.delete(`/v2/subscriptions/${subscriptionIdOCBCommandAttributeList[i].IdOCB}`, 
+                            { headers: headersDelete })
+                    console.log("Deleted: " + subscriptionIdOCBCommandAttributeList[i].IdOCB)
+
+                    subscriptionIdOCBCommandAttributeList[i].IdOCB = ""
+                } catch(e) {
+                    console.error("Error - connecting Orion Context Broker: Can't unsubscribe: " + e.toString())
+                    test = false
+                } 
+            }
+        }
+
+        for(var i = 0; i < subscriptionIdOCBCommandAttributeList.length;i++) {
+            if (subscriptionIdOCBCommandAttributeList[i].IdOCB == "" && subscriptionIdOCBCommandAttributeList[i].delete) {
+                subscriptionIdOCBCommandAttributeList.splice(i, 1); 
+                i--;
+            }
+        }
+
+        return test
+
+    } catch(e) {
+        console.error("orionUnsubscription: " + e.toString())
+        return false
+
+    }
+}
+
+//Delete Orion Context Broker entity.
+//async function deleteCBEntity (service,servicePath,subscriptionIdOCB) {
+async function orionObtainTypes () {
+    try {
+        //Definimos baseURL de axios según la URl de OCB source.
+        const instance = axios.create({
+                baseURL: urlCB
+        })
+
+        var headersGet = {}
+        headersGet["Accept"] = 'application/json';
+
+        /* Non-operative
+        if (typeof service !== 'undefined') {
+            headersDelete["fiware-service"] = service;
+        }
+            
+        if (typeof servicePath !== 'undefined') {
+            headersDelete["fiware-servicepath"] = servicePath;
+        }
+        */
+
+        var responseGet
+
+        try {
+
+            const responseGet = await instance.get(`/v2/types?limit=100&options=count`, { headers: headersGet })
+
+            console.log(responseGet)
+
+        } catch(e) {
+            console.error("Get type fails (1) - error deleting Context Broker entity: " + e.toString());            
+            return {  status: 500, data: [] }
+        }
+        return responseGet
+
+    } catch(e) {
+        console.error("Get type fails (2) - error deleting Context Broker entity: " + e.toString());            
+        return { status: 500, data: [] }
+    }
+}
 
 
 
@@ -776,6 +1213,8 @@ async function appendCBEntity(payLoadObject,urlCB,vThingID) {
         var entities = []
         entities.push(payLoadObject)
 
+        //console.log(payLoadObject)
+
         var updatebody = {
             actionType: "APPEND",
             entities
@@ -783,6 +1222,7 @@ async function appendCBEntity(payLoadObject,urlCB,vThingID) {
 
         //console.log("updatebody")
         //console.log(updatebody)
+        //console.log(updatebody.entities)
         //console.log(typeof updatebody)
 
         //Update/create entity - CONTEXT BROKER
@@ -907,6 +1347,124 @@ async function deleteCBEntity (vThingID,urlCB) {
     }
 }
 
+
+//Process NGSI payload to create, if it corresponds, the commands attributes.
+//Affected topics:
+// - vThing/<vThingID>/data_out
+// - vSilo/<vSiloID>/c_in {"command":"getContextResponse","data":[...], ,"meta":{"vThingID":"<vThingID>"}}
+
+async function processNGSIv2Payload(entityArg) {
+    try {
+
+        var entity = {}
+
+        entity = JSON.parse(JSON.stringify(entityArg))
+
+        
+        if (typeof entity.commands !== "undefined") {
+
+            for(var j = 0; j < entity.commands.value.length;j++) {
+
+                var testAddAttributes = false
+                try {
+                    var response = await orion.obtainCBAttributeEntity (entity.id, entity.commands.value[j], hostCB, portCB, serviceCB, servicePathCB)
+
+                    if(response.status == 404) {
+                        testAddAttributes = true
+                    }   
+                } catch(e) {
+                    if(e.message.indexOf("statusCode=404") >= 0) {
+                        testAddAttributes = true
+                    } else {
+                        console.error(e);
+                    }
+
+                }
+
+                if(testAddAttributes) {
+                    entity[entity.commands.value[j]] = {type: "command", value: ""}
+                    entity[entity.commands.value[j] + "-result"] = {type: "commandResult", value: ""}
+                    entity[entity.commands.value[j] + "-status"] = {type: "commandStatus", value: ""}
+                }
+                   
+            }
+            delete entity.commands
+
+            //console.log(entity)
+        }
+
+        return entity
+
+    } catch(e) {
+        console.error(e.toString());
+        return {}
+    }
+}
+
+//Process NGSI payload to create, if it corresponds, the commands attributes.
+//Affected topics:
+// - vSilo/<vSiloID>/data_in {"data":[...], ,"meta":{"vThingID":"<vThingID>"}}
+
+async function processNGSIv2PayloadDataIn(entityArg) {
+    try {
+
+        var entity = {}
+
+        entity = JSON.parse(JSON.stringify(entityArg))
+
+        for(var key in entity) {
+
+            if(findArrayElement(["id","type","@context"],key) == false) {
+
+                //console.log(key)
+
+                try {
+                    //console.log(key.substring(key.length-7,key.length))
+
+                    if(key.substring(key.length-7,key.length) == "-result") {
+
+                        var cmdResultValue = entity[key].value["cmd-result"]
+
+                        entity[key].type = "commandResult"
+                        entity[key].value = cmdResultValue
+                        //delete entity[key].metadata
+
+
+                    } else if(key.substring(key.length-7,key.length) == "-status") {
+
+                            var cmdStatusValue = entity[key].value["cmd-status"]
+
+                            entity[key].type = "commandStatus"
+                            entity[key].value = cmdStatusValue
+                            //delete entity[key].metadata
+
+                    } else {
+                        console.log("Delete key: " + key )
+                        delete entity[key]
+                    }
+
+                } catch(e) {
+                    console.error(e.toString());
+                    var a
+
+                }
+
+            }
+
+        }
+
+        return entity
+
+    } catch(e) {
+        console.error(e.toString());
+        return {}
+    }
+}
+
+
+
+
+
 //Send delete messages in topics.
 async function sendDeleteMessages() {
     try {
@@ -935,6 +1493,73 @@ async function sendDeleteMessages() {
         return false
     }
 }
+
+
+//Sending commands....
+async function sendCommandMessage(commandBodyLD,entityType,entiyID) {
+    try {
+
+        /*
+            {
+                "meta":{
+                        "vSiloID":"tenantID_orionv2_vSiloName_orionv2"
+                },
+                "data":[
+                        {
+                            "id":"urn:ngsi-ld:Device:001",
+                            "type":"Device",
+                            "start":{
+                                        "type":"Property",
+                                        "value":{
+                                                    "cmd-value": "",
+                                                    "cmd-qos":"0",
+                                                    "cmd-id":"001",
+                                                    "cmd-nuri":["viriot:vSilo/tenantID_orionv2_vSiloName_orionv2/data_in"]
+                                        }
+                            }
+                        }
+                ]
+            }
+        */
+
+        var vThingIDValue = ""
+
+        for(var k = 0; k < vThingList.length;k++) {
+            if (vThingList[k].vThingLDType == entityType && vThingList[k].vThingLDID == entiyID) {
+                vThingIDValue = vThingList[k].vThingID
+                break;
+            }
+        }
+
+        if(vThingIDValue != "") {
+
+            const topic = MQTTbrokerApiKeyvThing + "/" + vThingIDValue + "/" + MQTTbrokerTopicDataIn;
+                    
+            const topicMessage = {"data": [commandBodyLD], "meta": {"vSiloID": vSiloID}}
+
+            console.log("Sending message... " + topic + " " + JSON.stringify(topicMessage));
+
+            await clientMosquittoMqttData.publish(topic, JSON.stringify(topicMessage), {qos: 0}, function (err) {
+                if (!err) {
+                    //console.log("Message has been sent correctly.")
+                } else {
+                    console.error("ERROR: Sending MQTT message (publish): ",err)
+                }
+            })
+
+        } else {
+            console.error("sendCommandMessage: Can't send command - vThingID to (type: " + entityType + ", id: " + entiyID + ") not found.")
+        }
+
+                    
+        return true
+
+    } catch(e) {
+        console.error("sendCommandMessage: " + e.toString())
+        return false
+    }  
+}
+
 
 
 async function shutdown(param) {
@@ -1027,6 +1652,198 @@ capt_signals.forEach(signal => {
 	}
 );
 
-//TODO: To avoid the container remove after clientMosquittoMqtt*.end()
-var http = require('http');
-http.createServer().listen(8080);
+//Consume Orion Context Broker notifications..
+app.post(config.pathNotification, async function(req,res) {
+    try {
+        console.log("")
+        console.log(util.unixTime(Date.now()) + " - POST /notification - " + req.body.subscriptionId)
+    
+        const dataBody = req.body.data
+
+
+        for(var i = 0; i < dataBody.length; i++) {
+
+            var mqttPayLoad = {}
+
+            var attributes = {}
+
+            var testSendCommand = false
+
+            //Obtain command from payload
+            for(var key in dataBody[i]) {
+                if(key != "id" && key != "type") {
+
+                    var auxValue  = ""
+                    if (typeof dataBody[i][key].value === "object") {
+                        auxValue = JSON.parse(JSON.stringify(dataBody[i][key].value))
+                    } else {
+                        auxValue = dataBody[i][key].value
+                    }
+
+                    //Send command only if command.value is defined.
+                    if(auxValue != "") {
+
+                        var cmdID = parseInt(Date.now())
+
+                        attributes[key] = {
+                            "type":"Property",
+                            "value":{
+                                    "cmd-value": auxValue,
+                                    "cmd-qos":"0",
+                                    "cmd-id": cmdID,
+                                    "cmd-nuri":["viriot:" + MQTTbrokerApiKeySilo + "/" + vSiloID + "/" + MQTTbrokerTopicDataIn]
+                            }
+                        }
+
+                        testSendCommand = true
+                    //} else {
+                    //    console.log("Don't send : " + key)
+                    //    console.log(dataBody[i])
+                    }
+
+                    
+                }
+            }
+
+            if(testSendCommand){
+
+                /*
+                {
+                    "id":"urn:ngsi-ld:Device:001",
+                    "type":"Device",
+                    "start":{
+                                "type":"Property",
+                                "value":{
+                                            "cmd-value": "",
+                                            "cmd-qos":"0",
+                                            "cmd-id":"001",
+                                            "cmd-nuri":["viriot:vSilo/tenantID_orionv2_vSiloName_orionv2/data_in"]
+                                }
+                    }
+                }
+
+                */
+                var dataPayload = {}
+
+                dataPayload = JSON.parse(JSON.stringify(attributes))
+
+                dataPayload["id"] = dataBody[i].id
+                dataPayload["type"] = dataBody[i].type
+
+                const responseSendCommandMessage = await sendCommandMessage(dataPayload,dataBody[i].type,dataBody[i].id)
+
+            }
+
+        }
+
+
+
+        //var service =req.headers['fiware-service'] || ""
+        
+        res.status(200).send({description: 'Operation has been completed successfully'})
+    } catch(e) {
+        console.error(e)
+        res.status(500).send({ error: e })
+    }
+})
+
+// Launch service.
+app.listen(portNotification,() => {        
+
+    setTimeout(async function() {
+        console.log(util.unixTime(Date.now()) + ` - Listener running, port: ${portNotification}`)
+
+    }, 10000); //Wait 10 seconds
+
+})
+
+
+// PERIODIC PROCESS
+setInterval(async  function() {
+
+    try  {
+        
+        //Obtain all representation schema by type and compare with subscriptionIdOCBCommandAttributeList to add or remove subscritions.
+        var responseOrionSchemaByType
+
+        var error = false
+
+        try {
+
+            responseOrionSchemaByType = await orion.obtainALLCBSchemaByType (1000, hostCB, portCB, serviceCB, servicePathCB)
+
+        } catch(e){
+            console.error(e)
+
+            error = true
+        }
+
+        //console.log(responseOrionSchemaByType[0].attrs)
+
+        if (error == false) {
+
+            //console.log("Marking subscriptions to delete....")
+            //Obtain subscriptions should be deleted.
+            for(var i = 0; i < subscriptionIdOCBCommandAttributeList.length;i++) {
+
+                if (responseOrionSchemaByType.length == 0) { //Mark all subscriptions to delete them.
+                    subscriptionIdOCBCommandAttributeList[i].delete = true
+                    console.log("Mark to remove subscription(1): " + subscriptionIdOCBCommandAttributeList[i].IdOCB)
+                } else {
+
+                    var testFound = false
+
+                    for(var j = 0; j < responseOrionSchemaByType.length;j++) {
+
+                        if(responseOrionSchemaByType[j].type == subscriptionIdOCBCommandAttributeList[i].Type && 
+                            typeof responseOrionSchemaByType[j].attrs[subscriptionIdOCBCommandAttributeList[i].Command+"-result"] !== "undefined") {
+                            testFound = true
+                            break
+                        }
+
+                    }
+
+                    if (testFound == false) {
+                        subscriptionIdOCBCommandAttributeList[i].delete = true
+                        console.log("Mark to remove subscription(2): " + subscriptionIdOCBCommandAttributeList[i].IdOCB)
+                    }
+
+                }
+            }
+
+            //console.log("Detecting new subscriptions to create....")
+            //Detect if new subscriptions are needed.
+            for(var i = 0; i < responseOrionSchemaByType.length;i++) {
+
+                for(var key in responseOrionSchemaByType[i].attrs) {
+
+                    if(findArrayElement(["@context"],key) == false) {
+
+                        if (typeof responseOrionSchemaByType[i].attrs[key].types !== "undefined") {
+
+                            if (findArrayElement(responseOrionSchemaByType[i].attrs[key].types, "commandResult")) {
+
+                                var addCommandResult = addCommandToSubcriptionList(
+                                                            serviceCB, //Service
+                                                            servicePathCB, //Service_path
+                                                            responseOrionSchemaByType[i].type, //type
+                                                            key.substring(0,key.length-7) //command
+                                                            )
+                            } 
+                        }
+                    }
+                }
+            }
+
+            //Delete unnecessary subscriptions.
+            var responseOrionUnsubscription = await orionUnsubscription()
+
+            //Call orionSubscriptionByTypeCommands and create new subcriptions.
+            var responseOrionSubscription = await orionSubscriptionByTypeCommands()
+
+        }
+
+    } catch(e) {
+        console.error(e.toString());
+    }
+}, config.frecuency_mseg);  

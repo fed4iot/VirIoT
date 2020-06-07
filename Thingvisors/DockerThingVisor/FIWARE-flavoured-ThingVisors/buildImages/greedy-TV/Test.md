@@ -185,6 +185,16 @@ Open a new terminal, and make a subscription on the MQTT internal bridge to see 
 mosquitto_sub -t "#" -v
 ```
 
+## End to end tests with a ORION vSilo
+
+This test shows how to receive information from Orion Context Broker (NGSIv2) of a provider in an ORION vSilo whose Docker image fed4iot/fiware-f is assumed available. The same test can be repeated for other vSilo flavours.
+
+If fed4iot/fiware-f isn't available, you can build changing  directory to `VirIoT/Flavours/orion-flavour` and running:
+
+```bash  
+./build.sh
+```
+
 ### Add the vSilo flavours
 
 Move in a CLI terminal and execute

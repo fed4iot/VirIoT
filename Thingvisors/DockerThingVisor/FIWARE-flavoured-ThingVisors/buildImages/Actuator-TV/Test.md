@@ -91,7 +91,7 @@ From now on you are allowed to execute any CLI command
 
 ## Build the FiWARE Provider Simulator (optional)
 
-Open a new terminal and change directory to VirIoT/Extra/FiWARE-Provider-Simulator
+Open a new terminal and change directory to `VirIoT/Extra/FiWARE-Provider-Simulator`
 
 Run FiWARE Provider Simulator to test the ThingVisor with the simulator rather than a real FiWARE Provider one.
 
@@ -113,7 +113,7 @@ Finally, provision the mqtt devices, to create the corresponding entities in Ori
 NOTE: To obtain more entities in Orion Context Broker of provider you can run device002.sh and device003.sh too.
 
 
-Finally, you can access to Orion Context Broker of provider to recover entities information, change directory to VirIoT/Extra/FiWARE-Provider-Simulator and run:
+Finally, you can access to Orion Context Broker of provider to recover entities information running:
 
 ```bash
 ./broker-provider-monitor.sh
@@ -251,6 +251,12 @@ You should observe too the following messages on the MQTT provider broker.
 ## End to end tests with a ORION vSilo
 
 This test shows how to send commands to a FiWARE provider environment (NGSIv2) through an ORION vSilo whose Docker image fed4iot/fiware-f is assumed available. The same test can be repeated for other vSilo flavours.
+
+If fed4iot/fiware-f isn't available, you can build changing  directory to `VirIoT/Flavours/orion-flavour` and running:
+
+```bash  
+./build.sh
+```
 
 ### Add the vSilo flavours
 

@@ -1,6 +1,6 @@
 # License
 
-Flavour source code files are made avaialable under the Apache License, Version 2.0 (Apache-2.0), located into the LICENSE file.
+Orion Flavour source code files are made avaialable under the Apache License, Version 2.0 (Apache-2.0), located into the LICENSE file.
 
 # README
 
@@ -10,6 +10,11 @@ This flavour exposes vThing information through Orion Context broker (FIWARE pla
 ## How To Run
 
 ### Local Docker deployment
+
+Build orion-flavour image running:
+```bash  
+./build.sh
+```
 
 Use the VirIoT CLI as admin and run the following command  (use "f4i.py add-flavour --help" for CLI parameters).
 

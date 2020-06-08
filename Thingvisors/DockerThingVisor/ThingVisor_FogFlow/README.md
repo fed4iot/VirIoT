@@ -21,24 +21,24 @@ python3 master-controller.py
 ### add the FogFlow thingVisor
 
 ```bash
-python3 f4i.py add-thingvisor -c http://127.0.0.1:8090 -i fed4iot/fogflow-tv:latest -n fogflow -d "FogFlow thingVisor"
+python3 f4i.py add-thingvisor -i fed4iot/fogflow-tv:latest -n fogflow -d 'FogFlow thingVisor' -p '{"FogFlowURL": "http://localhost"}' 
 ```
 
 ### list the thingVisor
 
 ```bash
-python3 f4i.py list-thingvisors -c http://127.0.0.1:8090 
+python3 f4i.py list-thingvisors 
 ```
 
 ### update the FogFlow thingVisor
 
 Update the FogFlow ThingVisor to start or stop a service topology
 ```bash
-python3 f4i.py update-thingvisor -i fed4iot/fogflow-tv:latest -n fogflow -d "FogFlow thingVisor"  -p '{"service_topology": "test", "command": "start"}'
+python3 f4i.py update-thingvisor -n fogflow -p '{"service_topology": "test", "command": "start"}' 
 ```
 
 ### delete the FogFlow thingVisor
 
 ```bash
-python3 f4i.py del-thingvisor -c http://127.0.0.1:8090 -n fogflow 
+python3 f4i.py del-thingvisor -n fogflow 
 ```

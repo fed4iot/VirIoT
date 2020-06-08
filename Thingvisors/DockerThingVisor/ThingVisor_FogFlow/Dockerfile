@@ -12,3 +12,5 @@ RUN pip3 install -r requirements.txt
 ENTRYPOINT []
 
 CMD [ "/bin/bash", "./start.sh" ]
+
+

@@ -14,7 +14,7 @@
 
 # Fed4IoT virtual Silo controller for NGSI-LD brokers (specifically Scorpio Broker from NEC)
 
-import sys 
+import sys
 import os
 
 # lets import the common functionality from the parent (..) or current (.) folder
@@ -68,11 +68,11 @@ def remove_vThing_from_Broker(v_thing_id):
 def delete_entity_under_vThing_on_Broker(v_thing_id, entity_id):
     # lets now delete the entity from the Broker
     try:
-      response = F4Ingsild.delete_entity(brokerurl, entity_id)
-      return True
+        response = F4Ingsild.delete_entity(brokerurl, entity_id)
+        return True
     except Exception:
-      traceback.print_exc()
-      print("Exception while REST DELETE of Entity " + entity_id + " on vThing " + v_thing_id)
+        traceback.print_exc()
+        print("Exception while REST DELETE of Entity " + entity_id + " on vThing " + v_thing_id)
     return False
 
 
@@ -85,31 +85,31 @@ def add_entity_under_vThing_on_Broker(v_thing_id, entity):
     # to change the value of the entity's GeoProperties into a string,
     # hence we need to escape the quote and make it a string
     for attribute_name, attribute_value in entity.items():
-      # let's find wether this attribute of the object is a GeoProperty
-      # by examining its "type", if it has one
-      if isinstance(attribute_value, dict):
-        try:
-          type_of_the_attribute = attribute_value['type']
-          if type_of_the_attribute == "GeoProperty":
+        # let's find wether this attribute of the object is a GeoProperty
+        # by examining its "type", if it has one
+        if isinstance(attribute_value, dict):
             try:
-              value_of_the_geo_property = attribute_value['value']
-              value_of_the_geo_property_as_string = json.dumps(value_of_the_geo_property)
-              value_of_the_geo_property_as_escaped_string = value_of_the_geo_property_as_string.replace('"', '\"').replace('\n', '\\n')
-              # turn it into a string
-              attribute_value['value'] = value_of_the_geo_property_as_escaped_string
+                type_of_the_attribute = attribute_value['type']
+                if type_of_the_attribute == "GeoProperty":
+                    try:
+                        value_of_the_geo_property = attribute_value['value']
+                        value_of_the_geo_property_as_string = json.dumps(value_of_the_geo_property)
+                        value_of_the_geo_property_as_escaped_string = value_of_the_geo_property_as_string.replace('"', '\"').replace('\n', '\\n')
+                        # turn it into a string
+                        attribute_value['value'] = value_of_the_geo_property_as_escaped_string
+                    except Exception:
+                        print("GeoProperty malformed? no value field??: " + entity['id'])
             except Exception:
-              print("GeoProperty malformed? no value field??: " + entity['id'])
-        except Exception:
-          print("entity malformed? no type field??: " + entity['id'])
+                print("entity malformed? no type field??: " + entity['id'])
 
     # lets now push the entity to the Broker
     try:
-      response = F4Ingsild.append_or_create_entity(brokerurl, entity)
-      return True
+        response = F4Ingsild.append_or_create_entity(brokerurl, entity)
+        return True
     except Exception:
-      traceback.print_exc()
-      print("Exception while REST POST of Entity " + entity['id'])
-    
+        traceback.print_exc()
+        print("Exception while REST POST of Entity " + entity['id'])
+
     return False
 
 ############# END Scorpio Functions ############

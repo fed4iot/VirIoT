@@ -1689,7 +1689,7 @@ app.post(config.pathNotification, async function(req,res) {
                             "type":"Property",
                             "value":{
                                     "cmd-value": auxValue,
-                                    "cmd-qos":"0",
+                                    "cmd-qos":"2",
                                     "cmd-id": cmdID,
                                     "cmd-nuri":"viriot://" + MQTTbrokerApiKeySilo + "/" + vSiloID + "/" + MQTTbrokerTopicDataIn
                             }

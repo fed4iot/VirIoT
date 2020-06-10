@@ -919,6 +919,8 @@ setTimeout(async function() {
 
                     var vSiloIDValue = payLoadObject.meta.vSiloID
 
+                    var vThingIDValue = centralElement
+
                     for(var i = 0; i < payLoadObject.data.length;i++){
 
                         var commandKey = ""
@@ -1024,6 +1026,33 @@ setTimeout(async function() {
 
                                     //TODO: ¿¿qos specific actions?? 
                                     //TODO: (send PENDING when cmd-qos == 2) considering cmd-nuri
+
+
+                                    if (parseInt(cmd_qosValue) == 2) {
+
+                                        var dataBodyLDmod = {}
+                                        var obtainCommand = {}
+
+                                        obtainCommand = JSON.parse(JSON.stringify(payLoadObject.data[i][commandKey].value))
+
+                                        obtainCommand["cmd-status"] = "PENDING"
+
+                                        var date = new Date();
+
+                                        const timestampValue = util.ISODateString(date)
+
+                                        dataBodyLDmod = {"id": payLoadObject.data[i].id, "type": payLoadObject.data[i].type}
+                                        dataBodyLDmod[commandKey + "-status"] = {"type":"Property","value": obtainCommand, 
+                                                                                 "TimeInstant": {"type":"Property","value": timestampValue}}
+
+                                        //Obtaining vSilo topic to response.
+
+                                        var listCMDNURI = processCMDNURI(obtainCommand["cmd-nuri"])
+
+                                        const responseSendInfoStatusMQTT = await sendCommandInfoStatusMQTT(vSiloIDValue, vThingIDValue, dataBodyLDmod, listCMDNURI)
+
+                                    }
+
                                 }
 
                             }
@@ -1415,44 +1444,51 @@ app.post(config.pathNotification, async function(req,res) {
 
                                     obtainCommand1 = JSON.parse(JSON.stringify(vSiloCommandRequestHistory[j][2].data[0][vSiloCommandRequestHistory[j][1]].value))
 
-                                    obtainCommand1["cmd-result"] = "OK"
+                                    if (typeof obtainCommand1["cmd-qos"] !== "undefined") {
 
-                                    obtainCommand2 = JSON.parse(JSON.stringify(vSiloCommandRequestHistory[j][2].data[0][vSiloCommandRequestHistory[j][1]].value))
+                                        if (parseInt(obtainCommand1["cmd-qos"]) > 0 ) {
 
-                                    obtainCommand2["cmd-status"] = "OK"
+                                            obtainCommand1["cmd-result"] = "OK"
 
-                                    dataBodyLDmod = {"id": dataBodyLD.id, "type": dataBodyLD.type}
+                                            obtainCommand2 = JSON.parse(JSON.stringify(vSiloCommandRequestHistory[j][2].data[0][vSiloCommandRequestHistory[j][1]].value))
 
-                                    var commandResultKey = vSiloCommandRequestHistory[j][1]+"-result"
+                                            obtainCommand2["cmd-status"] = "OK"
 
-                                    var commandStatusKey = vSiloCommandRequestHistory[j][1]+"-status"
+                                            dataBodyLDmod = {"id": dataBodyLD.id, "type": dataBodyLD.type}
 
-                                    var commandResultTimeInstant = {}
-                                    var commandStatusTimeInstant = {}
+                                            var commandResultKey = vSiloCommandRequestHistory[j][1]+"-result"
 
-                                    if (typeof dataBodyLD[vSiloCommandRequestHistory[j][1]+"_info"].TimeInstant !== "undefined") {
-                                        commandResultTimeInstant = JSON.parse(JSON.stringify(dataBodyLD[vSiloCommandRequestHistory[j][1]+"_info"].TimeInstant))
-                                        dataBodyLDmod[commandResultKey] = {"type":"Property","value": obtainCommand1, "TimeInstant": commandResultTimeInstant} 
-                                    } else {
-                                        dataBodyLDmod[commandResultKey] = {"type":"Property","value": obtainCommand1} 
+                                            var commandStatusKey = vSiloCommandRequestHistory[j][1]+"-status"
+
+                                            var commandResultTimeInstant = {}
+                                            var commandStatusTimeInstant = {}
+
+                                            if (typeof dataBodyLD[vSiloCommandRequestHistory[j][1]+"_info"].TimeInstant !== "undefined") {
+                                                commandResultTimeInstant = JSON.parse(JSON.stringify(dataBodyLD[vSiloCommandRequestHistory[j][1]+"_info"].TimeInstant))
+                                                dataBodyLDmod[commandResultKey] = {"type":"Property","value": obtainCommand1, "TimeInstant": commandResultTimeInstant} 
+                                            } else {
+                                                dataBodyLDmod[commandResultKey] = {"type":"Property","value": obtainCommand1} 
+                                            }
+
+                                            if (typeof dataBodyLD[vSiloCommandRequestHistory[j][1]+"_status"].TimeInstant !== "undefined") {
+                                                commandStatusTimeInstant = JSON.parse(JSON.stringify(dataBodyLD[vSiloCommandRequestHistory[j][1]+"_status"].TimeInstant))
+                                                dataBodyLDmod[commandStatusKey] = {"type":"Property","value": obtainCommand2, "TimeInstant": commandStatusTimeInstant} 
+                                            } else {
+                                                dataBodyLDmod[commandStatusKey] = {"type":"Property", "value": obtainCommand2}
+                                            }
+
+                                            //Obtaining vSilo topic to response.
+
+                                            const vSiloIDaux = vSiloCommandRequestHistory[j][2].meta.vSiloID
+                                            const vThingIDaux = vSiloCommandRequestHistory[j][3]
+
+                                            var listCMDNURI = processCMDNURI(dataBodyLDmod[commandResultKey].value["cmd-nuri"])
+
+                                            const responseSendInfoStatusMQTT = await sendCommandInfoStatusMQTT(vSiloIDaux, vThingIDaux, dataBodyLDmod, listCMDNURI)
+
+                                        } 
                                     }
-
-                                    if (typeof dataBodyLD[vSiloCommandRequestHistory[j][1]+"_status"].TimeInstant !== "undefined") {
-                                        commandStatusTimeInstant = JSON.parse(JSON.stringify(dataBodyLD[vSiloCommandRequestHistory[j][1]+"_status"].TimeInstant))
-                                        dataBodyLDmod[commandStatusKey] = {"type":"Property","value": obtainCommand2, "TimeInstant": commandStatusTimeInstant} 
-                                    } else {
-                                        dataBodyLDmod[commandStatusKey] = {"type":"Property", "value": obtainCommand2}
-                                    }
-
-                                    //Obtaining vSilo topic to response.
-
-                                    const vSiloIDaux = vSiloCommandRequestHistory[j][2].meta.vSiloID
-                                    const vThingIDaux = vSiloCommandRequestHistory[j][3]
-
-                                    var listCMDNURI = processCMDNURI(dataBodyLDmod[commandResultKey].value["cmd-nuri"])
-
-                                    const responseSendInfoStatusMQTT = await sendCommandInfoStatusMQTT(vSiloIDaux, vThingIDaux, dataBodyLDmod, listCMDNURI)
-
+                                    
                                     break;
                                 }
                             }

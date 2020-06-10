@@ -3150,11 +3150,9 @@ function sleep(ms) {
 https://stackoverflow.com/questions/16338884/what-does-exited-abnormally-with-signal-9-killed-9-mean/27989874
 */
 
-//TODO: remove or update?
 // To capture signals.
 const capt_signals = ['SIGHUP', 'SIGINT', 'SIGTERM'];
 
-//TODO: remove or update?
 // processing exit condition signals
 capt_signals.forEach(signal => {
 	var sd_gen = (s) => {

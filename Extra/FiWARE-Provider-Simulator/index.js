@@ -443,7 +443,6 @@ async function shutdown(param) {
             mqttSubscriptionList = []
         }
 
-        //TODO: process response_unsubscribeMQTT value (true or false) send topic message¿?¿?
         console.log('MQTT Subscriptionsd deleted.');
 
         clientMosquittoMqtt.end()
@@ -482,11 +481,9 @@ async function shutdown(param) {
 https://stackoverflow.com/questions/16338884/what-does-exited-abnormally-with-signal-9-killed-9-mean/27989874
 */
 
-//TODO: remove or update?
 // To capture signals.
 const capt_signals = ['SIGHUP', 'SIGINT', 'SIGTERM'];
 
-//TODO: remove or update?
 // processing exit condition signals
 capt_signals.forEach(signal => {
 	var sd_gen = (s) => {
@@ -498,4 +495,3 @@ capt_signals.forEach(signal => {
 	process.on(signal, sd_gen(signal))
 	}
 );
-

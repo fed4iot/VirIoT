@@ -620,7 +620,7 @@ clientMosquittoMqttData.on("message", async function(topic, payload) {
                                                             "cmd-value":"",
                                                             "cmd-qos":"0",
                                                             "cmd-id":"001",
-                                                            "cmd-nuri":["viriot:vSilo/tenantID_orionv2/data_in"],
+                                                            "cmd-nuri":["viriot://vSilo/tenantID_orionv2/data_in"],
                                                             "cmd-result":"OK"
                                                 }
                                 },
@@ -630,7 +630,7 @@ clientMosquittoMqttData.on("message", async function(topic, payload) {
                                                             "cmd-value":"",
                                                             "cmd-qos":"0",
                                                             "cmd-id":"001",
-                                                            "cmd-nuri":["viriot:vSilo/tenantID_orionv2/data_in"],
+                                                            "cmd-nuri":["viriot://vSilo/tenantID_orionv2/data_in"],
                                                             "cmd-status":"OK"
                                                 }
                                 }
@@ -1514,7 +1514,7 @@ async function sendCommandMessage(commandBodyLD,entityType,entiyID) {
                                                     "cmd-value": "",
                                                     "cmd-qos":"0",
                                                     "cmd-id":"001",
-                                                    "cmd-nuri":["viriot:vSilo/tenantID_orionv2_vSiloName_orionv2/data_in"]
+                                                    "cmd-nuri":["viriot://vSilo/tenantID_orionv2_vSiloName_orionv2/data_in"]
                                         }
                             }
                         }
@@ -1691,7 +1691,7 @@ app.post(config.pathNotification, async function(req,res) {
                                     "cmd-value": auxValue,
                                     "cmd-qos":"0",
                                     "cmd-id": cmdID,
-                                    "cmd-nuri":["viriot:" + MQTTbrokerApiKeySilo + "/" + vSiloID + "/" + MQTTbrokerTopicDataIn]
+                                    "cmd-nuri":"viriot://" + MQTTbrokerApiKeySilo + "/" + vSiloID + "/" + MQTTbrokerTopicDataIn
                             }
                         }
 
@@ -1717,7 +1717,7 @@ app.post(config.pathNotification, async function(req,res) {
                                             "cmd-value": "",
                                             "cmd-qos":"0",
                                             "cmd-id":"001",
-                                            "cmd-nuri":["viriot:vSilo/tenantID_orionv2_vSiloName_orionv2/data_in"]
+                                            "cmd-nuri":["viriot://vSilo/tenantID_orionv2_vSiloName_orionv2/data_in"]
                                 }
                     }
                 }

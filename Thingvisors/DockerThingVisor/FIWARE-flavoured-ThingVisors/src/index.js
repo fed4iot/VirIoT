@@ -1022,7 +1022,8 @@ setTimeout(async function() {
                                         console.error(e)
                                     }
 
-                                    //3) ¿¿qos specific actions?? TODO: (send PENDING)
+                                    //TODO: ¿¿qos specific actions?? 
+                                    //TODO: (send PENDING when cmd-qos == 2) considering cmd-nuri
                                 }
 
                             }
@@ -1443,15 +1444,14 @@ app.post(config.pathNotification, async function(req,res) {
                                         dataBodyLDmod[commandStatusKey] = {"type":"Property", "value": obtainCommand2}
                                     }
 
-                                    //console.log("dataBodyLDmod")
-                                    //console.log(dataBodyLDmod)
-
                                     //Obtaining vSilo topic to response.
-                                    //TODO: support cmd-nuri? (string or array)
+
                                     const vSiloIDaux = vSiloCommandRequestHistory[j][2].meta.vSiloID
                                     const vThingIDaux = vSiloCommandRequestHistory[j][3]
 
-                                    const responseSendInfoStatusMQTT = await sendCommandInfoStatusMQTT(vSiloIDaux, vThingIDaux, dataBodyLDmod)
+                                    var listCMDNURI = processCMDNURI(dataBodyLDmod[commandResultKey].value["cmd-nuri"])
+
+                                    const responseSendInfoStatusMQTT = await sendCommandInfoStatusMQTT(vSiloIDaux, vThingIDaux, dataBodyLDmod, listCMDNURI)
 
                                     break;
                                 }
@@ -1501,6 +1501,42 @@ app.listen(notificacion_port_container,() => {
     }, 25000); //Wait 25 seconds
 
 })
+
+
+function processCMDNURI(valueArg) {
+
+    var resultArray = []
+
+    try {
+        
+        var typeCMDNURI = typeof valueArg
+
+        if (typeCMDNURI !== "undefined") {
+
+            if (typeCMDNURI == "string" && valueArg.startsWith("viriot://") ) {
+
+                resultArray.push(valueArg.substring("viriot://".length))
+
+            } else if (typeCMDNURI == "object") {
+
+                for(var k = 0; k < valueArg.length; k++) {
+
+                    if (typeof valueArg[i] == "string" && valueArg[i].startsWith("viriot://") ) {
+
+                        resultArray.push(valueArg[i].substring("viriot://".length))
+                    }
+                }
+            }
+        }
+
+    } catch(e) {
+        resultArray = resultArray
+    }
+
+    return resultArray
+}
+
+
 
 function obtainParams(paramsString) {
 
@@ -2878,7 +2914,7 @@ async function sendDataMQTT(dataBody, dataBodyLD, service, servicePath) {
     }  
 }
 
-async function sendCommandInfoStatusMQTT(vSiloID, vThingID, entities) {
+async function sendCommandInfoStatusMQTT(vSiloID, vThingID, entities, cmdnuriArg) {
     try {
 
         //"/vSilo/<ID>/data_in" topic
@@ -2896,7 +2932,20 @@ async function sendCommandInfoStatusMQTT(vSiloID, vThingID, entities) {
             }
         })
                     
-        
+        for(var k = 0; k < cmdnuriArg.length;k++) {
+            if (cmdnuriArg[k] != topic) {
+                console.log("Sending message... " + cmdnuriArg[k] + " " + JSON.stringify(topicMessage));
+
+                await clientMosquittoMqttData.publish(cmdnuriArg[k], JSON.stringify(topicMessage), {qos: 0}, function (err) {
+                    if (!err) {
+                        //console.log("Message has been sent correctly.")
+                    } else {
+                        console.error("ERROR: Sending MQTT message (publish): ",err)
+                    }
+                })
+            }
+        }
+
         return true
 
     } catch(e) {

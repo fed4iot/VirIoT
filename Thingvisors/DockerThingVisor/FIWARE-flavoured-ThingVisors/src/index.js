@@ -1024,10 +1024,6 @@ setTimeout(async function() {
                                         console.error(e)
                                     }
 
-                                    //TODO: ¿¿qos specific actions?? 
-                                    //TODO: (send PENDING when cmd-qos == 2) considering cmd-nuri
-
-
                                     if (parseInt(cmd_qosValue) == 2) {
 
                                         var dataBodyLDmod = {}

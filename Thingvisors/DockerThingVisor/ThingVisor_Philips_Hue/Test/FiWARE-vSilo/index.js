@@ -149,7 +149,7 @@ setInterval(async  function() {
         payLoadObject =  
             {
                 "id": "urn:ngsi-ld:pHueActuator:light1",
-                "type": "Extendedcolorlight",
+                "type": "Extended_color_light",
                 "set-on": {
                     "type": "command",
                     "value": nextValueCommand_Ligth1.toString()
@@ -178,7 +178,7 @@ setInterval(async function() {
         var payLoadObject =  
                 {
                     "id": "urn:ngsi-ld:pHueActuator:light2",
-                    "type": "Extendedcolorlight",
+                    "type": "Extended_color_light",
                     "set-hue": {
                         "type": "command",
                         "value": nextValueCommand_Light2.toString()
@@ -209,7 +209,7 @@ setInterval(async  function() {
         payLoadObject =  
             {
                 "id": "urn:ngsi-ld:pHueActuator:light3",
-                "type": "Extendedcolorlight",
+                "type": "Extended_color_light",
                 "set-on": {
                     "type": "command",
                     "value": nextValueCommand_Light3.toString()

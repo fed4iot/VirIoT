@@ -11,8 +11,8 @@ services:
     image: fed4iot/tenantsimulator-actuator
     environment:
       - vSiloProtocol=http # <protocol vSilo>
-      - vSiloHost=192.168.1.106 #<public IP vSilo>
-      - vSiloPort=32774 #<broker-exposed-port-vSilo>
+      - vSiloHost=<public IP vSilo>
+      - vSiloPort=<broker-exposed-port-vSilo>
       
       - actuatorLight1=1 # Admited values: 0/1. 1 --> Send the command set-on (False<-->True) to  Light1.
       - frecuency_mseg_Light1=2000 # Frecuency of command set-on to Light1.

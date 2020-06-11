@@ -256,7 +256,7 @@ f4i.py list-vsilos
 python3 f4i.py add-vthing -v pHueActuator/light1 -t tenant1 -s Silo1
 ```
 
-If you are using Orion vSilo, you can access to vSilo Broker (Orion Context Broker) to recover entities information, run [broker-vSilo-monitor.sh](./broker-vSilo-monitor.sh), to do it you need the broker exposed port of vSilo previously obtained:
+If you are using Orion vSilo, you can access to vSilo Broker (Orion Context Broker) to recover entities information, change directory to `VirIoT/Thingvisors/DockerThingVisor/ThingVisor_Philips_Hue/Test/FiWARE-vSilo` and run [broker-vSilo-monitor.sh](./broker-vSilo-monitor.sh), to do it you need the broker exposed port of vSilo previously obtained:
 
 ```bash
 ./broker-vSilo-monitor.sh <broker-exposed-port-vSilo>

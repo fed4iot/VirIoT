@@ -330,8 +330,6 @@ if __name__ == '__main__':
     db_client = MongoClient('mongodb://' + db_IP + ':' + str(db_port) + '/')
     db = db_client[db_name]
     tv_entry = db[thing_visor_collection].find_one({"thingVisorID": thing_visor_ID})
-    print(tv_entry["MQTTDataBroker"]["ip"])
-    print(tv_entry["MQTTDataBroker"]["port"])
 
     valid_tv_entry = False
     for x in range(MAX_RETRY):
@@ -350,7 +348,7 @@ if __name__ == '__main__':
         MQTT_control_broker_IP = tv_entry["MQTTControlBroker"]["ip"]
         MQTT_control_broker_port = int(tv_entry["MQTTControlBroker"]["port"])
 
-        # import paramenters from DB
+        # read paramenters from DB
         # parameters = tv_entry["params"]
         parameters = tv_entry["params"].replace("'", '"')
         if parameters:
@@ -364,17 +362,6 @@ if __name__ == '__main__':
     except Exception as e:
         print("Error: Parameters not found in tv_entry", e)
         exit()
-    # MQTT_data_broker_IP = os.environ["MQTTDataBrokerIP"]
-    # MQTT_data_broker_port = int(os.environ["MQTTDataBrokerPort"])
-    # MQTT_control_broker_IP = os.environ["MQTTControlBrokerIP"]
-    # MQTT_control_broker_port = int(os.environ["MQTTControlBrokerPort"])
-
-    # print("MQTT_data_broker_IP", MQTT_data_broker_IP)
-    # print("MQTT_data_broker_port", MQTT_data_broker_port)
-    # print("MQTT_control_broker_IP", MQTT_control_broker_IP)
-    # print("MQTT_control_broker_port", MQTT_control_broker_port)
-    # print("param", param)
-    # print("type(param)", type(param))
 
     tv_prefix = "TV"  # prefix name for controller communication topic
     v_thing_prefix = "vThing"  # prefix name for virtual Thing data and control topics
@@ -385,25 +372,6 @@ if __name__ == '__main__':
     v_silo_prefix = "vSilo"
     v_thing_topic = v_thing_prefix + "/" + v_thing_ID
 
-    # # import paramenters from environments
-    # parameters = os.environ.get("params")
-
-    # params = []
-    # if parameters:
-    #     try:
-    #         params = json.loads(parameters)
-    #     except json.decoder.JSONDecodeError:
-    #         # TODO manage exception
-    #         print("error on params (JSON) decoding"+"\n")
-
-    # # Mongodb settings
-    # time.sleep(1.5)  # wait before query the system database
-    # db_name = "viriotDB"  # name of system database
-    # thing_visor_collection = "thingVisorC"
-    # db_IP = os.environ['systemDatabaseIP']  # IP address of system database
-    # db_port = os.environ['systemDatabasePort']  # port of system database
-    # db_client = MongoClient('mongodb://' + db_IP + ':' + str(db_port) + '/')
-    # db = db_client[db_name]
     port_mapping = db[thing_visor_collection].find_one(
         {"thingVisorID": thing_visor_ID}, {"port": 1, "_id": 0})
     print("port mapping: " + str(port_mapping)+"\n")

@@ -568,8 +568,6 @@ def start_silo_controller(broker_specific_module_name):
         db = db_client[db_name]
         silo_entry = db[v_silo_collection].find_one({"vSiloID": v_silo_id})
 
-        ##############################
-        ##############################
         valid_silo_entry = False
         for x in range(MAX_RETRY):
             if silo_entry is not None:
@@ -595,18 +593,6 @@ def start_silo_controller(broker_specific_module_name):
             print("Error: Parameters not found in silo_entry", e)
             exit()
 
-        ##############################
-        ##############################
-
-        # tenant_id = os.environ["tenantID"]
-        # v_silo_id = os.environ["vSiloID"]
-        # flavour_params = os.environ["flavourParams"]
-        # virIoT_mqtt_data_broker_IP = os.environ["MQTTDataBrokerIP"]
-        # virIoT_mqtt_data_broker_port = int(os.environ["MQTTDataBrokerPort"])
-        # virIoT_mqtt_control_broker_IP = os.environ["MQTTControlBrokerIP"]
-        # virIoT_mqtt_control_broker_port = int(os.environ["MQTTControlBrokerPort"])
-        # db_IP = os.environ['systemDatabaseIP']  # IP address of system database
-        # db_port = os.environ['systemDatabasePort']  # port of system database
         db_client.close()   # Close DB connection
         print("starting silo controller")
 

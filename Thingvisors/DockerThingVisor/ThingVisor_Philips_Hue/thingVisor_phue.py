@@ -407,11 +407,6 @@ if __name__ == '__main__':
     # v_thing_ID = os.environ["vThingID_0"]
     thing_visor_ID = os.environ["thingVisorID"]
 
-    # MQTT_data_broker_IP = os.environ["MQTTDataBrokerIP"]
-    # MQTT_data_broker_port = int(os.environ["MQTTDataBrokerPort"])
-    # MQTT_control_broker_IP = os.environ["MQTTControlBrokerIP"]
-    # MQTT_control_broker_port = int(os.environ["MQTTControlBrokerPort"])
-
     tv_prefix = "TV"  # prefix name for controller communication topic
     v_thing_prefix = "vThing"  # prefix name for virtual Thing data and control topics
     data_out_suffix = "data_out"
@@ -444,7 +439,7 @@ if __name__ == '__main__':
     params = dict()
 
     try:
-        # import paramenters from DB
+        # read paramenters from DB
         MQTT_data_broker_IP = tv_entry["MQTTDataBroker"]["ip"]
         MQTT_data_broker_port = int(tv_entry["MQTTDataBroker"]["port"])
         MQTT_control_broker_IP = tv_entry["MQTTControlBroker"]["ip"]
@@ -462,18 +457,6 @@ if __name__ == '__main__':
         print("Error: Parameters not found in tv_entry", e)
         exit()
 
-
-    # # import paramenters from environments
-    # parameters = os.environ.get("params")
-    # params = []
-    # if parameters:
-    #     try:
-    #         params = json.loads(parameters)
-    #     except json.decoder.JSONDecodeError:
-    #         # TODO manage exception
-    #         print("error on params (JSON) decoding"+"\n")
-    #
-
     if "bridgePort" not in params:
         bridgePort = "8000"
     else:
@@ -484,30 +467,12 @@ if __name__ == '__main__':
     else:
         bridgeIP = params["bridgeIP"]
 
-    # if "bridgeIP" not in params:
-    #     bridgeIP = "172.17.0.1"
-    # else:
-    #     bridgeIP = params["bridgeIP"]
-    #
-    # if "bridgePort" not in params:
-    #     bridgePort = "8000"
-    # else:
-    #     bridgePort = params["bridgePort"]
-
     # initialize Hue bridge connection and creates pbridge global variable, and the v_things and lights global collections
     contexts = dict()
     lights = dict()
     v_things = dict()
     initHue()
 
-    # # Mongodb settings
-    # time.sleep(1.5)  # wait before query the system database
-    # db_name = "viriotDB"  # name of system database
-    # thing_visor_collection = "thingVisorC"
-    # db_IP = os.environ['systemDatabaseIP']  # IP address of system database
-    # db_port = os.environ['systemDatabasePort']  # port of system database
-    # db_client = MongoClient('mongodb://' + db_IP + ':' + str(db_port) + '/')
-    # db = db_client[db_name]
     port_mapping = db[thing_visor_collection].find_one(
         {"thingVisorID": thing_visor_ID}, {"port": 1, "_id": 0})
     print("port mapping: " + str(port_mapping)+"\n")

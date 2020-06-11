@@ -505,8 +505,6 @@ if __name__ == '__main__':
     control_in_suffix = "c_in"
     control_out_suffix = "c_out"
 
-    ########################################################
-    ########################################################
     MAX_RETRY = 3
     v_silo_id = os.environ["vSiloID"]
     db_IP = os.environ['systemDatabaseIP']  # IP address of system database
@@ -544,22 +542,10 @@ if __name__ == '__main__':
         virIoT_mqtt_control_broker_IP = silo_entry["MQTTControlBroker"]["ip"]
         virIoT_mqtt_control_broker_port = int(silo_entry["MQTTControlBroker"]["port"])
 
-
     except Exception as e:
         print("Error: Parameters not found in silo_entry", e)
         exit()
-    ########################################################
 
-    # fetch env parameters
-    # tenant_id = os.environ["tenantID"]
-    # flavourParams = os.environ["flavourParams"]
-    # v_silo_id = os.environ["vSiloID"]
-    # virIoT_mqtt_data_broker_IP = os.environ["MQTTDataBrokerIP"]
-    # virIoT_mqtt_data_broker_port = int(os.environ["MQTTDataBrokerPort"])
-    # virIoT_mqtt_control_broker_IP = os.environ["MQTTControlBrokerIP"]
-    # virIoT_mqtt_control_broker_port = int(os.environ["MQTTControlBrokerPort"])
-    # db_IP = os.environ['systemDatabaseIP']  # IP address of system database
-    # db_port = os.environ['systemDatabasePort']  # port of system database
     db_client.close()   # Close DB connection
     print("Starting vSilo controller")
 
@@ -569,11 +555,6 @@ if __name__ == '__main__':
     on_add_vThing_on_Broker = on_add_vThing_Mobius
     on_vThing_data_on_Broker = on_vThing_data_Mobius
     on_commandRequest_on_Broker = on_commandRequest_Mobius
-
-    # Mongodb settings
-    # db_name = "viriotDB"  # name of system database
-    # v_thing_collection = "vThingC"
-    # thing_visor_collection = "thingVisorC"
 
     # Init Broker
     BROKER_IP = "127.0.0.1"

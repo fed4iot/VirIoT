@@ -267,8 +267,6 @@ if __name__ == '__main__':
     db = db_client[db_name]
     silo_entry = db[v_silo_collection].find_one({"vSiloID": v_silo_id})
 
-    ##############################
-    ##############################
     valid_silo_entry = False
     for x in range(MAX_RETRY):
         if silo_entry is not None:
@@ -281,7 +279,7 @@ if __name__ == '__main__':
         exit()
 
     try:
-        # import paramenters from DB
+        # read paramenters from DB
         tenant_id = silo_entry["tenantID"]
         flavourParams = silo_entry["flavourParams"]  # in this flavour, param is the silo type (Raw, Mobius, FiWare)
 
@@ -290,23 +288,10 @@ if __name__ == '__main__':
         virIoT_mqtt_control_broker_IP = silo_entry["MQTTControlBroker"]["ip"]
         virIoT_mqtt_control_broker_port = int(silo_entry["MQTTControlBroker"]["port"])
 
-
     except Exception as e:
         print("Error: Parameters not found in silo_entry", e)
         exit()
 
-    ##############################
-    ##############################
-
-    # tenant_id = os.environ["tenantID"]
-    # flavourParams = os.environ["flavourParams"]  # in this flavour, param is the silo type (Raw, Mobius, FiWare)
-    # v_silo_id = os.environ["vSiloID"]
-    # virIoT_mqtt_data_broker_IP = os.environ["MQTTDataBrokerIP"]
-    # virIoT_mqtt_data_broker_port = int(os.environ["MQTTDataBrokerPort"])
-    # virIoT_mqtt_control_broker_IP = os.environ["MQTTControlBrokerIP"]
-    # virIoT_mqtt_control_broker_port = int(os.environ["MQTTControlBrokerPort"])
-    # db_IP = os.environ['systemDatabaseIP']  # IP address of system database
-    # db_port = os.environ['systemDatabasePort']  # port of system database
     db_client.close()  # Close DB connection
     print("starting silo controller")
 

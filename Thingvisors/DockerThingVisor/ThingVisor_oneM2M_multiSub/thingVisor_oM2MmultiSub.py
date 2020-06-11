@@ -327,35 +327,10 @@ if __name__ == '__main__':
         print("Error: Parameters not found in tv_entry", e)
         exit(1)
 
-
-
-    # parameters = os.environ["params"]
-    # if parameters:
-    #     try:
-    #         params = json.loads(parameters)
-    #         CSE_url = params['CSEurl']
-    #         cnt_arns = params['cntArns']  # array of source container absolute resource names
-    #         v_thing_name = params["vThingName"]
-    #         v_thing_label = v_thing_name
-    #         v_thing_description = params["vThingDescription"]
-    #         origin = params["origin"]
-    #     except json.decoder.JSONDecodeError:
-    #         # TODO manage exception
-    #         print("error on params (JSON) decoding")
-    #         os._exit(1)
-    #     except KeyError:
-    #         print(Exception.with_traceback())
-    #         os._exit(1)
-
     v_thing_ID = thing_visor_ID + "/" + v_thing_name
     v_thing = {"label": v_thing_label,
                "id": v_thing_ID,
                "description": v_thing_description}
-
-    # MQTT_data_broker_IP = os.environ["MQTTDataBrokerIP"]
-    # MQTT_data_broker_port = int(os.environ["MQTTDataBrokerPort"])
-    # MQTT_control_broker_IP = os.environ["MQTTControlBrokerIP"]
-    # MQTT_control_broker_port = int(os.environ["MQTTControlBrokerPort"])
 
     sub_rn = v_thing_ID.replace("/",":") + "_subF4I"
     vtype = ""
@@ -364,23 +339,6 @@ if __name__ == '__main__':
     context_vThing = Context()
     # mapping of virtual thing with its context object. Useful in case of multiple virtual things
     contexts = {v_thing_ID: context_vThing}
-
-    # # Mqtt settings
-    # tv_control_prefix = "TV"  # prefix name for controller communication topic
-    # v_thing_prefix = "vThing"  # prefix name for virtual Thing data and control topics
-    # v_thing_data_suffix = "data_out"
-    # in_control_suffix = "c_in"
-    # out_control_suffix = "c_out"
-    # v_silo_prefix = "vSilo"
-    #
-    # # Mongodb settings
-    # time.sleep(1.5)  # wait before query the system database
-    # db_name = "viriotDB"  # name of system database
-    # thing_visor_collection = "thingVisorC"
-    # db_IP = os.environ['systemDatabaseIP']  # IP address of system database
-    # db_port = os.environ['systemDatabasePort']  # port of system database
-    # db_client = MongoClient('mongodb://' + db_IP + ':' + str(db_port) + '/')
-    # db = db_client[db_name]
 
     port_mapping = db[thing_visor_collection].find_one({"thingVisorID": thing_visor_ID}, {"port": 1, "_id": 0})
     poa_IP_dict = db[thing_visor_collection].find_one({"thingVisorID": thing_visor_ID}, {"IP": 1, "_id": 0})

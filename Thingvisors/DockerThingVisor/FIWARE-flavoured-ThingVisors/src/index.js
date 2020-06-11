@@ -1045,15 +1045,16 @@ setTimeout(async function() {
 
                                         var listCMDNURI = processCMDNURI(obtainCommand["cmd-nuri"])
 
-                                        const responseSendInfoStatusMQTT = await sendCommandInfoStatusMQTT(vSiloIDValue, vThingIDValue, dataBodyLDmod, listCMDNURI)
-
+                                        if(listCMDNURI.length > 0) {
+                                            const responseSendInfoStatusMQTT = await sendCommandInfoStatusMQTT(vSiloIDValue, vThingIDValue, dataBodyLDmod, listCMDNURI)
+                                        } else  {
+                                            console.log("Send using data_out topic (2).")
+                                            const responseSendInfoStatusMQTT_data_out = await sendCommandInfoStatusMQTT_data_out(vThingIDValue, dataBodyLDmod)
+                                        }
                                     }
-
                                 }
-
                             }
                         }
-
                     }
                 }
             } else {
@@ -1480,8 +1481,12 @@ app.post(config.pathNotification, async function(req,res) {
 
                                             var listCMDNURI = processCMDNURI(dataBodyLDmod[commandResultKey].value["cmd-nuri"])
 
-                                            const responseSendInfoStatusMQTT = await sendCommandInfoStatusMQTT(vSiloIDaux, vThingIDaux, dataBodyLDmod, listCMDNURI)
-
+                                            if(listCMDNURI.length > 0) {
+                                                const responseSendInfoStatusMQTT = await sendCommandInfoStatusMQTT(vSiloIDaux, vThingIDaux, dataBodyLDmod, listCMDNURI)
+                                            } else  {
+                                                console.log("Send using data_out topic (1).")
+                                                const responseSendInfoStatusMQTT_data_out = await sendCommandInfoStatusMQTT_data_out(vThingIDaux, dataBodyLDmod)
+                                            }
                                         } 
                                     }
                                     
@@ -2946,13 +2951,13 @@ async function sendDataMQTT(dataBody, dataBodyLD, service, servicePath) {
     }  
 }
 
-async function sendCommandInfoStatusMQTT(vSiloID, vThingID, entities, cmdnuriArg) {
+async function sendCommandInfoStatusMQTT(vSiloID, vThingID, dataBodyLD, cmdnuriArg) {
     try {
 
         //"/vSilo/<ID>/data_in" topic
         const topic = MQTTbrokerApiKeySilo + "/" + vSiloID + "/" + MQTTbrokerTopicDataIn;
                 
-        const topicMessage = {"data": [entities], "meta": {"vThingID": vThingID}}
+        const topicMessage = {"data": [dataBodyLD], "meta": {"vThingID": vThingID}}
 
         console.log("Sending message... " + topic + " " + JSON.stringify(topicMessage));
 
@@ -2981,7 +2986,31 @@ async function sendCommandInfoStatusMQTT(vSiloID, vThingID, entities, cmdnuriArg
         return true
 
     } catch(e) {
-        console.error("sendDataMQTT: " + e.toString())
+        console.error("sendCommandInfoStatusMQTT: " + e.toString())
+        return false
+    }  
+}
+
+async function sendCommandInfoStatusMQTT_data_out(vThingIDArg, dataBodyLD) {
+    try {
+        const topic = MQTTbrokerApiKeyvThing + "/" + vThingIDArg + "/" + MQTTbrokerTopicDataOut;
+                
+        const topicMessage = {"data": [dataBodyLD], "meta": {"vThingID": vThingIDArg}}
+
+        console.log("Sending message... " + topic + " " + JSON.stringify(topicMessage));
+
+        await clientMosquittoMqttData.publish(topic, JSON.stringify(topicMessage), {qos: 0}, function (err) {
+            if (!err) {
+                //console.log("Message has been sent correctly.")
+            } else {
+                console.error("ERROR: Sending MQTT message (publish): ",err)
+            }
+        })
+                    
+        return true
+
+    } catch(e) {
+        console.error("sendCommandInfoStatusMQTT_data_out: " + e.toString())
         return false
     }  
 }

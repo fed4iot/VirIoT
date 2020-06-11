@@ -267,6 +267,108 @@ async function sendCommandUpdatingBroker(payLoadObject,ocb_ip, ocb_port, ocb_ser
     }
 }
 
+//Fields used as identifiers in the NGSIv2 API follow special rules regarding allowed syntax. These rules apply to:
+//    Entity id
+//    Entity type
+//    Attribute name
+//    Attribute type
+//    Metadata name
+//    Metadata type
+//Allowed characters are the ones in the plain ASCII set, except the following ones: control characters, whitespace, &, ?, / and #
+
+function cleanJSON_InvalidChar(string) {
+
+    var stringReplace = string
+
+    var resultado = ""
+
+
+    stringReplace = stringReplace.replace(/ /g,"");
+    stringReplace = stringReplace.replace(/\&/g,"");
+    stringReplace = stringReplace.replace(/\?/g,"");
+    stringReplace = stringReplace.replace(/\//g,"");
+    stringReplace = stringReplace.replace(/\#/g,"");
+    stringReplace = stringReplace.replace(/\(/g,"");
+    stringReplace = stringReplace.replace(/\)/g,"");
+    stringReplace = stringReplace.replace(/\%/g,"");
+    stringReplace = stringReplace.replace(/\"/g,"");
+    
+    /*
+    stringReplace = stringReplace.replace(String.fromCharCode(" ".charCodeAt(0)), '');
+    stringReplace = stringReplace.replace(String.fromCharCode("&".charCodeAt(0)), '');
+    stringReplace = stringReplace.replace(String.fromCharCode("?".charCodeAt(0)), '');
+    stringReplace = stringReplace.replace(String.fromCharCode("/".charCodeAt(0)), '');
+    stringReplace = stringReplace.replace(String.fromCharCode("#".charCodeAt(0)), '');
+
+    
+    stringReplace = stringReplace.replace(String.fromCharCode("[".charCodeAt(0)), '');
+    stringReplace = stringReplace.replace(String.fromCharCode("\"".charCodeAt(0)), '');
+    stringReplace = stringReplace.replace(String.fromCharCode("'".charCodeAt(0)), '');
+    stringReplace = stringReplace.replace(String.fromCharCode("(".charCodeAt(0)), '');
+    stringReplace = stringReplace.replace(String.fromCharCode(")".charCodeAt(0)), '');
+    stringReplace = stringReplace.replace(String.fromCharCode(";".charCodeAt(0)), '');
+    stringReplace = stringReplace.replace(String.fromCharCode("<".charCodeAt(0)), '');
+    stringReplace = stringReplace.replace(String.fromCharCode("=".charCodeAt(0)), '');
+    stringReplace = stringReplace.replace(String.fromCharCode(">".charCodeAt(0)), '');
+    stringReplace = stringReplace.replace(String.fromCharCode("\\".charCodeAt(0)), '');
+    stringReplace = stringReplace.replace(String.fromCharCode("{".charCodeAt(0)), '');
+    stringReplace = stringReplace.replace(String.fromCharCode("}".charCodeAt(0)), '');
+    stringReplace = stringReplace.replace(String.fromCharCode("]".charCodeAt(0)), '');
+    */
+
+    for (var i = 0; i< stringReplace.length; i++) {
+        var caracter = stringReplace.charAt(i);
+
+        if( caracter.charCodeAt(0) >= 32 && caracter.charCodeAt(0) <= 127) {
+            resultado = resultado.concat(caracter);
+         }
+    }
+    return resultado
+}
+
+//Remove not allowed characters to JSON string.
+//""","'","(",")",";","<","=",">","\","{","}"
+function cleanJSON_Strings(string) {
+
+    var stringReplace = string
+
+    var resultado = ""
+    
+    stringReplace = stringReplace.replace(/\&/g,"");
+    stringReplace = stringReplace.replace(/\?/g,"");
+    stringReplace = stringReplace.replace(/\//g,"");
+    stringReplace = stringReplace.replace(/\#/g,"");
+    stringReplace = stringReplace.replace(/\(/g,"");
+    stringReplace = stringReplace.replace(/\)/g,"");
+    stringReplace = stringReplace.replace(/\%/g,"");
+    stringReplace = stringReplace.replace(/\"/g,"");
+    stringReplace = stringReplace.replace(/\'/g,"");
+    stringReplace = stringReplace.replace(/\(/g,"");
+    stringReplace = stringReplace.replace(/\)/g,"");
+    stringReplace = stringReplace.replace(/\;/g,"");
+    stringReplace = stringReplace.replace(/\</g,"");
+    stringReplace = stringReplace.replace(/\=/g,"");
+    stringReplace = stringReplace.replace(/\>/g,"");
+    stringReplace = stringReplace.replace(/\\/g,"");
+    stringReplace = stringReplace.replace(/\{/g,"");
+    stringReplace = stringReplace.replace(/\}/g,"");
+    stringReplace = stringReplace.replace(/\[/g,"");
+    stringReplace = stringReplace.replace(/\]/g,"");
+        
+    //Recorre la cadena y si encuentra caracteres con ascii no comprendidos entre 32 y 255 ambos inclusive se quitan.
+    for (var i = 0; i< cadenaReplace.length; i++) {
+        var caracter = cadenaReplace.charAt(i);
+
+        if( caracter.charCodeAt(0) >= 32 && caracter.charCodeAt(0) <= 255) {
+            resultado = resultado.concat(caracter);
+         }
+    }
+    return resultado
+}
+
+module.exports.cleanJSON_InvalidChar = cleanJSON_InvalidChar; 
+module.exports.cleanJSON_Strings = cleanJSON_Strings; 
+
 module.exports.obtainCBEntity = obtainCBEntity; 
 module.exports.obtainALLCBEntities = obtainALLCBEntities;
 module.exports.obtainALLCBEntitiesPerType = obtainALLCBEntitiesPerType;

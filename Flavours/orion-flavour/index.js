@@ -406,6 +406,9 @@ clientMosquittoMqttControl.on("message", async function(topic, payload) {
 
                         //console.log(processedEntities)
 
+                        processedEntities.id = processedEntities.id.replace(/ /g,"_");
+                        processedEntities.type = processedEntities.type.replace(/ /g,"_");
+
                         const append_vThingResponse = await appendCBEntity(processedEntities,urlCB,payLoadObject.meta.vThingID)
         
                         if (append_vThingResponse) {
@@ -593,6 +596,9 @@ clientMosquittoMqttData.on("message", async function(topic, payload) {
 
                     const processedEntities = await processNGSIv2Payload(payLoadObjectNGSIv2)
 
+                    processedEntities.id = processedEntities.id.replace(/ /g,"_");
+                    processedEntities.type = processedEntities.type.replace(/ /g,"_");
+
                     const append_vThingResponse = await appendCBEntity(processedEntities,urlCB,vThingID)
 
                     if (append_vThingResponse) {
@@ -657,6 +663,9 @@ clientMosquittoMqttData.on("message", async function(topic, payload) {
 
                     //console.log("processedEntities")
                     //console.log(processedEntities)
+
+                    processedEntities.id = processedEntities.id.replace(/ /g,"_");
+                    processedEntities.type = processedEntities.type.replace(/ /g,"_");
                     
                     const append_vThingResponse = await appendCBEntity(processedEntities,urlCB,payLoadObject.meta.vThingID)
         

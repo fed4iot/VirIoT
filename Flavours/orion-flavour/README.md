@@ -1,6 +1,6 @@
 # License
 
-Flavour source code files are made avaialable under the Apache License, Version 2.0 (Apache-2.0), located into the LICENSE file.
+Orion Flavour source code files are made avaialable under the Apache License, Version 2.0 (Apache-2.0), located into the LICENSE file.
 
 # README
 
@@ -10,6 +10,11 @@ This flavour exposes vThing information through Orion Context broker (FIWARE pla
 ## How To Run
 
 ### Local Docker deployment
+
+Build orion-flavour image running:
+```bash  
+./build.sh
+```
 
 Use the VirIoT CLI as admin and run the following command  (use "f4i.py add-flavour --help" for CLI parameters).
 
@@ -59,4 +64,4 @@ A Property/Relationship of an NGSI-LD entity is represented as an attribute in N
 
 Additional properties/relationship are considered metadata in NGSIv2.
 
-
+The NGSI-LD property named `commands` is considered as a special case. This property contains an array with all the commands the entity supports. This property doesn't create an attribute `commands` in NGSIv2 entity. But three NGSIv2 attributes are created by each element of the array (<commands[i]>, <command[i]-result> and <commands[i]-status>.

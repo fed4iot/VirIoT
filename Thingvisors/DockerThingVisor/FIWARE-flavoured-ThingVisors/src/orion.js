@@ -10,6 +10,8 @@ SPDX-License-Identifier: Apache-2.0
 
 var http = require('http');
 
+const axios = require('axios');
+
 //Send request
 function httpRequest(params, postData) {
     return new Promise(function(resolve, reject) {
@@ -153,7 +155,66 @@ function obtainCBSubscriptions (offset, limit, ocb_ip, ocb_port, ocb_service, oc
     });
 };
 
+//Update Orion Context Broker entity to send a command.
+async function sendCommandUpdatingBroker(payLoadObject,ocb_ip, ocb_port, ocb_service, ocb_servicePath) {
+    try {
+        const instance = axios.create({
+            baseURL: "http://" + ocb_ip + ":" + ocb_port
+        })
+
+        //Defining headers.
+        var headersPost = {}
+
+        headersPost["Content-Type"] = 'application/json';
+
+        //const dOCBService = subscriptionFound.destinyOCB_service || ""
+        //const dOCBServicePath = subscriptionFound.destinyOCB_servicePath || ""
+
+        //if (dOCBService != "") {
+        headersPost["fiware-service"] = ocb_service;
+        //}
+        
+        //if (dOCBServicePath != "") {
+        headersPost["fiware-servicepath"] = ocb_servicePath
+        //}
+
+        const options = {
+            headers: headersPost
+        }
+        
+        //payLoadObject.id = subscriptionFound.destinyOCB_id
+        //payLoadObject.type = subscriptionFound.destinyOCB_type
+
+        //Definimos el body de la actualización.
+        var contextElements = []
+        contextElements.push(payLoadObject)
+
+        var updatebody = {
+            updateAction: "UPDATE",
+            contextElements
+            }
+
+        //console.log("updatebody")
+        //console.log(updatebody)
+        //console.log(typeof updatebody)
+
+        //Update/create entity - CONTEXT BROKER
+        try {
+            const responsePost = await instance.post(`/v1/updateContext`, updatebody, options)
+
+        } catch(e) {
+            console.error("sendCommandUpdatingBroker fails - error: " + e.toString());            
+            return false
+        }
+        return true
+    } catch(e) {
+        console.error("sendCommandUpdatingBroker fails - error: " + e.toString());            
+        return false
+    }
+}
+
 module.exports.obtainCBEntity = obtainCBEntity; 
 module.exports.obtainALLCBEntities = obtainALLCBEntities;
 module.exports.obtainALLCBEntitiesPerType = obtainALLCBEntitiesPerType;
 module.exports.obtainCBSubscriptions = obtainCBSubscriptions;
+module.exports.sendCommandUpdatingBroker = sendCommandUpdatingBroker;

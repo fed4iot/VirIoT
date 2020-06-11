@@ -170,7 +170,6 @@ def create_virtual_silo_on_docker(v_silo_id, v_silo_name, tenant_id, flavour_par
         db[v_silo_collection].update_one({"vSiloID": v_silo_id}, {"$set": silo_entry})
 
     except Exception as e:
-        print("SBAGLIATO")
         db[v_silo_collection].delete_one({"vSiloID": v_silo_id})
         print("Error: in create vSilo %s - " % v_silo_id, e)
         # print(traceback.format_exc())
@@ -285,9 +284,10 @@ def create_virtual_silo_on_kubernetes(v_silo_id, v_silo_name, tenant_id, flavour
 
         db[v_silo_collection].update_one({"vSiloID": v_silo_id}, {"$set": silo_entry})
 
-    except Exception:
+    except Exception as e:
         db[v_silo_collection].delete_one({"vSiloID": v_silo_id})
-        print(traceback.format_exc())
+        print("Error: in create vSilo %s - " % v_silo_id, e)
+        # print(traceback.format_exc())
 
 
 def destroy_virtual_silo_on_docker(silo_entry):
@@ -399,6 +399,7 @@ def create_thing_visor_on_docker(tv_img_name, debug_mode, tv_id, tv_params, tv_d
         # db[thing_visor_collection].delete_one({"thingVisorID": tv_id})
         db[thing_visor_collection].update_one({"thingVisorID": tv_id}, {"$set": {"status": STATUS_ERROR,
                                                                                  "error": "%s" % ex}})
+        print("Error: in create ThingVisor %s - " % tv_id, ex)
         # print(traceback.format_exc())
 
 
@@ -451,7 +452,6 @@ def create_thing_visor_on_kubernetes(tv_img_name, debug_mode, tv_id, tv_params, 
                     tv_img_name = yaml["spec"]["template"]["spec"]["containers"][0]["image"]
 
                     url = "https://hub.docker.com/v2/repositories/%s" % tv_img_name.split(":")[0]
-                    print("Request_url", url)
                     response = requests.head(url, allow_redirects=True)
                     if not response.status_code == 200:
                         raise docker.errors.ImageNotFound("ImageNotFound")
@@ -524,6 +524,7 @@ def create_thing_visor_on_kubernetes(tv_img_name, debug_mode, tv_id, tv_params, 
         # db[thing_visor_collection].delete_one({"thingVisorID": tv_id})
         db[thing_visor_collection].update_one({"thingVisorID": tv_id}, {"$set": {"status": STATUS_ERROR,
                                                                                  "error": "%s" % ex}})
+        print("Error: in create ThingVisor %s - " % tv_id, ex)
         # print(traceback.format_exc())
 
 def delete_thing_visor_on_docker(tv_entry):
@@ -1668,8 +1669,9 @@ def dockerImageExist(name):
 
 
 def db_tv_check_on_docker():
-    try:
-        for thing_visor in db[thing_visor_collection].find({}, {"_id": 0}):
+
+    for thing_visor in db[thing_visor_collection].find({}, {"_id": 0}):
+        try:
             tv_id = thing_visor["thingVisorID"]
             if "containerID" in thing_visor.keys():
                 container_id = thing_visor["containerID"]
@@ -1682,9 +1684,9 @@ def db_tv_check_on_docker():
             if docker_client.containers.get(container_id).status != "running":
                 db[thing_visor_collection].delete_many({"containerID": container_id})
                 print("removed thing Visor with id " + tv_id + " from system database")
-    except docker.errors.NotFound:
-        db[thing_visor_collection].delete_many({"thingVisorID": tv_id})
-        print("removed thing Visor with id " + tv_id + " from system database")
+        except docker.errors.NotFound:
+            db[thing_visor_collection].delete_many({"thingVisorID": tv_id})
+            print("removed thing Visor with id " + tv_id + " from system database")
     # except Exception as err:
     #     db[thing_visor_collection].delete_many({"thingVisorID": tv_id})
     #     print("ERROR", err)
@@ -1693,8 +1695,9 @@ def db_tv_check_on_docker():
 
 def db_tv_check_on_kubernetes():
     api_instance = kubernetes.client.AppsV1Api()
-    try:
-        for thing_visor in db[thing_visor_collection].find({}, {"_id": 0}):
+
+    for thing_visor in db[thing_visor_collection].find({}, {"_id": 0}):
+        try:
             tv_id = thing_visor["thingVisorID"]
             deployment_name = thing_visor["deploymentName"]
             api_response = api_instance.read_namespaced_deployment(deployment_name, working_namespace)
@@ -1707,27 +1710,28 @@ def db_tv_check_on_kubernetes():
                     db[thing_visor_collection].delete_many({"thingVisorID": tv_id})
                     print("removed thing Visor with id " + tv_id + " from system database")
 
-    except ApiException as err:
-        # print("Exception when calling AppsV1Api->read_namespaced_deployment: %s\n" % e)
-        api_response = err
-        db[thing_visor_collection].delete_many({"thingVisorID": tv_id})
-    except Exception as err:
-        print("Error:", err)
-        db[thing_visor_collection].delete_many({"thingVisorID": tv_id})
+        except ApiException as err:
+            # print("Exception when calling AppsV1Api->read_namespaced_deployment: %s\n" % e)
+            api_response = err
+            db[thing_visor_collection].delete_many({"thingVisorID": tv_id})
+        except Exception as err:
+            print("Error:", err)
+            db[thing_visor_collection].delete_many({"thingVisorID": tv_id})
 
 
 def db_silo_check_on_docker():
-    try:
-        for silo in db[v_silo_collection].find({}, {"_id": 0}):
+
+    for silo in db[v_silo_collection].find({}, {"_id": 0}):
+        try:
             v_silo_id = silo["vSiloID"]
             container_id = silo["containerID"]
             # Check if virtual Silo's docker container is running
             if docker_client.containers.get(container_id).status != "running":
                 db[v_silo_collection].delete_many({"containerID": container_id})
                 print("removed virtual Silo with id " + v_silo_id + " from system database")
-    except docker.errors.NotFound:
-        db[v_silo_collection].delete_many({"vSiloID": v_silo_id})
-        print("removed virtual Silo with id " + v_silo_id + " from system database")
+        except docker.errors.NotFound:
+            db[v_silo_collection].delete_many({"vSiloID": v_silo_id})
+            print("removed virtual Silo with id " + v_silo_id + " from system database")
 
 
 def db_silo_check_on_kubernetes():
@@ -1750,14 +1754,15 @@ def db_silo_check_on_kubernetes():
                 print("removed virtual Silo with id " + v_silo_id + " from system database")
 
 def db_flavour_check():
-    try:
-        for flavour in db[flavour_collection].find({}, {"_id": 0}):
+
+    for flavour in db[flavour_collection].find({}, {"_id": 0}):
+        try:
             flavour_id = flavour["flavourID"]
             if flavour["status"] == STATUS_ERROR or flavour["status"] == STATUS_PENDING:
                 db[flavour_collection].delete_many({"flavourID": flavour_id})
-    except Exception as err:
-        print("Error", err)
-        db[flavour_collection].delete_many({"flavourID": flavour_id})
+        except Exception as err:
+            print("Error", err)
+            db[flavour_collection].delete_many({"flavourID": flavour_id})
 
 def database_integrity_check_on_docker():
     db_tv_check_on_docker()
@@ -1817,7 +1822,7 @@ if __name__ == '__main__':
 
         mongo_client = MongoClient('mongodb://' + mongo_IP + ':' + str(mongo_port) + '/')
 
-        # Trick to obtain master-controller IP
+        # Master-controller IP
         master_IP = (mongo_IP.split(".")[:-1])
         master_IP.append("1")
         master_IP = ".".join(master_IP)

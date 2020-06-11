@@ -583,13 +583,13 @@ def start_silo_controller(broker_specific_module_name):
 
         try:
             # import paramenters from DB
-            tenant_id = os.environ["tenantID"]
-            flavourParams = os.environ["flavourParams"]  # in this flavour, param is the silo type (Raw, Mobius, FiWare)
+            tenant_id = silo_entry["tenantID"]
+            flavourParams = silo_entry["flavourParams"]  # in this flavour, param is the silo type (Raw, Mobius, FiWare)
 
-            virIoT_mqtt_data_broker_IP = os.environ["MQTTDataBrokerIP"]
-            virIoT_mqtt_data_broker_port = int(os.environ["MQTTDataBrokerPort"])
-            virIoT_mqtt_control_broker_IP = os.environ["MQTTControlBrokerIP"]
-            virIoT_mqtt_control_broker_port = int(os.environ["MQTTControlBrokerPort"])
+            virIoT_mqtt_data_broker_IP = silo_entry["MQTTDataBroker"]["ip"]
+            virIoT_mqtt_data_broker_port = int(silo_entry["MQTTDataBroker"]["port"])
+            virIoT_mqtt_control_broker_IP = silo_entry["MQTTControlBroker"]["ip"]
+            virIoT_mqtt_control_broker_port = int(silo_entry["MQTTControlBroker"]["port"])
 
         except Exception as e:
             print("Error: Parameters not found in silo_entry", e)

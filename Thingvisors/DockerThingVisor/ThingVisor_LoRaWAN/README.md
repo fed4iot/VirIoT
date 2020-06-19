@@ -15,7 +15,85 @@ When the thingVisor is connected to the Chirpstack server, the vThings are creat
 
 For now, the only supported type is 'smartcam'.
 
-## How to add a type
+## NGSI-LS data model
 
-TO BE DONE
+```json
+{
+   "id": "urn:ngsi-ld:Device:smartcam01",
+   "type":"Device",
+   "name":{
+     "type":"Property",
+	 "value":"Grasse Camera"
+	},
+	"monitors": {
+                "type":"Relationship",
+                "object":f"urn:ngsi-ld:Site:{self.id_site}"
+            },
+	"location": {
+                "type":"GeoProperty",
+                "value":{
+                    "type":"Point",
+                    "coordinates": self.location
+                }
+            },
+	"observationSpace": {
+                    "type":"GeoProperty",
+                    "value":{
+                        "type":"Polygon",
+                        "coordinates":self.observation_space
+                    }
+                }
+	"@context":[
+		"http://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+		"http://models.eglobalmark.com/grasse/waste-management-context.jsonld"
+	]
+}
+
+{
+	"id": "urn:ngsi-ld:Sensor:PersonCounter01",
+	"type": "Sensor",
+	"connectsTo": {
+		"type": "Relationship",
+		"object": "urn:ngsi-ld:Device:smartcam01"
+	},
+	"@context": [
+		"http://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+		"http://models.eglobalmark.com/grasse/waste-management-context.jsonld"
+	]
+}
+
+{
+	"id":"urn:ngsi-ld:Site:01",
+	"type":"Site",
+	"location":{
+		"type":"GeoProperty",
+		"value":{
+			"type":"Point",
+			"coordinates":[
+				-8.5,
+				41.2
+			]
+		}
+	},
+	"name":{
+		"type":"Property",
+		"value":"Sophia"
+	},
+	"personNumber":{
+		"type":"Property",
+		"value":150,
+		"unitCode": "IE",
+		"observedAt": "2020-03-10T13:44:38.000Z",
+		"observedBy":{
+			"type":"Relationship",
+			"object":"urn:ngsi-ld:Sensor:PersonCounter01"
+		}
+	},
+	"@context":[
+      "http://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+      "http://models.eglobalmark.com/grasse/waste-management-context.jsonld"
+   ]
+}
+```
+
 

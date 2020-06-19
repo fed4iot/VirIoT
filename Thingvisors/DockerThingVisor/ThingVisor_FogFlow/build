@@ -1,0 +1,2 @@
+docker build -t  "fed4iot/fogflow-tv"  .
+

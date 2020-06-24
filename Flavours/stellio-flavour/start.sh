@@ -7,6 +7,7 @@ exec >/dev/tty 2>/dev/tty </dev/tty && screen -S api-gateway -s /bin/bash -t win
 exec >/dev/tty 2>/dev/tty </dev/tty && screen -S entity-service -s /bin/bash -t win0 -A -d -m
 exec >/dev/tty 2>/dev/tty </dev/tty && screen -S search-service -s /bin/bash -t win0 -A -d -m
 exec >/dev/tty 2>/dev/tty </dev/tty && screen -S subscription-service -s /bin/bash -t win0 -A -d -m
+exec >/dev/tty 2>/dev/tty </dev/tty && screen -S silocontroller -s /bin/bash -t win0 -A -d -m
 
 echo "Starting zookeeper"
 screen -S zookeeper -p win0 -X stuff $'kafka_2.12-2.3.0/bin/zookeeper-server-start.sh kafka_2.12-2.3.0/config/zookeeper.properties\n'
@@ -36,4 +37,8 @@ echo "Starting entity service"
 screen -S entity-service -p win0 -X stuff $'java -Xms512m -jar stellio/entity-service-0.5.0.jar\n'
 sleep 30
 echo "Entity service started"
+echo "Starting silo controller"
+screen -S silocontroller -p win0 -X stuff $'python3 stellio_silo_controller.py\n'
+sleep 30
+echo "Silo controller started"
 sleep infinity

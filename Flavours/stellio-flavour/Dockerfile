@@ -15,9 +15,6 @@ WORKDIR /app
 RUN git clone https://github.com/stellio-hub/stellio-context-broker.git
 WORKDIR /app/stellio-context-broker
 
-### disable neo4j migrations (temp)
-RUN echo "org.neo4j.migrations.enabled=false" >> entity-service/src/main/resources/application.properties
-
 ### compile and assemble Stellio
 RUN ./gradlew build --exclude-task test
 
@@ -39,11 +36,11 @@ RUN echo "\nlisteners=PLAINTEXT://:29092" >> kafka_2.12-2.3.0/config/server.prop
 RUN wget -O - https://debian.neo4j.com/neotechnology.gpg.key | apt-key add -
 RUN echo 'deb https://debian.neo4j.com stable latest' | tee -a /etc/apt/sources.list.d/neo4j.list
 RUN apt-get update
-RUN apt-get install -y neo4j=1:4.0.5
+RUN apt-get install -y neo4j
 RUN echo "dbms.default_database=stellio" >> /etc/neo4j/neo4j.conf
 RUN neo4j-admin set-initial-password neo4j_password
 
-### download and configure postgresql 10 and timescaledb 1.5.1
+### download and configure postgresql 10 and timescaledb 1.4.2
 RUN apt-get install -y --no-install-recommends postgresql-10
 RUN wget --content-disposition https://packagecloud.io/timescale/timescaledb/packages/debian/jessie/timescaledb-loader-postgresql-10_1.4.2~debian8_amd64.deb/download.deb
 RUN wget --content-disposition https://packagecloud.io/timescale/timescaledb/packages/debian/jessie/timescaledb-oss-postgresql-10_1.4.2~debian8_amd64.deb/download.deb
@@ -83,8 +80,13 @@ RUN apt-get autoremove -y
 RUN rm -rf plyvelhashmap
 RUN rm -rf __pycache__
 
+### set gateway routes uri
+ENV APPLICATION_ENTITY_SERVICE_URL localhost
+ENV APPLICATION_SEARCH_SERVICE_URL localhost
+ENV APPLICATION_SUBSCRIPTION_SERVICE_URL localhost
+
 ENTRYPOINT []
 CMD /app/start.sh
 
 # replace this with your application's default port
-EXPOSE 9090
+EXPOSE 8080

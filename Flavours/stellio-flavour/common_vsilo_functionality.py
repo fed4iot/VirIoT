@@ -518,7 +518,6 @@ def start_silo_controller(broker_specific_module_name):
     global is_this_vsilo_systemvsilo
     global controllerurl
     global adminpassword
-    global flavour_params
 
     # lets import the silo-controller-specific functions and bind them into us
     print("importing module: " + broker_specific_module_name)
@@ -538,7 +537,6 @@ def start_silo_controller(broker_specific_module_name):
     parser.add_argument('-d', '--debug_mongo_ip', dest='debug_mongo_ip', help='run in debug mode and use the given IP address of the system MongoDB (usually 172.17.0.2)')
     args = parser.parse_args()
     # flavour_params must be a string
-    flavour_params = ""
     if args.debug_mongo_ip != None:
         # -------------- DEBUG PARAMETERS --------------
         #tenant_id = "tenant1"
@@ -583,7 +581,7 @@ def start_silo_controller(broker_specific_module_name):
         try:
             # import paramenters from DB
             tenant_id = silo_entry["tenantID"]
-            flavourParams = silo_entry["flavourParams"]  # in this flavour, param is the silo type (Raw, Mobius, FiWare)
+            flavour_params = silo_entry["flavourParams"]  # in this flavour, param is the silo type (Raw, Mobius, FiWare)
 
             virIoT_mqtt_data_broker_IP = silo_entry["MQTTDataBroker"]["ip"]
             virIoT_mqtt_data_broker_port = int(silo_entry["MQTTDataBroker"]["port"])

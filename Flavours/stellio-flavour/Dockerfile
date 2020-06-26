@@ -6,7 +6,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update
 RUN apt-get -y upgrade
-RUN apt-get install -y wget gnupg2 openjdk-11-jdk
+RUN apt-get install -y wget gnupg2 openjdk-11-jdk lsb-release
 
 ### download Stellio
 RUN apt-get install -y git
@@ -20,10 +20,10 @@ RUN ./gradlew build --exclude-task test
 
 ### move created jars outside
 RUN mkdir ../stellio/
-RUN cp api-gateway/build/libs/api-gateway-0.5.0.jar ../stellio/
-RUN cp entity-service/build/libs/entity-service-0.5.0.jar ../stellio/
-RUN cp search-service/build/libs/search-service-0.5.0.jar ../stellio/
-RUN cp subscription-service/build/libs/subscription-service-0.5.0.jar ../stellio/
+RUN cp api-gateway/build/libs/api-gateway-*.jar ../stellio/
+RUN cp entity-service/build/libs/entity-service-*.jar ../stellio/
+RUN cp search-service/build/libs/search-service-*.jar ../stellio/
+RUN cp subscription-service/build/libs/subscription-service-*.jar ../stellio/
 
 ### download and configure kafka and zookeeper
 WORKDIR /app
@@ -40,14 +40,17 @@ RUN apt-get install -y neo4j
 RUN echo "dbms.default_database=stellio" >> /etc/neo4j/neo4j.conf
 RUN neo4j-admin set-initial-password neo4j_password
 
-### download and configure postgresql 10 and timescaledb 1.4.2
-RUN apt-get install -y --no-install-recommends postgresql-10
-RUN wget --content-disposition https://packagecloud.io/timescale/timescaledb/packages/debian/jessie/timescaledb-loader-postgresql-10_1.4.2~debian8_amd64.deb/download.deb
-RUN wget --content-disposition https://packagecloud.io/timescale/timescaledb/packages/debian/jessie/timescaledb-oss-postgresql-10_1.4.2~debian8_amd64.deb/download.deb
-RUN dpkg -i timescaledb-loader-postgresql-10_1.4.2~debian8_amd64.deb; exit 0
+### download and configure postgresql 11 and timescaledb 1.4.2
+RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
+RUN sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" >> /etc/apt/sources.list.d/pgdg.list'
+RUN apt update
+RUN apt-get install -y --no-install-recommends postgresql-11
+RUN wget --content-disposition https://packagecloud.io/timescale/timescaledb/packages/debian/jessie/timescaledb-loader-postgresql-11_1.4.2~debian8_amd64.deb/download.deb
+RUN wget --content-disposition https://packagecloud.io/timescale/timescaledb/packages/debian/jessie/timescaledb-oss-postgresql-11_1.4.2~debian8_amd64.deb/download.deb
+RUN dpkg -i timescaledb-loader-postgresql-11_1.4.2~debian8_amd64.deb; exit 0
 RUN apt --fix-broken install -y
-RUN dpkg -i timescaledb-oss-postgresql-10_1.4.2~debian8_amd64.deb
-RUN echo "shared_preload_libraries = 'timescaledb'" >> /etc/postgresql/10/main/postgresql.conf
+RUN dpkg -i timescaledb-oss-postgresql-11_1.4.2~debian8_amd64.deb
+RUN echo "shared_preload_libraries = 'timescaledb'" >> /etc/postgresql/11/main/postgresql.conf
 
 USER postgres
 RUN /etc/init.d/postgresql start &&\
@@ -73,8 +76,8 @@ RUN apt-get install -y --no-install-recommends mosquitto-clients python3-minimal
 RUN pip3 install setuptools wheel paho-mqtt requests pymongo plyvel
 
 ### cleanup
-RUN rm -rf stellio-context-broker timescaledb-loader-postgresql-10_1.4.2~debian8_amd64.deb timescaledb-oss-postgresql-10_1.4.2~debian8_amd64.deb
-RUN apt-get purge -y wget gnupg2 openjdk-11-jdk git
+RUN rm -rf stellio-context-broker timescaledb-loader-postgresql-11_1.4.2~debian8_amd64.deb timescaledb-oss-postgresql-11_1.4.2~debian8_amd64.deb
+RUN apt-get purge -y wget gnupg2 openjdk-11-jdk lsb-release git
 RUN apt-get autoclean -y
 RUN apt-get autoremove -y
 RUN rm -rf plyvelhashmap

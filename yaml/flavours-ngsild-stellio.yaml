@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: f4i-ngsild-stellio-f
-        image: fed4iot/ngsild-stellio-f:2.2
+        image: fed4iot/ngsild-stellio-f:latest
         ports:
         - containerPort: 9090
 ---

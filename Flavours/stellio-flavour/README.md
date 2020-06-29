@@ -14,7 +14,7 @@ This flavour is for developers that want to use the NGSI-LD datamodel, which is 
 First (as admin) add a "stellio flavour" to the system, based on the Docker image available on the fed4iot dockerhub, pointing to it with argument -i. Use the VirIoT CLI as admin and run the following command  (use "f4i.py add-flavour --help" for CLI parameters).
 
 ```bash  
-python3 f4i.py add-flavour -f ngsild-stellio-f -i fed4iot/ngsild-stellio-f:2.2 -d "silo with a Stellio NGSI-LD broker" -s ""
+python3 f4i.py add-flavour -f ngsild-stellio-f -i fed4iot/ngsild-stellio-f:latest -d "silo with a Stellio NGSI-LD broker" -s ""
 ```
 
 Then (either as admin or as a regular user, e.g. tenant1) create a vSilo of that flavour, by running the following command (use "f4i.py create-vsilo --help" for CLI parameters).

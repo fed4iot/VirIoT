@@ -94,7 +94,7 @@ module.exports = {
     //[], [''], or regular expresions is NO SUPPORTED.
     //noGreedyListTypes: [['Sensor'],['Sensor']],
     //noGreedyListTypes: [['Sensor','SensorBici'],['SensorTest','SensorBiciTest']],
-    noGreedyListTypes: [['Sensor']],
+    noGreedyListTypes: [['Sensor','policy']],
     //noGreedyListTypes: [['Sensor'],['Sensor']],
     //TODO:
     //Improvement in consideration (NO SUPPORTED):
@@ -104,21 +104,35 @@ module.exports = {
     //Wildcard : [] (to recover all attributes into the specific service/servicepath/type)
     //noGreedyListTypesAttributes: [[['libres','totales','geoposicion']],[['libres','geoposicion']]],
     //noGreedyListTypesAttributes: [[[],['libres','geoposicion']],[[],['libres','geoposicion']]],
-    noGreedyListTypesAttributes: [[['nombre','libres','totales','geoposicion']]],
+    noGreedyListTypesAttributes: [[ 
+                                    ['nombre','disSpaceMc','disSpaceMcCapacity','disSpacePC','disSpacePCCapacity','EVSpaceMc','EVSpaceMcCapacity','EVSpacePC',
+                                    'EVSpacePCCapacity','numSpaceMc','totSpaceMcCapacity','libres','totales',
+                                    'maxHeight','maxLength','maxWidth','payMthd','payMthdCreditCard','policyMc','policyPC','policyMcPHolidays',
+                                    'policyPCPHolidays','isOpen','monday','tuesday','wednesday','thursday','friday','saturday','sunday','pHolidays',
+                                    'carWash','valet','EVCharger','phoneNumber','webSite','mail','address','geoposicion'], //Sensor attributes to map
+                                    ['appliesDuring','currency','exclPHolidays','gracePeriod','maxDuration']  //policy attributes to map
+                                  ]],
     //noGreedyListTypesAttributes: [[['nombre','libres','totales','geoposicion']],[[]]],
 
     //Greedy Flexible configuration... define destiny type for each data provider type
     //[], [''], or regular expresions is NO SUPPORTED.
     //noGreedyListDestTypes: [['parkingsite'],['bikeparkingsite']],
     //noGreedyListDestTypes: [['Sensor','SensorBici'],['parkingsite','parkingsitebike']],
-    noGreedyListDestTypes: [['parkingsite']],
+    noGreedyListDestTypes: [['parkingsite','policy']],
     //noGreedyListDestTypes: [['parkingsite'],['Point']],
 
     //Greedy Flexible configuration... define destiny attribute name for each data provider attributes list in service/servicepath/type
     //[], [''] or regular expresions is NO SUPPORTED.
     //noGreedyListDestAttributesTypes: [[['freeParkingSpaces','totalParkingSpaces','location']],[['freeParkingSpaces','location']]],
     //noGreedyListDestAttributesTypes: [[[],['freeParkingSpaces','location']],[[],['freeParkingSpaces2','location2']]],
-    noGreedyListDestAttributesTypes: [[['name','numSpacePC','totSpacePCCapacity','location']]],
+    noGreedyListDestAttributesTypes: [[
+                                        ['name','disSpaceMc','disSpaceMcCapacity','disSpacePC','disSpacePCCapacity','EVSpaceMc','EVSpaceMcCapacity','EVSpacePC',
+                                        'EVSpacePCCapacity','numSpaceMc','totSpaceMcCapacity','numSpacePC','totSpacePCCapacity',
+                                        'maxHeight','maxLength','maxWidth','payMthd','payMthdCreditCard','policyMc','policyPC','policyMcPHolidays',
+                                        'policyPCPHolidays','isOpen','monday','tuesday','wednesday','thursday','friday','saturday','sunday','pHolidays',
+                                        'carWash','valet','EVCharger','phoneNumber','webSite','mail','address','location'], //parkingsite attributes mapped
+                                        ['appliesDuring','currency','exclPHolidays','gracePeriod','maxDuration'] //policy attributes mapped
+                                      ]],
     //noGreedyListDestAttributesTypes: [[['name','numSpacePC','totSpacePCCapacity','location']],[[]]],
 
     /*
@@ -170,7 +184,7 @@ module.exports = {
 
     
     smartParkingStandardDM_Service: [''],
-
+/* DEPRECATED
     "parkingsite_id": ["Aparcamiento:101","Aparcamiento:102","Aparcamiento:103","Aparcamiento:104","Aparcamiento:105"],
     "parkingsite_disSpacePCCapacity": [14,20,7,0,0],
     "parkingsite_maxHeight": [2.3,2.3,1.9,1.9,2.0],
@@ -271,6 +285,6 @@ module.exports = {
                                "postalCode": "30008"
                            }
                            ],
-
+*/
     frecuency_mseg: 10000
 }

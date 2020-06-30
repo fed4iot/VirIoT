@@ -165,7 +165,7 @@ module.exports = {
     */
 
     smartParkingStandardDM_Service: [''],
-
+/* DEPRECATED
     "parkingsite_id": [],
     "parkingsite_disSpacePCCapacity": [],
     "parkingsite_maxHeight": [],
@@ -175,6 +175,6 @@ module.exports = {
     "parkingsite_webSite": [],
     "parkingsite_mail": [],
     "parkingsite_address": [],
-   
+*/   
     frecuency_mseg: 10000
 }

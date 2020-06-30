@@ -142,7 +142,7 @@ function match_keyNGSIv1(key, attribute, paramIn, paramOut, ldReversedContext) {
         //Version 0: Only consider NGSI-v2 geo:json type attribute as a NGSI-LD GeoProperty.
         //Version 1: consider NGSI-v2 coords type attribute as a NGSI-LD GeoProperty geo:json point type.
         //Version 2: consider NGSI-v2 geo:point type attribute as a NGSI-LD GeoProperty geo:json point type.
-        if (declType == "geo:json" || declType == "coords" || declType == "geo:point") {
+        if (declType == "geo:json" || declType == "coords" || declType == "geo:point" || declType == "geo:polygon") {
           attrObject["type"] = "GeoProperty";
         } else {
           attrObject["type"] = "Property";
@@ -166,6 +166,19 @@ function match_keyNGSIv1(key, attribute, paramIn, paramOut, ldReversedContext) {
           valueAttr = {type: "Point", 
                       coordinates:[ parseFloat(attribute.value.split(",")[1]), parseFloat(attribute.value.split(",")[0]) ]
                       }
+        } else if (declType == "geo:polygon") {
+          
+          var aux = []
+          
+          for(var i=0; i< attribute.value.length; i++){
+
+            aux.push([ parseFloat(attribute.value[i].split(",")[1]), parseFloat(attribute.value[i].split(",")[0]) ])
+          }
+
+          valueAttr = {type: "Polygon", 
+                      coordinates:[ aux ]
+                      }
+          
         }
 
         attrObject["value"] = libWrapperUtils.format_value(attrObject["type"], valueAttr, "",  valueType)

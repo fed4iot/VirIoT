@@ -171,106 +171,16 @@ module.exports = {
     
     smartParkingStandardDM_Service: [''],
 
-    "parkingsite_id": ["Aparcamiento:101","Aparcamiento:102","Aparcamiento:103","Aparcamiento:104","Aparcamiento:105"],
-    "parkingsite_disSpacePCCapacity": [14,20,7,0,0],
-    "parkingsite_maxHeight": [2.3,2.3,1.9,1.9,2.0],
-    "parkingsite_carWash": [true,true,false,false,false],
-    "parkingsite_valet": [false,false,false,false,false],
-    "parkingsite_phoneNumber": [
-                                   [ 
-                                       {
-                                           "phoneType": "Work Phone",
-                                           "countryCode": "34",
-                                           "areaCode": "968",
-                                           "contactNumber": "281344"
-                                       }
-                                   ],
-                                   [ 
-                                       {
-                                           "phoneType": "Work Phone",
-                                           "countryCode": "34",
-                                           "areaCode": "968",
-                                           "contactNumber": "200522"
-                                       }
-                                   ],
-                                   [ 
-                                       {
-                                           "phoneType": "Work Phone",
-                                           "countryCode": "34",
-                                           "areaCode": "968",
-                                           "contactNumber": "234733"
-                                       }
-                                   ],
-                                   [ 
-                                       {
-                                           "phoneType": "Work Phone",
-                                           "countryCode": "34",
-                                           "areaCode": "968",
-                                           "contactNumber": "235265"
-                                       }
-                                   ],
-                                   [ 
-                                       {
-                                           "phoneType": "Work Phone",
-                                           "countryCode": "34",
-                                           "areaCode": "968",
-                                           "contactNumber": "204387"
-                                       }
-                                   ]
-                               ],
-    "parkingsite_webSite": ["https://aparcamientosnewcapital.es/pf/avenida-libertad-murcia/#info",
-                           "https://aparcamientosnewcapital.es/pf/la-vega-murcia/",
-                           "https://www.interparking.es/es-ES/find-parking/AlfonsoX/",
-                           "https://aparcamientosnewcapital.es/pf/centrofama-murcia/",
-                           "https://aparcamientosnewcapital.es/pf/hospital-morales-meseguer-murcia/"],
-    "parkingsite_mail": ["info@newcapital2000.es","info@newcapital2000.es","5759@interparking.com","info@newcapital2000.es","info@newcapital2000.es"],
-    "parkingsite_address": [
-                           {   "country": "Spain",
-                               "state": "Murcia",
-                               "city": "Murcia",
-                               "citySection": "San Miguel", //
-                               "streetType": "Avenida",
-                               "streetDirection": "Libertad",
-                               "streetNumber": "S/N",
-                               "postalCode": "30008"
-                           },
-                           {   "country": "Spain",
-                               "state": "Murcia",
-                               "city": "Murcia",
-                               "citySection": "Santa Maria de Gracia",
-                               "streetType": "Avenida",
-                               "streetDirection": "Cronista Carlos Valcarcel",
-                               "streetNumber": "S/N",
-                               "postalCode": "30008"
-                           },
-                           {   "country": "Spain",
-                               "state": "Murcia",
-                               "city": "Murcia",
-                               "citySection": "La Fama",
-                               "streetType": "Avenida",
-                               "streetDirection": "Gran Vía Alfonso X",
-                               "streetNumber": "S/N",
-                               "postalCode": "30008"
-                           },
-                           {   "country": "Spain",
-                               "state": "Murcia",
-                               "city": "Murcia",
-                               "citySection": "La Fama",
-                               "streetType": "Avenida",
-                               "streetDirection": "Guitierrez Mellado",
-                               "streetNumber": "S/N",
-                               "postalCode": "30008"
-                           },
-                           {   "country": "Spain",
-                               "state": "Murcia",
-                               "city": "Murcia",
-                               "citySection": "Vista Alegre",
-                               "streetType": "Avenida",
-                               "streetDirection": "Marques de los Vélez",
-                               "streetNumber": "S/N",
-                               "postalCode": "30008"
-                           }
-                           ],
-
+/* DEPRECATED    
+    "parkingsite_id": [],
+    "parkingsite_disSpacePCCapacity": [],
+    "parkingsite_maxHeight": [],
+    "parkingsite_carWash": [],
+    "parkingsite_valet": [],
+    "parkingsite_phoneNumber": [],
+    "parkingsite_webSite": [],
+    "parkingsite_mail": [],
+    "parkingsite_address": [],
+*/
     frecuency_mseg: 10000
 }

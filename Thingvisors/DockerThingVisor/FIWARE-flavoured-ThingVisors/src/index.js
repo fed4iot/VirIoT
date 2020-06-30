@@ -73,6 +73,7 @@ var smartParkingStandardDM_Service
 var smartParkingStandardDM_ListTypes
 var smartParkingStandardDM_Attributes
 
+/* DEPRECATED
 var parkingsite_id
 var parkingsite_disSpacePCCapacity
 var parkingsite_maxHeight
@@ -82,6 +83,7 @@ var parkingsite_phoneNumber
 var parkingsite_webSite
 var parkingsite_mail
 var parkingsite_address
+*/
 
 var params
 
@@ -395,6 +397,7 @@ function settingConfiguration(notify_ipArg, paramsArg,MQTTDataBrokerIPArg, MQTTD
 
         dest_ocb_attrList = noGreedyListDestAttributesTypes
 
+        /* DEPRECATED
         parkingsite_id = config.parkingsite_id
         parkingsite_disSpacePCCapacity = config.parkingsite_disSpacePCCapacity
         parkingsite_maxHeight = config.parkingsite_maxHeight
@@ -404,6 +407,7 @@ function settingConfiguration(notify_ipArg, paramsArg,MQTTDataBrokerIPArg, MQTTD
         parkingsite_webSite = config.parkingsite_webSite
         parkingsite_mail = config.parkingsite_mail
         parkingsite_address = config.parkingsite_address
+        */
 
         //Configuration controls...
         if (isGreedy == false && isActuator == false) {
@@ -1135,13 +1139,22 @@ function obtainNGSILDPayload(service,dataBody){
             //it fails when aggregated data model entities are different than the entities.js one. 
             //If we won't this condition, we need to be careful. We must define types, in dest_ocb_type, 
             //are not included in entities.js file.
-            if((typeResult == 'parkingsite' || typeResult == 'parkingmeter') && isAggregated == false){
+            if(isAggregated == false){
+            //if((typeResult == 'parkingsite' || typeResult == 'parkingmeter') && isAggregated == false){
             //if(typeResult == 'parkingsite' || typeResult == 'parkingmeter'){
-                entity_template = obtainEntityDM(typeResult)
-                entityDataModel = JSON.parse(JSON.stringify(entity_template));
-                entityDataModel.id = entityDataModel.id.replace("---",dataBody.id)
-                isEntityDataModel = true
+                if (typeof obtainEntityDM(typeResult) !== 'undefined'){
 
+                    entity_template = obtainEntityDM(typeResult)
+                    entityDataModel = JSON.parse(JSON.stringify(entity_template));
+
+                    if(dataBody.id.startsWith("urn:ngsi-ld:")) {
+                        entityDataModel.id = dataBody.id
+                    } else {
+                        entityDataModel.id = entityDataModel.id.replace("---",dataBody.id)
+                    }
+                    
+                    isEntityDataModel = true                    
+                }
             }
 
             for(let attr in dataBody){
@@ -1162,15 +1175,33 @@ function obtainNGSILDPayload(service,dataBody){
                                             dataBody[attr].type.toUpperCase() == "NUMBER".toUpperCase() || 
                                             dataBody[attr].type.toUpperCase() == "STRUCTUREDVALUE".toUpperCase() ||
                                             dataBody[attr].type.toUpperCase() == "GEO:JSON".toUpperCase() ||
-                                            dataBody[attr].type.toUpperCase() == "DATETIME".toUpperCase() ) {
+                                            dataBody[attr].type.toUpperCase() == "DATETIME".toUpperCase() ||
+                                            dataBody[attr].type.toUpperCase() == "RELATIONSHIP".toUpperCase() ) {
                                                 
                                             entityDataModel[dest_ocb_attrList[serviceIndex][typeIndex][k]].value = dataBody[attr].value
             
                                         } else if (dataBody[attr].type.toUpperCase() == "COORDS".toUpperCase() ||
-                                                    dataBody[attr].type.toUpperCase() == "POINT".toUpperCase()) {
+                                                    dataBody[attr].type.toUpperCase() == "GEO:POINT".toUpperCase()) {
             
                                             entityDataModel[dest_ocb_attrList[serviceIndex][typeIndex][k]].value.coordinates = 
                                                 [ parseFloat(dataBody[attr].value.split(",")[1]), parseFloat(dataBody[attr].value.split(",")[0]) ]
+                                        } else if ( dataBody[attr].type.toUpperCase() == "GEO:POLYGON".toUpperCase()) {
+
+                                            var aux = []
+          
+                                            for(var l=0; l< dataBody[attr].value.length; l++){
+
+                                                aux.push([ parseFloat(dataBody[attr].value[l].split(",")[1]), parseFloat(dataBody[attr].value[l].split(",")[0]) ])
+                                            }
+
+           
+                                            entityDataModel[dest_ocb_attrList[serviceIndex][typeIndex][k]].value.coordinates = [ aux ]
+
+                                        }else if (dataBody[attr].type.toUpperCase() == "POINT".toUpperCase()) {
+            
+                                            entityDataModel[dest_ocb_attrList[serviceIndex][typeIndex][k]].value.coordinates = 
+                                                //[ parseFloat(dataBody[attr].value.split(",")[1]), parseFloat(dataBody[attr].value.split(",")[0]) ]
+                                                dataBody[attr].coordinates
                                         }
                                     }
 
@@ -1220,15 +1251,25 @@ function obtainNGSILDPayload(service,dataBody){
                 dataBodyLD = libfromNGSIv2.fromNGSIv2toNGSILD(entityv2TV,"")
 
             } else {
-                //Additional information (config.js)
-                if (typeResult.toUpperCase() == "parkingsite".toUpperCase()) {
 
-
+                if(typeof entityDataModel.timestamp !== 'undefined'){
                     const timestampIndex = obtainArrayIndex(mappedAttr,"timestamp")
                     if (timestampIndex==-1) {
                         entityDataModel.timestamp.value = timestampValue
                     }
+                }
 
+
+                ////Additional information (config.js)
+                //if (typeResult.toUpperCase() == "parkingsite".toUpperCase()) {
+                //
+
+                //    const timestampIndex = obtainArrayIndex(mappedAttr,"timestamp")
+                //    if (timestampIndex==-1) {
+                //        entityDataModel.timestamp.value = timestampValue
+                //    }
+
+                    /* DEPRECATED
                     //Find "id" in "parkingsite_id"
                     const idIndex = obtainArrayIndex(parkingsite_id,dataBody.id)
 
@@ -1280,7 +1321,8 @@ function obtainNGSILDPayload(service,dataBody){
                         }  
 
                     }
-                }
+                    */
+                //}
 
                 dataBodyLD = libfromNGSIv2.fromNGSIv2toNGSILD(entityDataModel,"")
 

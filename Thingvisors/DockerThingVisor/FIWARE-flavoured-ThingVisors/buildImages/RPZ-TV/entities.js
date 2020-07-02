@@ -91,7 +91,7 @@ module.exports = {
                     "type": "StructuredValue",
                     "value": [
                         "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
-                        "https://odins.org/smartParkingOntology/sector-context.jsonld"
+                        "https://odins.es/smartParkingOntology/sector-context.jsonld"
                     ]
                 }
     }  

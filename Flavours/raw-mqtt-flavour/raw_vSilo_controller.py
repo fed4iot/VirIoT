@@ -77,8 +77,8 @@ class broker_thread(Thread):
 def on_in_control_msg(mosq, obj, msg):
     payload = msg.payload.decode("utf-8", "ignore")
     print(msg.topic + " " + str(payload))
-    jres = json.loads(payload.replace("\'", "\""))
     try:
+        jres = json.loads(payload)
         commandType = jres["command"]
         if commandType == "addVThing":
             on_message_add_vThing(jres)
@@ -147,10 +147,10 @@ def on_message_delete_thing(jres):
 def on_vThing_data(mosq, obj, msg):
     try:
         if isinstance(msg, str):
-            jres = json.loads(msg.replace("\'", "\""))
+            jres = json.loads(msg)
         else:
             payload = msg.payload.decode("utf-8", "ignore")
-            jres = json.loads(payload.replace("\'", "\""))
+            jres = json.loads(payload)
         print("enter on_vThing_data, msg.payload: " + str(jres))
         on_vThing_data_on_broker(jres)
     except Exception as ex:
@@ -163,7 +163,7 @@ def on_vThing_data(mosq, obj, msg):
 def on_vThing_out_control(mosq, obj, msg):
     print("on_vThing_out_control")
     payload = msg.payload.decode("utf-8", "ignore")
-    jres = json.loads(payload.replace("\'", "\""))
+    jres = json.loads(payload)
     if jres["command"] == "deleteVThing":
         msg = {"vThingID": jres["vThingID"]}
         on_message_delete_thing(msg)
@@ -175,7 +175,7 @@ def on_vThing_out_control(mosq, obj, msg):
 
 def send_destroy_v_silo_ack_message():
     msg = {"command": "destroyVSiloAck", "vSiloID": v_silo_id}
-    mqtt_control_client.publish(v_silo_prefix + "/" + v_silo_id + "/" + out_control_suffix, str(msg).replace("\'", "\""))
+    mqtt_control_client.publish(v_silo_prefix + "/" + v_silo_id + "/" + out_control_suffix, json.dumps(msg))
     return
 
 
@@ -189,7 +189,7 @@ def on_message_destroy_v_silo(jres):
 
 def fetch_last_context(v_thing_id):
     message = {"command": "getContextRequest", "vSiloID": v_silo_id, "vThingID": v_thing_id}
-    mqtt_control_client.publish(v_thing_prefix + "/" + v_thing_id + "/" + in_control_suffix, str(message).replace("\'", "\""))
+    mqtt_control_client.publish(v_thing_prefix + "/" + v_thing_id + "/" + in_control_suffix, json.dumps(message))
 
 
 def handler(signal, frame):
@@ -222,7 +222,7 @@ def on_vThing_data_Raw(jmessage):
     global tenant_mqttc
     v_thing_id = jmessage['meta']['vThingID']
     mqtt_msg = jmessage
-    tenant_mqttc.publish(tenant_id + '/' + v_thing_id, str(mqtt_msg).replace("\'", "\""))
+    tenant_mqttc.publish(tenant_id + '/' + v_thing_id, json.dumps(mqtt_msg))
     return 'OK'
 
 

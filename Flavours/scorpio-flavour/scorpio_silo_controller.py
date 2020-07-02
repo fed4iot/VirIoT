@@ -94,6 +94,7 @@ def add_entity_under_vThing_on_Broker(v_thing_id, entity):
                     try:
                         value_of_the_geo_property = attribute_value['value']
                         value_of_the_geo_property_as_string = json.dumps(value_of_the_geo_property)
+                        # TODO REPLACE in scorpio
                         value_of_the_geo_property_as_escaped_string = value_of_the_geo_property_as_string.replace('"', '\"').replace('\n', '\\n')
                         # turn it into a string
                         attribute_value['value'] = value_of_the_geo_property_as_escaped_string

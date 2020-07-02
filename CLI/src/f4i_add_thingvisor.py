@@ -66,13 +66,17 @@ def run(args):
 
     yaml_list = get_yaml_file(args.yamlFilesPath)
 
-    payload = {"imageName": args.imageName,
-               "thingVisorID": args.name,
-               "params": json.loads(args.params),
-               "description": args.description,
-               "debug_mode": False if args.debug_mode == "false" else True,
-               "tvZone": args.tvZone,
-               "yamlFiles": yaml_list}
+    try:
+        payload = {"imageName": args.imageName,
+                   "thingVisorID": args.name,
+                   "params": json.loads(args.params),
+                   "description": args.description,
+                   "debug_mode": False if args.debug_mode == "false" else True,
+                   "tvZone": args.tvZone,
+                   "yamlFiles": yaml_list}
+    except Exception as err:
+        print("Error adding ThingVisor:", err)
+        exit()
 
     pprint(payload)
     token = get_token()

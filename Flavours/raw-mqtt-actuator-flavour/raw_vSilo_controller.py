@@ -186,7 +186,7 @@ def on_vThing_out_control(mosq, obj, msg):
 def send_destroy_v_silo_ack_message():
     msg = {"command": "destroyVSiloAck", "vSiloID": v_silo_id}
     mqtt_virIoT_control_client.publish(
-        v_silo_prefix + "/" + v_silo_id + "/" + out_control_suffix, str(msg).replace("\'", "\""))
+        v_silo_prefix + "/" + v_silo_id + "/" + out_control_suffix, json.dumps(msg))
     return
 
 

@@ -87,8 +87,8 @@ class broker_thread(Thread):
 def on_in_control_msg(mosq, obj, msg):
     payload = msg.payload.decode("utf-8", "ignore")
     print(msg.topic + " " + str(payload))
-    jres = json.loads(payload.replace("\'", "\""))
     try:
+        jres = json.loads(payload)
         commandType = jres["command"]
         if commandType == "addVThing":
             on_message_add_vThing(jres)
@@ -157,10 +157,10 @@ def on_message_delete_vThing(jres):
 def on_vThing_data(mosq, obj, msg):
     try:
         if isinstance(msg, str):
-            jres = json.loads(msg.replace("\'", "\""))
+            jres = json.loads(msg)
         else:
             payload = msg.payload.decode("utf-8", "ignore")
-            jres = json.loads(payload.replace("\'", "\""))
+            jres = json.loads(payload)
         print("enter on_vThing_data, msg.payload: " + str(jres))
         on_vThing_data_on_broker(jres)
     except Exception as ex:
@@ -173,13 +173,18 @@ def on_vThing_data(mosq, obj, msg):
 def on_vThing_out_control(mosq, obj, msg):
     print("on_vThing_out_control")
     payload = msg.payload.decode("utf-8", "ignore")
-    jres = json.loads(payload.replace("\'", "\""))
-    if jres["command"] == "deleteVThing":
-        msg = {"vThingID": jres["vThingID"]}
-        on_message_delete_vThing(msg)
-    else:
-        # TODO manage others commands
-        return 'command not managed'
+    try:
+        jres = json.loads(payload)
+        if jres["command"] == "deleteVThing":
+            msg = {"vThingID": jres["vThingID"]}
+            on_message_delete_vThing(msg)
+        else:
+            # TODO manage others commands
+            return 'command not managed'
+    except Exception as ex:
+        traceback.print_exc()
+        print('ERROR in on_vThing_out_control')
+        return 'ERROR'
     return 'OK'
 
 
@@ -422,8 +427,6 @@ if __name__ == '__main__':
     db = db_client[db_name]
     silo_entry = db[v_silo_collection].find_one({"vSiloID": v_silo_id})
 
-    ##############################
-    ##############################
     valid_silo_entry = False
     for x in range(MAX_RETRY):
         if silo_entry is not None:
@@ -437,29 +440,17 @@ if __name__ == '__main__':
 
     try:
         # import paramenters from DB
-        tenant_id = os.environ["tenantID"]
-        flavourParams = os.environ["flavourParams"]  # in this flavour, param is the silo type (Raw, Mobius, FiWare)
+        tenant_id = silo_entry["tenantID"]
+        flavourParams = silo_entry["flavourParams"]  # in this flavour, param is the silo type (Raw, Mobius, FiWare)
 
-        virIoT_mqtt_data_broker_IP = os.environ["MQTTDataBrokerIP"]
-        virIoT_mqtt_data_broker_port = int(os.environ["MQTTDataBrokerPort"])
-        virIoT_mqtt_control_broker_IP = os.environ["MQTTControlBrokerIP"]
-        virIoT_mqtt_control_broker_port = int(os.environ["MQTTControlBrokerPort"])
+        virIoT_mqtt_data_broker_IP = silo_entry["MQTTDataBroker"]["ip"]
+        virIoT_mqtt_data_broker_port = int(silo_entry["MQTTDataBroker"]["port"])
+        virIoT_mqtt_control_broker_IP = silo_entry["MQTTControlBroker"]["ip"]
+        virIoT_mqtt_control_broker_port = int(silo_entry["MQTTControlBroker"]["port"])
 
     except Exception as e:
         print("Error: Parameters not found in silo_entry", e)
         exit()
-
-    ##############################
-
-    # tenant_id = os.environ["tenantID"]
-    # flavourParams = os.environ["flavourParams"]     # in this flavour, param is the silo type (Raw, Mobius, FiWare)
-    # v_silo_id = os.environ["vSiloID"]
-    # virIoT_mqtt_data_broker_IP = os.environ["MQTTDataBrokerIP"]
-    # virIoT_mqtt_data_broker_port = int(os.environ["MQTTDataBrokerPort"])
-    # virIoT_mqtt_control_broker_IP = os.environ["MQTTControlBrokerIP"]
-    # virIoT_mqtt_control_broker_port = int(os.environ["MQTTControlBrokerPort"])
-    # db_IP = os.environ['systemDatabaseIP']  # IP address of system database
-    # db_port = os.environ['systemDatabasePort']  # port of system database
 
     db_client.close()  # Close DB connection
     print("starting silo controller")
@@ -468,10 +459,6 @@ if __name__ == '__main__':
     delete_vThing_on_Broker = delete_vThing_Mobius
     create_vThing_on_Broker = create_vThing_Mobius
     on_vThing_data_on_broker = on_vThing_data_Mobius
-
-    # Mongodb settings
-    db_name = "viriotDB"  # name of system database
-    v_thing_collection = "vThingC"
 
     silo_broker_thread = broker_thread()
     silo_broker_thread.start()

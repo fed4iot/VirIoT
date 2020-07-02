@@ -10,6 +10,7 @@ This project contains different ThingVisors which obtain information from a FIWA
 
 Inside of buildImages's folder, you can find a subfolder per ThingVisor type. Each buildImages's subfolder contains README.md and Test.md files which explain how can deploy and test each ThingVisor individually. The ThingVisor type are:
 
+- [Actuator-TV](./buildImages/AggrValue-TV): obtains various information depending "Fiware-Services" and "Fiware-ServicePaths" that want to be considered. This ThingVisor discovers entities with commands and allows the interaction with them. 
 - [AggrValue](./buildImages/AggrValue-TV): obtains an entity, which contains the sum of free spaces of parking sites (aggregated value).
 - [greedy](./buildImages/greedy-TV): obtains various information depending "Fiware-Services" that want to be considered.
 - [ParkingSite](./buildImages/ParkingSite-TV): obtains parking sites information.

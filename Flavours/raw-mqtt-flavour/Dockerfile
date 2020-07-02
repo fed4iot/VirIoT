@@ -10,5 +10,6 @@ COPY . /app
 WORKDIR /app
 
 ENTRYPOINT []
-CMD /app/start.sh
+#CMD /app/start.sh
+CMD ["/bin/bash", "./start.sh"]
 EXPOSE 1883 9001

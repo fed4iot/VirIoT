@@ -220,7 +220,9 @@ if __name__ == '__main__':
         MQTT_control_broker_IP = tv_entry["MQTTControlBroker"]["ip"]
         MQTT_control_broker_port = int(tv_entry["MQTTControlBroker"]["port"])
 
-        params = tv_entry["params"]
+        parameters = tv_entry["params"]
+        if parameters:
+            params = json.loads(parameters))
 
     except json.decoder.JSONDecodeError:
         print("error on params (JSON) decoding" + "\n")
@@ -232,10 +234,6 @@ if __name__ == '__main__':
 
     # mapping of virtual thing with its context object. Useful in case of multiple virtual things
     contexts = {}
-
-    # parameters = os.environ["params"]
-    # params = json.loads(parameters)
-
 
     cities = params["cities"]
     sensors = [{"id": "_temp", "type": "temp", "description": "current temperature, Kelvin",
@@ -250,8 +248,7 @@ if __name__ == '__main__':
         refresh_rate = params["rate"]
     else:
         refresh_rate = 300
-    # refresh_rate = int(params.get('rate','300'))
-    # thing_visor_ID = os.environ["thingVisorID"]
+
     v_things = []
     for city in cities:
         for sens in sensors:
@@ -264,21 +261,6 @@ if __name__ == '__main__':
                              "topic": v_thing_prefix + "/" + identifier, "type": sens["type"],
                              "dataType": sens["dataType"], "city": city, "thing": thing})
             contexts[identifier] = Context()
-
-    # MQTT_data_broker_IP = os.environ["MQTTDataBrokerIP"]
-    # MQTT_data_broker_port = int(os.environ["MQTTDataBrokerPort"])
-    # MQTT_control_broker_IP = os.environ["MQTTControlBrokerIP"]
-    # MQTT_control_broker_port = int(os.environ["MQTTControlBrokerPort"])
-
-    # Mongodb settings
-    # time.sleep(1.5)   # wait before query the system database
-    # db_name = "viriotDB"  # name of system database
-    # thing_visor_collection = "thingVisorC"
-    #
-    # db_IP = os.environ['systemDatabaseIP']  # IP address of system database
-    # db_port = os.environ['systemDatabasePort']  # port of system database
-    # db_client = MongoClient('mongodb://' + db_IP + ':' + str(db_port) + '/')
-    # db = db_client[db_name]
 
     port_mapping = db[thing_visor_collection].find_one({"thingVisorID": thing_visor_ID}, {"port": 1, "_id": 0})
     print("port mapping: " + str(port_mapping))

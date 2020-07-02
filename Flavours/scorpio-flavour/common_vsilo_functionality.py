@@ -215,8 +215,8 @@ def invoke_REST_add_vthing(token, v_thing_id):
     print("  System vSilo " + v_silo_name + " adding vThing " + v_thing_id + " to itself via mastercontroller url: " + controllerurl)
 
     payload = "{\n\t\"tenantID\":\"" + tenant_id + "\",\n" \
-                                                   "\t\"vThingID\":\"" + v_thing_id + "\",\n" \
-                                                                                      "\t\"vSiloName\":\"" + v_silo_name + "\"}"
+                "\t\"vThingID\":\"" + v_thing_id + "\",\n" \
+                "\t\"vSiloName\":\"" + v_silo_name + "\"}"
 
     headers = {
         'Authorization': "Bearer " + token,
@@ -568,8 +568,6 @@ def start_silo_controller(broker_specific_module_name):
         db = db_client[db_name]
         silo_entry = db[v_silo_collection].find_one({"vSiloID": v_silo_id})
 
-        ##############################
-        ##############################
         valid_silo_entry = False
         for x in range(MAX_RETRY):
             if silo_entry is not None:
@@ -583,30 +581,18 @@ def start_silo_controller(broker_specific_module_name):
 
         try:
             # import paramenters from DB
-            tenant_id = os.environ["tenantID"]
-            flavourParams = os.environ["flavourParams"]  # in this flavour, param is the silo type (Raw, Mobius, FiWare)
+            tenant_id = silo_entry["tenantID"]
+            flavourParams = silo_entry["flavourParams"]  # in this flavour, param is the silo type (Raw, Mobius, FiWare)
 
-            virIoT_mqtt_data_broker_IP = os.environ["MQTTDataBrokerIP"]
-            virIoT_mqtt_data_broker_port = int(os.environ["MQTTDataBrokerPort"])
-            virIoT_mqtt_control_broker_IP = os.environ["MQTTControlBrokerIP"]
-            virIoT_mqtt_control_broker_port = int(os.environ["MQTTControlBrokerPort"])
+            virIoT_mqtt_data_broker_IP = silo_entry["MQTTDataBroker"]["ip"]
+            virIoT_mqtt_data_broker_port = int(silo_entry["MQTTDataBroker"]["port"])
+            virIoT_mqtt_control_broker_IP = silo_entry["MQTTControlBroker"]["ip"]
+            virIoT_mqtt_control_broker_port = int(silo_entry["MQTTControlBroker"]["port"])
 
         except Exception as e:
             print("Error: Parameters not found in silo_entry", e)
             exit()
 
-        ##############################
-        ##############################
-
-        # tenant_id = os.environ["tenantID"]
-        # v_silo_id = os.environ["vSiloID"]
-        # flavour_params = os.environ["flavourParams"]
-        # virIoT_mqtt_data_broker_IP = os.environ["MQTTDataBrokerIP"]
-        # virIoT_mqtt_data_broker_port = int(os.environ["MQTTDataBrokerPort"])
-        # virIoT_mqtt_control_broker_IP = os.environ["MQTTControlBrokerIP"]
-        # virIoT_mqtt_control_broker_port = int(os.environ["MQTTControlBrokerPort"])
-        # db_IP = os.environ['systemDatabaseIP']  # IP address of system database
-        # db_port = os.environ['systemDatabasePort']  # port of system database
         db_client.close()   # Close DB connection
         print("starting silo controller")
 
@@ -617,7 +603,7 @@ def start_silo_controller(broker_specific_module_name):
     # because this silo needs to talk to the master controller and
     # programmatically add each and every vThing that enters the platform
     # via a POST to /addVThing REST interfce of master controller
-    print(v_silo_id + " got flavour params: " + str(flavour_params))
+    print(v_silo_id + " got flavour params: " + flavour_params)
     try:
         params = json.loads(flavour_params.replace("'", '"'))
         flavourtype = params['flavourtype']
@@ -688,5 +674,3 @@ def start_silo_controller(broker_specific_module_name):
             print("WARNING CC " + str(connected_clients))
 
     clean_close()
-
-

@@ -34,24 +34,12 @@ module.exports = {
 
                     "payMthd": { "type": "StructuredValue", "value": [ "Cash", "PayPal"] },
                     "payMthdCreditCard": { "type": "StructuredValue", "value": ["AmericanExpress","Discover","MasterCard","VISA"] },
-/*
-                    "policyMc": {
-                        "type": "RelationShip",
-                        "object": "urn:ngsi-ld:policy:Aparcamiento:101:Motorcycle"
-                    },
-                    "policyPC": {
-                        "type": "RelationShip",
-                        "object": "urn:ngsi-ld:policy:Aparcamiento:101:PrivateCar"
-                    },
-                    "policyMcPHolidays": {
-                        "type": "RelationShip",
-                        "object": "urn:ngsi-ld:policy:Aparcamiento:101:MotorcyclePublicHoliday"
-                    },
-                    "policyPCPHolidays": {
-                        "type": "RelationShip",
-                        "object": "urn:ngsi-ld:policy:Aparcamiento:101:PrivateCarPublicHoliday"
-                    },
-*/
+
+                    "policyMc": { "type": "Relationship", "value": "" },
+                    "policyPC": { "type": "Relationship", "value": "" },
+                    "policyMcPHolidays": { "type": "Relationship", "value": "" },
+                    "policyPCPHolidays": { "type": "Relationship", "value": "" },
+
                     "isOpen": { "type": "boolean", "value": true},
                     "monday": { "type": "StructuredValue", "value": [ { "opens": "00:00", "closes": "23:59" } ] },
                     "tuesday": { "type": "StructuredValue", "value": [ { "opens": "00:00", "closes": "23:59" } ] },
@@ -182,5 +170,51 @@ module.exports = {
                         ]
                     }
     },
-    parkingmeter: {}   
+    parkingmeter: {},
+    policy: { 
+                "id": "urn:ngsi-ld:policy:---",
+                "type": "policy",
+                "appliesDuring": {
+                    "type": "StructuredValue",
+                    "value": [
+                        {
+                            "startTime": "00:00",
+                            "endTime": "23:59",
+                            "parkingRateWeekDay": [
+                                {
+                                    "forDuration": { "minutes": 1 },
+                                    "fromDuration": 0,
+                                    "toDuration": 0,
+                                    "monetaryCost": 0,
+                                    "minParkingCharge": { "minutes": 0 },
+                                    "maxParkingCost": 0
+                                }
+                            ],
+                            "parkingRateWeekEnd": [],
+                            "parkingRatePHolidays": [],
+                            "parkingRateWeekDayDis": [],
+                            "parkingRateWeekEndDis": [],
+                            "parkingRatePHolidaysDis": []
+                        }
+                    ]
+                },
+                "currency": { "type": "Text", "value": "EUR" },
+                "exclPHolidays": { "type": "boolean", "value": false },
+                "gracePeriod": {
+                    "type": "StructuredValue",
+                    "value": { "minutes": 0 }
+                },
+                "maxDuration": {
+                    "type": "StructuredValue",
+                    "value": { "minutes": 0 }
+                },
+                "@context": {
+                    "type": "StructuredValue",
+                    "value": [
+                        "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+                        "https://odins.es/smartParkingOntology/policy-context.jsonld"
+                    ]
+                 }
+    },
+    sector: {}
 }

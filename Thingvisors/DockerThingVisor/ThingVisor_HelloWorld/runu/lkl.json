@@ -1,0 +1,11 @@
+{
+    "interfaces": [
+        {
+            "ip": "AUTO",
+            "name": "eth0",
+            "type": "rumpfd"
+        }
+    ],
+    "debug": "1",
+    "delay_main": "30000"
+}

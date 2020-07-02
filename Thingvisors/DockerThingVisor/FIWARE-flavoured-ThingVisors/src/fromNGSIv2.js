@@ -117,7 +117,16 @@ function match_keyNGSIv2(key, attribute, paramIn, paramOut, ldReversedContext) {
   } else if (key.toUpperCase() == "dateModified".toUpperCase() ) {
     return ["modifiedAt", attribute.value]
   } else if (key.toUpperCase() == "@context".toUpperCase() ) {
-    return ["@context", attribute.value]
+
+    var valueContext = ""
+    if (typeof attribute.value === "undefined") {
+      valueContext = attribute
+    } else {
+      valueContext = attribute.value
+    }
+
+    //return ["@context", attribute.value]
+    return ["@context", valueContext]
   //NGSI-LD DateTime format "observedAt"
   //Response: Error: "title": "Attribute must be a JSON object",
   } else if (key.toUpperCase() == "timestamp".toUpperCase() ) {
@@ -153,7 +162,7 @@ function match_keyNGSIv2(key, attribute, paramIn, paramOut, ldReversedContext) {
         //Version 0: Only consider NGSI-v2 geo:json type attribute as a NGSI-LD GeoProperty.
         //Version 1: consider NGSI-v2 coords type attribute as a NGSI-LD GeoProperty geo:json point type.
         //Version 2: consider NGSI-v2 geo:point type attribute as a NGSI-LD GeoProperty geo:json point type.
-        if (declType == "geo:json" || declType == "coords" || declType == "geo:point") {
+        if (declType == "geo:json" || declType == "coords" || declType == "geo:point" || declType == "geo:polygon") {
           attrObject["type"] = "GeoProperty";
         } else {
           attrObject["type"] = "Property";
@@ -177,6 +186,18 @@ function match_keyNGSIv2(key, attribute, paramIn, paramOut, ldReversedContext) {
           valueAttr = {type: "Point", 
                       coordinates:[ parseFloat(attribute.value.split(",")[1]), parseFloat(attribute.value.split(",")[0]) ]
                       }
+        } else if (declType == "geo:polygon") {
+          var aux = []
+          
+          for(var i=0; i< attribute.value.length; i++){
+
+            aux.push([ parseFloat(attribute.value[i].split(",")[1]), parseFloat(attribute.value[i].split(",")[0]) ])
+          }
+
+          valueAttr = {type: "Polygon", 
+                      coordinates:[ aux ]
+                      }
+          
         }
 
         attrObject["value"] = libWrapperUtils.format_value(attrObject["type"], valueAttr, "",  valueType)

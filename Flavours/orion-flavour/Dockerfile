@@ -169,8 +169,10 @@ RUN yum clean all
 RUN yum -y install gcc-c++
 RUN yum clean all
 
+COPY routes ./routes
+
 #COPY package*.json config.js index.js util.js run.sh first_run.sh fromNGSILD.js wrapperUtils.js ./
-COPY package.json config.js index.js util.js run.sh first_run.sh fromNGSILD.js wrapperUtils.js ./
+COPY app.js package.json config.js index.js util.js run.sh first_run.sh fromNGSILD.js wrapperUtils.js orion.js ./
 ENV NODE_ENV=production
 RUN npm install --only=production
 RUN chmod +x ./*.sh

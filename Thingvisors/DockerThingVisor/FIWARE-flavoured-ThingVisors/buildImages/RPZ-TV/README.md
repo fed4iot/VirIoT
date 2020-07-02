@@ -44,7 +44,8 @@ Each parkingmeter obtained from OCB is represented by an NGSI-LD entity like the
                 "coordinates":[-1.128053634,37.99128625]
                 }
   },
-  "@context":["https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld","https://odins.es/smartParkingOntology/rpz-context.jsonld"]  
+  "@context":["https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+              "https://gitlab.com/Odins/fed4iot/contextfiles/-/blob/master/parkingmeter-context.jsonld"]  
 }
 
 ```

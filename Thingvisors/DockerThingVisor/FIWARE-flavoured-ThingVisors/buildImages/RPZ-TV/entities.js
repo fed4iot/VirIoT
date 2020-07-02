@@ -20,13 +20,7 @@ module.exports = {
                         "type" : "StructuredValue",
                         "value" : [
                             "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
-                            "https://odins.es/smartParkingOntology/rpz-context.jsonld"
-/*  Can replace "https://odins.es/smartParkingOntology/parkingsite-context.jsonld" link
-                            {
-                                "name": "http://purl.org/goodrelations/v1#name" ,
-                                "location": "https://schema.org/location"
-                            }
-*/                            
+                            "https://gitlab.com/Odins/fed4iot/contextfiles/-/blob/master/parkingmeter-context.jsonld"
                         ]
                     }
     },
@@ -71,7 +65,7 @@ module.exports = {
                     "type": "StructuredValue",
                     "value": [
                         "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
-                        "https://odins.es/smartParkingOntology/policy-context.jsonld"
+                        "https://gitlab.com/Odins/fed4iot/contextfiles/-/blob/master/policy-context.jsonld"
                     ]
                  }
     },
@@ -91,7 +85,7 @@ module.exports = {
                     "type": "StructuredValue",
                     "value": [
                         "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
-                        "https://odins.es/smartParkingOntology/sector-context.jsonld"
+                        "https://gitlab.com/Odins/fed4iot/contextfiles/-/blob/master/sector-context.jsonld"
                     ]
                 }
     }  

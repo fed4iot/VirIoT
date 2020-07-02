@@ -199,7 +199,8 @@ Each parking site obtained from OCB is represented by an NGSI-LD entity like the
                 "coordinates":[-1.1336517,37.9894006]
               }
   },
-  "@context":["https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld","https://odins.es/smartParkingOntology/parkingsite-context.jsonld"]
+  "@context":["https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+              "https://gitlab.com/Odins/fed4iot/contextfiles/-/blob/master/parkingsite-context.jsonld"]
 
 }
 

@@ -1,0 +1,56 @@
+#
+#Copyright Odin Solutions S.L. All Rights Reserved.
+#
+#SPDX-License-Identifier: Apache-2.0
+#
+
+version: "3"
+services:
+  mongo:
+    image: mongo:3.4
+    command: --nojournal
+    ports:
+      - "127.0.0.1:27017:27017"
+    restart: unless-stopped
+  orion:
+    image: fiware/orion
+    ports:
+      - "1026:1026"
+    command: -dbhost mongo
+    depends_on:
+      - mongo
+    restart: unless-stopped
+  mosquitto:
+    image: eclipse-mosquitto
+    ports:
+      - "1884:1883"
+      - "9002:9001"
+    volumes:
+      - mosquitto-data:/mosquitto/data
+      - mosquitto-log:/mosquitto/log
+    restart: unless-stopped
+  iotagent:
+    image: fiware/iotagent-json
+    volumes:
+      - "./IDAS/config_docker.js:/opt/iotajson/config.js"
+    ports:
+      - "4041:4041"
+    depends_on:
+      - mongo
+    restart: unless-stopped
+  device:
+    image: fed4iot/devicesimulator-mqtt
+    depends_on:
+      - mosquitto
+    restart: unless-stopped
+    environment:
+      - MQTTBrokerHost=mosquitto
+      - MQTTBrokerPort=1883
+      - frecuency_mseg_device001=2000
+      - frecuency_mseg_device002=600000
+      - frecuency_mseg_device003=600000
+
+
+volumes:
+  mosquitto-data:
+  mosquitto-log:

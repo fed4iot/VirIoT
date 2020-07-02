@@ -1,0 +1,26 @@
+#
+#Copyright Odin Solutions S.L. All Rights Reserved.
+#
+#SPDX-License-Identifier: Apache-2.0
+#
+
+version: '3.1'
+
+services:
+  tenant1:
+    image: fed4iot/tenantsimulator-actuator
+    environment:
+      - vSiloProtocol=http # <protocol vSilo>
+      - vSiloHost=<public IP vSilo>
+      - vSiloPort=<broker-exposed-port-vSilo>
+      
+      - actuatorLight1=1 # Admited values: 0/1. 1 --> Send the command set-on (False<-->True) to  Light1.
+      - frecuency_mseg_Light1=2000 # Frecuency of command set-on to Light1.
+
+      - actuatorLight2=1 # Admited values: 0/1. 1 --> Send the command set-hue to change color to Light2.
+      - initialValueColorLight2=23536 # Initial color of Light2
+      - increasingStepColorLight2=2500 # Increasing of color value.
+      - frecuency_mseg_Light2=1000 # Frecuency of command set-hue to Light2.
+
+      - actuatorLight3=1  # Admited values: 0/1. 1 --> Send the command set-on (False<-->True) to  Light3.
+      - frecuency_mseg_Light3=6000 # Frecuency of command set-on to Light3.

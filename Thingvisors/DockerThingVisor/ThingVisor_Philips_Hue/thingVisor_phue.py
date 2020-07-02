@@ -403,13 +403,9 @@ def publish(mqtt_client, message, out_topic):
 
 # main
 if __name__ == '__main__':
+    MAX_RETRY = 3
     # v_thing_ID = os.environ["vThingID_0"]
     thing_visor_ID = os.environ["thingVisorID"]
-
-    MQTT_data_broker_IP = os.environ["MQTTDataBrokerIP"]
-    MQTT_data_broker_port = int(os.environ["MQTTDataBrokerPort"])
-    MQTT_control_broker_IP = os.environ["MQTTControlBrokerIP"]
-    MQTT_control_broker_port = int(os.environ["MQTTControlBrokerPort"])
 
     tv_prefix = "TV"  # prefix name for controller communication topic
     v_thing_prefix = "vThing"  # prefix name for virtual Thing data and control topics
@@ -419,30 +415,6 @@ if __name__ == '__main__':
     control_out_suffix = "c_out"
     v_silo_prefix = "vSilo"
 
-    # import paramenters from environments
-    parameters = str(os.environ.get("params")).replace("'", '"')
-    params=[]
-    if parameters:
-        try:
-            params = json.loads(parameters)
-        except json.decoder.JSONDecodeError:
-            # TODO manage exception
-            print("error on params (JSON) decoding"+"\n")
-    if "bridgeIP" not in params:
-        bridgeIP = "172.17.0.1"
-    else:
-        bridgeIP = params["bridgeIP"]
-    if "bridgePort" not in params:
-        bridgePort = "8000"
-    else:
-        bridgePort = params["bridgePort"]
-
-    # initialize Hue bridge connection and creates pbridge global variable, and the v_things and lights global collections
-    contexts = dict()
-    lights = dict()
-    v_things = dict()
-    initHue()
-
     # Mongodb settings
     time.sleep(1.5)  # wait before query the system database
     db_name = "viriotDB"  # name of system database
@@ -451,6 +423,56 @@ if __name__ == '__main__':
     db_port = os.environ['systemDatabasePort']  # port of system database
     db_client = MongoClient('mongodb://' + db_IP + ':' + str(db_port) + '/')
     db = db_client[db_name]
+    tv_entry = db[thing_visor_collection].find_one({"thingVisorID": thing_visor_ID})
+
+    valid_tv_entry = False
+    for x in range(MAX_RETRY):
+        if tv_entry is not None:
+            valid_tv_entry = True
+            break
+        time.sleep(3)
+
+    if not valid_tv_entry:
+        print("Error: ThingVisor entry not found for thing_visor_ID:", thing_visor_ID)
+        exit()
+
+    params = dict()
+
+    try:
+        # read paramenters from DB
+        MQTT_data_broker_IP = tv_entry["MQTTDataBroker"]["ip"]
+        MQTT_data_broker_port = int(tv_entry["MQTTDataBroker"]["port"])
+        MQTT_control_broker_IP = tv_entry["MQTTControlBroker"]["ip"]
+        MQTT_control_broker_port = int(tv_entry["MQTTControlBroker"]["port"])
+
+        parameters = tv_entry["params"].replace("'", '"')
+        params = []
+        if parameters:
+            params = json.loads(parameters)
+
+    except json.decoder.JSONDecodeError:
+        print("error on params (JSON) decoding" + "\n")
+        exit()
+    except Exception as e:
+        print("Error: Parameters not found in tv_entry", e)
+        exit()
+
+    if "bridgePort" not in params:
+        bridgePort = "8000"
+    else:
+        bridgePort = params["bridgePort"]
+
+    if "bridgeIP" not in params:
+        bridgeIP = "172.17.0.1"
+    else:
+        bridgeIP = params["bridgeIP"]
+
+    # initialize Hue bridge connection and creates pbridge global variable, and the v_things and lights global collections
+    contexts = dict()
+    lights = dict()
+    v_things = dict()
+    initHue()
+
     port_mapping = db[thing_visor_collection].find_one(
         {"thingVisorID": thing_visor_ID}, {"port": 1, "_id": 0})
     print("port mapping: " + str(port_mapping)+"\n")

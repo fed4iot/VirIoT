@@ -253,15 +253,46 @@ if __name__ == '__main__':
     # db_IP = "172.17.0.2"
     # db_port = 27017
 
-    tenant_id = os.environ["tenantID"]
-    flavourParams = os.environ["flavourParams"]  # in this flavour, param is the silo type (Raw, Mobius, FiWare)
+    MAX_RETRY = 3
     v_silo_id = os.environ["vSiloID"]
-    virIoT_mqtt_data_broker_IP = os.environ["MQTTDataBrokerIP"]
-    virIoT_mqtt_data_broker_port = int(os.environ["MQTTDataBrokerPort"])
-    virIoT_mqtt_control_broker_IP = os.environ["MQTTControlBrokerIP"]
-    virIoT_mqtt_control_broker_port = int(os.environ["MQTTControlBrokerPort"])
     db_IP = os.environ['systemDatabaseIP']  # IP address of system database
     db_port = os.environ['systemDatabasePort']  # port of system database
+
+    # Mongodb settings
+    time.sleep(1.5)  # wait before query the system database
+    db_name = "viriotDB"  # name of system database
+    v_thing_collection = "vThingC"
+    v_silo_collection = "vSiloC"
+    db_client = MongoClient('mongodb://' + db_IP + ':' + str(db_port) + '/')
+    db = db_client[db_name]
+    silo_entry = db[v_silo_collection].find_one({"vSiloID": v_silo_id})
+
+    valid_silo_entry = False
+    for x in range(MAX_RETRY):
+        if silo_entry is not None:
+            valid_silo_entry = True
+            break
+        time.sleep(3)
+
+    if not valid_silo_entry:
+        print("Error: Virtual Silo entry not found for v_silo_id:", v_silo_id)
+        exit()
+
+    try:
+        # read paramenters from DB
+        tenant_id = silo_entry["tenantID"]
+        flavourParams = silo_entry["flavourParams"]  # in this flavour, param is the silo type (Raw, Mobius, FiWare)
+
+        virIoT_mqtt_data_broker_IP = silo_entry["MQTTDataBroker"]["ip"]
+        virIoT_mqtt_data_broker_port = int(silo_entry["MQTTDataBroker"]["port"])
+        virIoT_mqtt_control_broker_IP = silo_entry["MQTTControlBroker"]["ip"]
+        virIoT_mqtt_control_broker_port = int(silo_entry["MQTTControlBroker"]["port"])
+
+    except Exception as e:
+        print("Error: Parameters not found in silo_entry", e)
+        exit()
+
+    db_client.close()  # Close DB connection
     print("starting silo controller")
 
     initEnv = init_Raw

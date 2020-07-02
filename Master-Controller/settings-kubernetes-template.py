@@ -14,6 +14,9 @@ mongodb_svc_name = "db-svc-mc-noauth"
 mongo_IP = mongodb_svc_name + ".default.svc.cluster.local"
 mongo_port = 27017
 
+master_svc_name = "f4i-master-controller-svc"
+master_IP = master_svc_name + ".default.svc.cluster.local"
+
 # container_manager [DOCKER, KUBERNETES]
 container_manager = "KUBERNETES"
 

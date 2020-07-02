@@ -1,0 +1,44 @@
+#
+#Copyright Odin Solutions S.L. All Rights Reserved.
+#
+#SPDX-License-Identifier: Apache-2.0
+#
+
+version: '3.1'
+
+services:
+  tenant1:
+    image: fed4iot/tenantsimulator-actuator
+    environment:
+      - tenantID=tenant1 # Tenant identifier
+      - vSiloProtocol=http # <protocol vSilo>
+      - vSiloHost=<public IP vSilo>
+      - vSiloPort=<broker-exposed-port-vSilo>
+      
+      - actuatorDevice001=1 # Admited values: 0/1. 1 --> Alternately sends the commands (start/stop) to dDvice001).
+      - frecuency_mseg_Device001=12000 # Frecuency of commands request (start/stop) to Device001.
+
+#      - actuatorDevice002=1 # Admited values: 0/1. 1 --> Alternately sends the command (increasing) to Device002).
+#      - frecuency_mseg_Device002=30000 # Frecuency of commands request (increasing) to Device002.
+
+#      - actuatorDevice003=1 # Admited values: 0/1. 1 --> Alternately sends the command (setCounter/reset) to Device003).
+#      - counterValue_Device003=22 # To setCountest command.
+#      - frecuency_mseg_Device003=60000 # Frecuency of commands request to Device003.
+
+#  tenant2:
+#    image: fed4iot/tenantsimulator-actuator
+#    environment:
+#      - tenantID=tenant2 # Tenant identifier
+#      - vSiloProtocol=<protocol vSilo>
+#      - vSiloHost=<public IP vSilo>
+#      - vSiloPort=<broker-exposed-port-vSilo>
+      
+#      - actuatorDevice001=1 # Admited values: 0/1. 1 --> Alternately sends the commands (start/stop) to dDvice001).
+#      - frecuency_mseg_Device001=30000 # Frecuency of commands request (start/stop) to Device001.
+
+#      - actuatorDevice002=0 # Admited values: 0/1. 1 --> Alternately sends the command (increasing) to Device002).
+#      - frecuency_mseg_Device002=60000 # Frecuency of commands request (increasing) to Device002.
+
+#      - actuatorDevice003=1 # Admited values: 0/1. 1 --> Alternately sends the command (setCounter/reset) to Device003).
+#      - counterValue_Device003=33 # To setCountest command.
+#      - frecuency_mseg_Device003=30000 # Frecuency of commands request (setCounter/reset) to Device003.

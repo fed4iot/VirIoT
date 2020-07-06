@@ -352,13 +352,7 @@ if __name__ == '__main__':
         MQTT_control_broker_port = int(tv_entry["MQTTControlBroker"]["port"])
 
         # read paramenters from DB
-        # parameters = tv_entry["params"]
-        parameters = tv_entry["params"]
-        if parameters:
-            params = json.loads(parameters)
-        # param = []
-        # if parameters:
-        #     params = json.loads(parameters)
+        params = tv_entry["params"]
     except json.decoder.JSONDecodeError:
         print("error on params (JSON) decoding" + "\n")
         exit()

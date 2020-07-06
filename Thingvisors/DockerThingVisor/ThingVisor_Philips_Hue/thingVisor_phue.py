@@ -444,10 +444,7 @@ if __name__ == '__main__':
         MQTT_control_broker_IP = tv_entry["MQTTControlBroker"]["ip"]
         MQTT_control_broker_port = int(tv_entry["MQTTControlBroker"]["port"])
 
-        parameters = tv_entry["params"].replace("'", '"')
-        params = []
-        if parameters:
-            params = json.loads(parameters)
+        params = tv_entry["params"]
 
     except json.decoder.JSONDecodeError:
         print("error on params (JSON) decoding" + "\n")

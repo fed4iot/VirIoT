@@ -32,4 +32,4 @@ ENTRYPOINT []
 
 CMD [ "/bin/bash", "/app/start.sh" ]
 # replace this with your application's default port
-EXPOSE 7579
+EXPOSE 7579 1883

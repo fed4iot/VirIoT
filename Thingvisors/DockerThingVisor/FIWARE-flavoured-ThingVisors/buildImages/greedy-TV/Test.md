@@ -104,7 +104,7 @@ docker build -t fed4iot/fiware-greedy-tv -f buildImages/greedy-TV/Dockerfile  ./
 Use the terminal with the CLI and execute
   
 ```bash  
-python3 f4i.py add-thingvisor -i fed4iot/fiware-greedy-tv -n thingVisorID_Greedy -d "thingVisorID_Greedy" -p "{'ocb_ip':'<OCB_Public_IP>', 'ocb_port':'<OCB_Port>','ocb_service':['bicis','aparcamiento','ora']}"
+python3 f4i.py add-thingvisor -i fed4iot/fiware-greedy-tv -n thingVisorID_Greedy -d "thingVisorID_Greedy" -p '{"ocb_ip":"<OCB_Public_IP>", "ocb_port":"<OCB_Port>","ocb_service":["bicis","aparcamiento","ora"]}'
 ```  
 
 JSON parameters are: 

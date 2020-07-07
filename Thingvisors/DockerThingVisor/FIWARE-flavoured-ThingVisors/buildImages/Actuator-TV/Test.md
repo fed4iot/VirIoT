@@ -134,7 +134,7 @@ docker build -t fed4iot/fiware-actuator-tv -f buildImages/Actuator-TV/Dockerfile
 Use the terminal with the CLI and execute
   
 ```bash  
-python3 f4i.py add-thingvisor -i fed4iot/fiware-actuator-tv -n thingVisorID_Actuator -d "thingVisorID_Actuator" -p "{'ocb_ip':'<OCB_Public_IP>', 'ocb_port':'<OCB_Port>', 'ocb_service':['demo1'],'ocb_servicePath':['/demo']}"
+python3 f4i.py add-thingvisor -i fed4iot/fiware-actuator-tv -n thingVisorID_Actuator -d "thingVisorID_Actuator" -p '{"ocb_ip":"<OCB_Public_IP>", "ocb_port":"<OCB_Port>", "ocb_service":["demo1"],"ocb_servicePath":["/demo"]}'
 ```  
 
 JSON parameters are: 

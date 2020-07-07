@@ -29,7 +29,7 @@ The main entry-point for querying data is the /entities REST resource.
 For instance, if you add a Weather ThingVisor to the system, with a command similar to:
 
 ```bash
-f4i.py add-thingvisor -n weather -p "{'cities':['Rome', 'Tokyo','Grasse','Heidelberg'], 'rate':60}" -d "Weather ThingVisor"
+f4i.py add-thingvisor -n weather -p '{"cities":["Rome", "Tokyo","Grasse","Heidelberg"], "rate":60}' -d "Weather ThingVisor"
 ```
 
 The Sytem vSilo will immediately start incorporating data from all virtual things managed by the Weather ThingVisor, making them available as NGSI-LD Entities under the /entities endpoint.

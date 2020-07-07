@@ -13,7 +13,7 @@ This ThingVisor obtains entities from a FIWARE's Orion Context Broker (OCB) usin
 Use the VirIoT CLI as admin and run the following command, you must define OCB endpoint.
 
 ```bash  
-python3 f4i.py add-thingvisor -i fed4iot/fiware-actuator-tv -n thingVisorID_Actuator -d "thingVisorID_Actuator" -p "{'ocb_ip':'<OCB_Public_IP>', 'ocb_port':'<OCB_Port>', 'ocb_service':['<service>',...],'ocb_servicePath':['<servicePath>',...]}"
+python3 f4i.py add-thingvisor -i fed4iot/fiware-actuator-tv -n thingVisorID_Actuator -d "thingVisorID_Actuator" -p '{"ocb_ip":"<OCB_Public_IP>", "ocb_port":"<OCB_Port>", "ocb_service":["<service>",...],"ocb_servicePath":["<servicePath>",...]}'
 ```
 
 ### Kubernetes deployment
@@ -21,7 +21,7 @@ python3 f4i.py add-thingvisor -i fed4iot/fiware-actuator-tv -n thingVisorID_Actu
 Use the VirIoT CLI as admin and run the following command, you must define OCB endpoint.
 
 ```bash  
-python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n thingVisorID_Actuator -d "thingVisorID_Actuator" -p "{'ocb_ip':'<OCB_Public_IP>', 'ocb_port':'<OCB_Port>', 'ocb_service':['<service>',...],'ocb_servicePath':['<servicePath>',...]}" -y "yaml/thingVisor-fiWAREActuator.yaml"
+python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n thingVisorID_Actuator -d "thingVisorID_Actuator" -p '{"ocb_ip":"<OCB_Public_IP>", "ocb_port":"<OCB_Port>", "ocb_service":["<service>",...],"ocb_servicePath":["<servicePath>",...]}' -y "yaml/thingVisor-fiWAREActuator.yaml"
 ```
 
 ## NGSI-LD data model

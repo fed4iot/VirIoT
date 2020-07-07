@@ -27,7 +27,7 @@ def do_nothing():
     """ A small helper function that does nothing """
     None
 
-    
+
 class VThing_SmartCam(VThing, SmartCamController):
     def __init__(self, id, label, deveui, csapp, params):
         VThing.__init__(self, id, label, label)
@@ -56,15 +56,15 @@ class VThing_SmartCam(VThing, SmartCamController):
 
     def event_car_count(self):
         None
-    
+
 
 device_manager_builder = {
     'smartcam' : VThing_SmartCam
 }
-        
 
 
-    
+
+
 def after_connect():
 
     log.debug("ThingVisor connected to MQTT brokers. Now configuring devices.")
@@ -81,12 +81,12 @@ def after_connect():
         if(csapp is None):
             csapp = AppController(appid, csbroker)
             csapp_list[appid] = csapp
-        
+
         deveui = device["deveui"]
         devid = f"{thing_visor_ID}/{appid}/{deveui}"
 
         log.info(f"Configuring connection to device:{devid} type:{devtype}")
-        
+
         vthing_creator = device_manager_builder.get(devtype)
         if (vthing_creator) :
             vthing = vthing_creator(devid, label, deveui, csapp, params)
@@ -101,14 +101,14 @@ def create_file_with_content(fname,content):
         print(f"creating file {fname}")
         with open(fname,"wb") as fh:
             fh.write(b64decode(content))
-        
+
 
 if __name__ == '__main__':
 
     log.info("-- Starting Smartcam ThingVisor --")
     log.info(f"VERSION {VERSION}")
     log.debug(f"Environment : {os.environ}")
-    
+
     # Viriot pub/sub system
     MQTT_data_broker_IP = os.environ["MQTTDataBrokerIP"]
     MQTT_data_broker_port = int(os.environ["MQTTDataBrokerPort"])
@@ -120,12 +120,15 @@ if __name__ == '__main__':
     thingvisor = ThingVisor(MQTT_control_broker_IP, MQTT_control_broker_port, thing_visor_ID)
     #TODO : maybe take into account distinct brokers for data and control as permitted by viriot
     thingvisor.start()
-    
-    params = os.environ["params"]
-    print('---')
-    print(params)
-    print('---')
-    params = json.loads(params.replace("'", '"'))
+
+    try:
+        params = os.environ["params"]
+        print('---')
+        print(params)
+        print('---')
+        params = json.loads(params)
+    except Exception as err:
+        print("Error reading params:", err)
 
     # Smart cams broker
     chirpstack_mqtt_server =  params["chirpstack_mqtt_server"]
@@ -133,18 +136,18 @@ if __name__ == '__main__':
 
     chirpstack_cafile =  params.get("chirpstack_cafile")
     create_file_with_content("ca.crt", chirpstack_cafile)
-    
+
     chirpstack_crtfile =  params.get("chirpstack_crtfile")
     create_file_with_content("user.crt", chirpstack_crtfile)
-    
+
     chirpstack_keyfile =  params.get("chirpstack_keyfile")
     create_file_with_content("user.key", chirpstack_keyfile)
-    
+
     csbroker = MqttBroker(chirpstack_mqtt_server, chirpstack_mqtt_port, do_nothing)
     if (chirpstack_cafile) : csbroker.ca_file = "ca.crt"
     if (chirpstack_crtfile) : csbroker.crt_file = "user.crt"
     if (chirpstack_keyfile) : csbroker.key_file = "user.key"
-    
+
     csbroker.start()
 
     log.debug("Waiting for mqtt brokers to be connected")
@@ -152,12 +155,12 @@ if __name__ == '__main__':
         time.sleep(1)
 
     after_connect()
-    
+
     #TODO: Maybe insert here a monitoring loop
-    
+
     csbroker.join()
     thingvisor.join()
-    
 
-        
-    
+
+
+

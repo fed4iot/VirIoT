@@ -309,15 +309,13 @@ if __name__ == '__main__':
         MQTT_control_broker_IP = tv_entry["MQTTControlBroker"]["ip"]
         MQTT_control_broker_port = int(tv_entry["MQTTControlBroker"]["port"])
 
-        parameters = tv_entry["params"]
-        if parameters:
-            params = json.loads(parameters)
-            CSE_url = params['CSEurl']
-            cnt_arns = params['cntArns']  # array of source container absolute resource names
-            v_thing_name = params["vThingName"]
-            v_thing_label = v_thing_name
-            v_thing_description = params["vThingDescription"]
-            origin = params["origin"]
+        params = tv_entry["params"]
+        CSE_url = params['CSEurl']
+        cnt_arns = params['cntArns']  # array of source container absolute resource names
+        v_thing_name = params["vThingName"]
+        v_thing_label = v_thing_name
+        v_thing_description = params["vThingDescription"]
+        origin = params["origin"]
 
 
     except json.decoder.JSONDecodeError:

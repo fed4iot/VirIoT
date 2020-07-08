@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: f4i-relay
-        image: fed4iot/relay-tv:2.2
+        image: fed4iot/relay-tv
         ports:
         - containerPort: 8089
 ---

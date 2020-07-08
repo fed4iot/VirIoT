@@ -150,7 +150,7 @@ def list_available_node_zone():
                 if "viriot-gw" in node.metadata.labels.keys():
                     zones[node.metadata.labels["viriot-zone"]] = node.metadata.labels["viriot-gw"]
                 else:
-                    # Alredy have an entry {"zone": "gw"}
+                    # Alredy have an entry {"viriot-zone": "gw"}
                     if node.metadata.labels["viriot-zone"] not in zones.keys():
                         zones[node.metadata.labels["viriot-zone"]] = ""
         return zones

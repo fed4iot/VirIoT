@@ -3,8 +3,8 @@ from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 from pprint import pprint
 
-# This variable set the node anti affinity to deploy the resources in the default zone, composed of the node without label "zone"
-zone_affinity = {'nodeAffinity': {'requiredDuringSchedulingIgnoredDuringExecution': {'nodeSelectorTerms': [{'matchExpressions': [{'key': 'zone', 'operator': 'DoesNotExist'}]}]}}}
+# This variable set the node anti affinity to deploy the resources in the default zone, composed of the node without label "viriot-zone"
+zone_affinity = {'nodeAffinity': {'requiredDuringSchedulingIgnoredDuringExecution': {'nodeSelectorTerms': [{'matchExpressions': [{'key': 'viriot-zone', 'operator': 'DoesNotExist'}]}]}}}
 
 def create_deployment(namespace, image_name, name, container_port = None, environment=None):
     api_instance_apps = kubernetes.client.AppsV1Api()

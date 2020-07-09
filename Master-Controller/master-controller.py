@@ -474,7 +474,7 @@ def create_thing_visor_on_kubernetes(tv_img_name, debug_mode, tv_id, tv_params, 
 
                 elif yaml["kind"] == "Service":
                     print("Service Creation")
-                    service_name = yaml["metadata"]["name"] + tv_id.lower().replace("_", "-")
+                    service_name = yaml["metadata"]["name"] + "-"+tv_id.lower().replace("_", "-")
                     yaml["metadata"]["name"] = service_name
                     yaml["spec"]["selector"]["thingVisorID"] = label_app
                     api_response_service = k8s.create_service_from_yaml(namespace="default", body=yaml)

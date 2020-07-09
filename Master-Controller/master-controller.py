@@ -441,6 +441,7 @@ def create_thing_visor_on_kubernetes(tv_img_name, debug_mode, tv_id, tv_params, 
         exposed_ports = {}
         deployment_name = "error"
         service_name = ""
+        label_app = tv_id.lower().replace("_", "-")
         if not debug_mode:
             api_response_service = None
 
@@ -449,6 +450,8 @@ def create_thing_visor_on_kubernetes(tv_img_name, debug_mode, tv_id, tv_params, 
                     print("Deployment Creation")
                     yaml["metadata"]["name"] += "-" + tv_id.lower().replace("_", "-")
                     yaml["spec"]["template"]["spec"]["containers"][0]["env"] = k8s.convert_env(env)
+                    yaml["spec"]["selector"]["matchLabels"]["thingVisorID"] = label_app
+                    yaml["spec"]["template"]["metadata"]["labels"]["thingVisorID"] = label_app
                     tv_img_name = yaml["spec"]["template"]["spec"]["containers"][0]["image"]
 
                     url = "https://hub.docker.com/v2/repositories/%s" % tv_img_name.split(":")[0]
@@ -473,6 +476,7 @@ def create_thing_visor_on_kubernetes(tv_img_name, debug_mode, tv_id, tv_params, 
                     print("Service Creation")
                     service_name = yaml["metadata"]["name"] + tv_id.lower().replace("_", "-")
                     yaml["metadata"]["name"] = service_name
+                    yaml["spec"]["selector"]["thingVisorID"] = label_app
                     api_response_service = k8s.create_service_from_yaml(namespace="default", body=yaml)
                     # print(api_response_service)
                 else:

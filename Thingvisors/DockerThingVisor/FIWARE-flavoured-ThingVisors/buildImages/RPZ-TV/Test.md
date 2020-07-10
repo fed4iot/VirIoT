@@ -138,6 +138,16 @@ If ThingVisor is properly connected you should see `vThings` information in the 
                 "label": "Service:ora # ServicePath:/#",
                 "id": "thingVisorID_RPZ/parkingmeter",
                 "description": ""
+            },
+            {
+                "label": "Service:ora # ServicePath:/#",
+                "id": "thingVisorID_RPZ/policy",
+                "description": ""
+            },
+            {
+                "label": "Service:ora # ServicePath:/#",
+                "id": "thingVisorID_RPZ/sector",
+                "description": ""
             }
         ],
         "params": "{'ocb_ip':'<OCB_Public_IP>', 'ocb_port':'<OCB_Port>'}",

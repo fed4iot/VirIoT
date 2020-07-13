@@ -6,7 +6,7 @@ metadata:
   namespace: default
 spec:
   serviceName: vernemq-mqtt
-  replicas: 2
+  replicas: 5
   selector:
     matchLabels:
       app: vernemq
@@ -24,7 +24,7 @@ spec:
                   operator: In
                   values:
                   - vernemq
-            topologyKey: "zone"
+            topologyKey: kubernetes.io/hostname
       shareProcessNamespace: true
       serviceAccountName: vernemq
       containers:
@@ -119,14 +119,14 @@ metadata:
   labels:
     app: vernemq
 spec:
-  type: NodePort
   selector:
     app: vernemq
   ports:
   - port: 1883
-    nodePort:
     name: vernemq-mqtt
-  externalTrafficPolicy: Local
+  topologyKeys:
+    - kubernetes.io/hostname
+    - "*"
 ---
 apiVersion: v1
 kind: ServiceAccount

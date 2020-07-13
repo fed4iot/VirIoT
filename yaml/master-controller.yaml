@@ -18,7 +18,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: zone
+              - key: viriot-zone
                 operator: DoesNotExist
       containers:
       - name: f4i-master-controller

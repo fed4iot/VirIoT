@@ -1785,18 +1785,17 @@ def mqtt_broker_connection_on_docker():
 
 def mqtt_broker_connection_on_kubernetes():
     if not settings.master_controller_in_container:
-        MQTT_control_broker_node_port = k8s.discover_mqtt_nodeport_debug(settings.MQTT_control_broker_svc_name,
+        MQTT_control_broker_service_IP = k8s.discover_mqtt_serviceIP_debug(settings.MQTT_control_broker_svc_name,
                                                                          working_namespace)
         # Impossible to find NodePort of MQTT broker
-        if not MQTT_control_broker_node_port:
+        if not MQTT_control_broker_service_IP:
             print("ERROR: broker MQTT not found in k8s cluster")
             sys.exit(0)
 
         # Broker mqtt inside the cluster with nodePort (MQTT_control_broker_port_debug)
-        mqttc.connect("localhost", MQTT_control_broker_node_port, 30)
+        mqttc.connect(MQTT_control_broker_service_IP, MQTT_control_broker_port, 30)
     else:
         mqttc.connect(MQTT_control_broker_IP, MQTT_control_broker_port, 30)
-
 
 
 if __name__ == '__main__':

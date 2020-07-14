@@ -45,6 +45,7 @@ Obtain an unique entity (NGSI-LD format) like the following one:
               "@value":"2020-05-21T13:53:19Z"
             }
     },
-    "@context":["https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld","https://odins.es/smartParkingOntology/parkingsite-context.jsonld"]
+    "@context":["https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+                "https://gitlab.com/Odins/fed4iot/contextfiles/-/blob/master/parkingsite-context.jsonld"]
 }
 ```

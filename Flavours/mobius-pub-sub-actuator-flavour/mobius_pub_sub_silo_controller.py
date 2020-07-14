@@ -357,7 +357,7 @@ def on_vThing_data_Mobius(jmessage):
                 if sub_container_uri in containers_uri_set:
                     # sub-container already there, insertion of content instance
                     create_cin_mqtt(sub_container_uri, origin,
-                                    str(value), usecsebase, ae_rn)
+                                    json.dumps(value), usecsebase, ae_rn)
                 else:
                     if main_container_uri not in containers_uri_set:
                         # create main-container
@@ -373,7 +373,7 @@ def on_vThing_data_Mobius(jmessage):
                     time.sleep(0.1)
                     # content instance insertion
                     create_cin_mqtt(sub_container_uri, origin,
-                                    str(value), usecsebase, ae_rn)
+                                    json.dumps(value), usecsebase, ae_rn)
             elif key == "commands":
                 mni = 3
                 if main_container_uri not in containers_uri_set:

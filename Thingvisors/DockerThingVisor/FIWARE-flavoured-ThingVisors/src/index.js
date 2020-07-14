@@ -2125,7 +2125,7 @@ async function sendDataMQTT_AggregatedValue(){
                             totalFreeParkingSpaces: { type: 'Property', value: totalFreeParkingSpaces },
                             '@context': 
                                 [ 'https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld',
-                                  'https://odins.es/smartParkingOntology/parkingsite-context.jsonld' ],
+                                  'https://gitlab.com/Odins/fed4iot/contextfiles/-/blob/master/parkingsite-context.jsonld' ],
                             observedAt: 
                                 { type: 'Property',
                                 value: { '@type': 'DateTime', '@value': maxObservedAt } },

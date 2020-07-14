@@ -112,6 +112,22 @@ Each parking site obtained from OCB is represented by an NGSI-LD entity like the
     "type":"Property",
     "value":["AmericanExpress","Discover","MasterCard","VISA"]
   },
+  "policyMc":{
+    "type":"Relationship",
+    "object":"urn:ngsi-ld:policy:Parkingsite2940"
+  },
+  "policyPC":{
+    "type":"Relationship",
+    "object":"urn:ngsi-ld:policy:Parkingsite2940"
+  },
+  "policyMcPHolidays":{
+    "type":"Relationship",
+    "object":"urn:ngsi-ld:policy:Parkingsite2940"
+  },
+  "policyPCPHolidays":{
+    "type":"Relationship",
+    "object":"urn:ngsi-ld:policy:Parkingsite2940"
+  },
   "isOpen":{
     "type":"Property",
     "value":true
@@ -199,8 +215,77 @@ Each parking site obtained from OCB is represented by an NGSI-LD entity like the
                 "coordinates":[-1.1336517,37.9894006]
               }
   },
-  "@context":["https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld","https://odins.es/smartParkingOntology/parkingsite-context.jsonld"]
+  "@context":["https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+              "https://gitlab.com/Odins/fed4iot/contextfiles/-/blob/master/parkingsite-context.jsonld"]
 
 }
+```
 
+
+Each policy obtained from OCB is represented by an NGSI-LD entity like the following one:
+
+
+```json
+{
+  "id":"urn:ngsi-ld:policy:Parkingsite2940",
+  "type":"policy",
+  "appliesDuring":{
+    "type":"Property",
+    "value":[
+        {
+          "startTime":"00:00",
+          "endTime":"23:59",
+          "parkingRateWeekDay":[
+            {
+              "forDuration":{"minutes":1},
+              "fromDuration":1,
+              "toDuration":300,
+              "monetaryCost":0.042,
+              "minParkingCharge":{"minutes":5},
+              "maxParkingCost":12.6
+            },
+            {
+              "forDuration":{"minutes":1},
+              "fromDuration":300,
+              "toDuration":720,
+              "monetaryCost":0.04,
+              "minParkingCharge":{"minutes":0},
+              "maxParkingCost":16.8
+            },
+            {
+              "forDuration":{"minutes":1},
+              "fromDuration":720,
+              "toDuration":1440,
+              "monetaryCost":0,
+              "minParkingCharge":0,
+              "maxParkingCost":0
+            }
+          ],
+        "parkingRateWeekEnd":[],
+        "parkingRatePHolidays":[],
+        "parkingRateWeekDayDis":[],
+        "parkingRateWeekEndDis":[],
+        "parkingRatePHolidaysDis":[]
+      }
+    ]
+  },
+  "currency":{
+    "type":"Property",
+    "value":"EUR"
+  },
+  "exclPHolidays":{
+    "type":"Property",
+    "value":false
+  },
+  "gracePeriod":{
+    "type":"Property",
+    "value":{"minutes":5}
+  },
+  "maxDuration":{
+    "type":"Property",
+    "value":{"minutes":1440}
+  },
+  "@context":["https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+              "https://gitlab.com/Odins/fed4iot/contextfiles/-/blob/master/policy-context.jsonld"]
+}
 ```

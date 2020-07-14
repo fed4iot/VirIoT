@@ -147,9 +147,14 @@ If ThingVisor is properly connected you should see `vThings` information in the 
         "tvDescription": "thingVisorID_ParkingSite",
         "vThings": [
             {
-                "description": "",
+                "label": "Service:aparcamiento # ServicePath:/#",
                 "id": "thingVisorID_ParkingSite/parkingsite",
-                "label": "Service:aparcamiento # ServicePath:/#"
+                "description": ""
+            },
+            {
+                "label": "Service:aparcamiento # ServicePath:/#",
+                "id": "thingVisorID_ParkingSite/policy",
+                "description": ""
             }
         ],
         "yamlFiles": null

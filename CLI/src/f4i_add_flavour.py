@@ -54,8 +54,10 @@ def run(args):
 
 
     # payload = "{\n\t\"flavourID\":\"" + args.flavourID + "\",\n\t\"flavourParams\":\"" + args.flavourParams + "\",\n\t\"imageName\":\"" + args.imageName + "\",\n\t\"flavourDescription\":\"" + args.description + "\"\n,\n\t\"yamlFile\":" + json.dumps(j_yaml) + "\n}"
+    print(args.flavourParams)
+    print(type(json.loads(args.flavourParams)))
     payload = {"flavourID": args.flavourID,
-               "flavourParams": args.flavourParams,
+               "flavourParams": json.loads(args.flavourParams),
                "imageName": args.imageName,
                "flavourDescription": args.description,
                "yamlFiles": yaml_list}
@@ -86,7 +88,7 @@ def init_args(parser):
     parser.add_argument('-f', action='store', dest='flavourID',
                         help='flavourID (default: Mobius-base-f)', default='Mobius-base-f')
     parser.add_argument('-s', action='store', dest='flavourParams',
-                        help='flavourParams (default: Mobius)', default='Mobius')
+                        help='flavourParams (default: Mobius)', default='"Mobius"')
     parser.add_argument('-i', action='store', dest='imageName',
                         help='image name (default: '')', default='')
     parser.add_argument('-d', action='store', dest='description',

@@ -61,7 +61,9 @@ mqttc = mqtt.Client()
 
 # Flask settings
 flask_host = "0.0.0.0"
-flask_port = 8090  # port of the controller
+# flask_port = 8090  # port of the controller
+# TODO test
+flask_port = 9090  # port of the controller
 # auth = HTTPBasicAuth()
 
 master_controller_prefix = "master"  # prefix name for Master-Controller communication topic
@@ -1828,7 +1830,9 @@ if __name__ == '__main__':
         docker_client = docker.from_env()
 
         # Database connection
-        mongocnt = docker_client.containers.get("mongo-container")
+        # TODO
+        # mongocnt = docker_client.containers.get("mongo-container")
+        mongocnt = docker_client.containers.get("mongo-container-dev")
         if mongocnt.status != "running":
             print("ERROR: database is not running... exit")
             sys.exit(0)

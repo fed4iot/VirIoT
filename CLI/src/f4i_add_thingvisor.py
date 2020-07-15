@@ -89,9 +89,12 @@ def run(args):
         'cache-control': "no-cache",
         }
 
-    response = requests.request("POST", url, data=json.dumps(payload), headers=headers)
-    print(response.json().get('message')+"\n")
-
+    try:
+        response = requests.request("POST", url, data=json.dumps(payload), headers=headers)
+        print(response.json().get('message')+"\n")
+    except Exception as err:
+        print("Error adding ThingVisor:", err)
+        exit()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

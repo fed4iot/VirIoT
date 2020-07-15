@@ -74,8 +74,7 @@ class httpRxThread(Thread):
 
         except Exception as err:
             print("Bad notification format", err)
-            return 'Bad notification format', 401
-
+            return json.dumps({"message": 'Bad notification format'}), 401
 
 
 class mqttDataThread(Thread):
@@ -157,10 +156,12 @@ class mqttControlThread(Thread):
     def __init__(self):
         Thread.__init__(self)
 
+
     def on_message_in_control_vThing(self, mosq, obj, msg):
         payload = msg.payload.decode("utf-8", "ignore")
         print(msg.topic + " " + str(payload))
-        jres = json.loads(payload.replace("\'", "\""))
+        # jres = json.loads(payload.replace("\'", "\""))
+        jres = json.loads(payload)
         try:
             command_type = jres["command"]
             if command_type == "getContextRequest":
@@ -173,7 +174,7 @@ class mqttControlThread(Thread):
     def on_message_in_control_TV(self, mosq, obj, msg):
         payload = msg.payload.decode("utf-8", "ignore")
         print(msg.topic + " " + str(payload))
-        jres = json.loads(payload.replace("\'", "\""))
+        jres = json.loads(payload)
         try:
             command_type = jres["command"]
             if command_type == "destroyTV":
@@ -192,7 +193,8 @@ class mqttControlThread(Thread):
                            "thingVisorID": thing_visor_ID,
                            "vThing": v_thing}
         mqtt_control_client.publish(tv_control_prefix + "/" + thing_visor_ID + "/" + control_out_suffix,
-                                    str(v_thing_message).replace("\'", "\""))
+                                    json.dumps(v_thing_message))
+                                    # str(v_thing_message).replace("\'", "\""))
 
         # Add message callbacks that will only trigger on a specific subscription match
         mqtt_control_client.message_callback_add(v_thing_topic + "/" + control_in_suffix,
@@ -207,6 +209,7 @@ class mqttControlThread(Thread):
 
 # main
 if __name__ == '__main__':
+    MAX_RETRY = 3
     resources_ip = "127.0.0.1"
     # Only for test
     '''
@@ -221,19 +224,45 @@ if __name__ == '__main__':
     '''
 
     thing_visor_ID = os.environ["thingVisorID"]
-    parameters = os.environ["params"]
-    if parameters:
-        try:
-            params = json.loads(parameters.replace("'", '"'))
-        except json.decoder.JSONDecodeError:
-            # TODO manage exception
-            print("error on params (JSON) decoding")
-            os._exit(1)
-        except KeyError:
-            print(Exception.with_traceback())
-            os._exit(1)
-        except Exception as err:
-            print("ERROR on params (JSON)", err)
+
+
+    # Mongodb settings
+    time.sleep(1.5)  # wait before query the system database
+    db_name = "viriotDB"  # name of system database
+    thing_visor_collection = "thingVisorC"
+    db_IP = os.environ['systemDatabaseIP']  # IP address of system database
+    db_port = os.environ['systemDatabasePort']  # port of system database
+    db_client = MongoClient('mongodb://' + db_IP + ':' + str(db_port) + '/')
+    db = db_client[db_name]
+    tv_entry = db[thing_visor_collection].find_one({"thingVisorID": thing_visor_ID})
+
+    valid_tv_entry = False
+    for x in range(MAX_RETRY):
+        if tv_entry is not None:
+            valid_tv_entry = True
+            break
+        time.sleep(3)
+
+    if not valid_tv_entry:
+        print("Error: ThingVisor entry not found for thing_visor_ID:", thing_visor_ID)
+        exit()
+
+    try:
+        MQTT_data_broker_IP = os.environ["MQTTDataBrokerIP"]
+        MQTT_data_broker_port = int(os.environ["MQTTDataBrokerPort"])
+        MQTT_control_broker_IP = os.environ["MQTTControlBrokerIP"]
+        MQTT_control_broker_port = int(os.environ["MQTTControlBrokerPort"])
+        params = tv_entry["params"]
+
+    except json.decoder.JSONDecodeError:
+        # TODO manage exception
+        print("error on params (JSON) decoding")
+        os._exit(1)
+    except KeyError:
+        print(Exception.with_traceback())
+        os._exit(1)
+    except Exception as err:
+        print("ERROR on params (JSON)", err)
 
     if 'vThingName' in params.keys():
         v_thing_name = params['vThingName']
@@ -243,6 +272,7 @@ if __name__ == '__main__':
         v_thing_type_attr = params['vThingType']
     else:
         v_thing_type_attr = "message"
+
     v_thing_label = v_thing_name
     v_thing_description = "Pass Through vThing"
     v_thing_ID = thing_visor_ID + "/" + v_thing_name
@@ -251,10 +281,12 @@ if __name__ == '__main__':
                "id": v_thing_ID,
                "description": v_thing_description}
 
-    MQTT_data_broker_IP = os.environ["MQTTDataBrokerIP"]
-    MQTT_data_broker_port = int(os.environ["MQTTDataBrokerPort"])
-    MQTT_control_broker_IP = os.environ["MQTTControlBrokerIP"]
-    MQTT_control_broker_port = int(os.environ["MQTTControlBrokerPort"])
+    # MQTT_data_broker_IP = os.environ["MQTTDataBrokerIP"]
+    # MQTT_data_broker_port = int(os.environ["MQTTDataBrokerPort"])
+    # MQTT_control_broker_IP = os.environ["MQTTControlBrokerIP"]
+    # MQTT_control_broker_port = int(os.environ["MQTTControlBrokerPort"])
+
+
 
     # sub_rn = v_thing_ID.replace("/",":") + "_subF4I"
     # vtype = ""
@@ -272,14 +304,14 @@ if __name__ == '__main__':
     control_out_suffix = "c_out"
     v_silo_prefix = "vSilo"
 
-    # Mongodb settings
-    time.sleep(1.5)  # wait before query the system database
-    db_name = "viriotDB"  # name of system database
-    thing_visor_collection = "thingVisorC"
-    db_IP = os.environ['systemDatabaseIP']  # IP address of system database
-    db_port = os.environ['systemDatabasePort']  # port of system database
-    db_client = MongoClient('mongodb://' + db_IP + ':' + str(db_port) + '/')
-    db = db_client[db_name]
+    # # Mongodb settings
+    # time.sleep(1.5)  # wait before query the system database
+    # db_name = "viriotDB"  # name of system database
+    # thing_visor_collection = "thingVisorC"
+    # db_IP = os.environ['systemDatabaseIP']  # IP address of system database
+    # db_port = os.environ['systemDatabasePort']  # port of system database
+    # db_client = MongoClient('mongodb://' + db_IP + ':' + str(db_port) + '/')
+    # db = db_client[db_name]
     port_mapping = db[thing_visor_collection].find_one({"thingVisorID": thing_visor_ID}, {"port": 1, "_id": 0})
     poa_IP_dict = db[thing_visor_collection].find_one({"thingVisorID": thing_visor_ID}, {"IP": 1, "_id": 0})
     poa_IP = str(poa_IP_dict['IP'])

@@ -91,7 +91,8 @@ RUN rm -rf plyvelhashmap
 RUN rm -rf __pycache__
 
 ENTRYPOINT []
-CMD /app/start.sh
+#CMD /app/start.sh
+CMD [ "/bin/bash", "/app/start.sh" ]
 
 # replace this with your application's default port
 EXPOSE 9090

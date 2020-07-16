@@ -89,7 +89,8 @@ ENV APPLICATION_SEARCH_SERVICE_URL localhost
 ENV APPLICATION_SUBSCRIPTION_SERVICE_URL localhost
 
 ENTRYPOINT []
-CMD /app/start.sh
+#CMD /app/start.sh
+CMD [ "/bin/bash", "/app/start.sh" ]
 
 # replace this with your application's default port
 EXPOSE 8080

@@ -131,8 +131,7 @@ if __name__ == '__main__':
 
     try:
         parser = argparse.ArgumentParser()
-        parser.add_argument('-t', action='store', dest='tenantID',
-                            help='tenantID (default: tenant1)', default='tenant1')
+    
         parser.add_argument('-su', action='store', dest='serverURL', 
                             help='Mobius vSilo Server URL (default: http://172.17.0.5:7579) ', default='http://172.17.0.5:7579')
         parser.add_argument('-cnt', action='store', dest='cnt_arn', 
@@ -141,6 +140,8 @@ if __name__ == '__main__':
                             help='Client URL where to receive notification (default http://172.17.0.1:5000/notify)', default='http://172.17.0.1:5000/notify')
         parser.add_argument('-m', action='store', dest='testMode', 
                             help='Test mode [HTTP, MQTT]: HTTP notification or MQTT notification (default HTTP)', default='HTTP')
+        parser.add_argument('-v', action='store', dest='vThingID', 
+                            help='vThingID (default: relayTV/timestamp) ', default='relayTV/timestamp')
         argcomplete.autocomplete(parser)
         args = parser.parse_args()
 
@@ -148,13 +149,12 @@ if __name__ == '__main__':
         traceback.print_exc()
     
     CSE_url = args.serverURL
-    cnt_arn = args.cnt_arn
-    tenantID = args.tenantID
-    origin="S"
+    tmp = args.vThingID.replace("/",":")
+    cnt_arn = tmp + "/urn:ngsi-ld:"+tmp+"/msg"
+    origin = "S"
     notification_URI = args.notificationURI
-    sub_rn="vSiloTestSub"
-    
-    if (args.testMode=="MQTT"):
+    sub_rn = "vSiloTestSub" 
+    if (args.testMode == "MQTT"):
         oneM2M_MQTT_silo_thread = oneM2MMQTTSiloThread()
         oneM2M_MQTT_silo_thread.start()
     else:

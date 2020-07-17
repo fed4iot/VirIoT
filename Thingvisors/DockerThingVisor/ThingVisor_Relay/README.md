@@ -20,6 +20,13 @@ Use the VirIoT CLI and run the following command to run the ThingVisor example. 
 python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -y ../yaml/thingVisor-relay.yaml -n relayTV -d "relay thingvisor in japan" -p "{'vThingName':'timestamp','vThingType':'timestamp'}"
 ```
 
+### Data injection
+Linux curl can be used to push a JSON object as in the following example
+
+```bash
+curl -d '{"timestamp": 1594982023328, "sqn": 66941}' -H "Content-Type: application/json" -X POST http://<ThingVisorIP:ThingVisorPort>/notify
+```
+
 ## NGSI-LD data model
  
 The NGSI-LD entity published by the vThing is the following:

@@ -28,7 +28,7 @@ class oneM2MMQTTSiloThread(Thread):
     def run(self):
         global total_timestamp, samples, mqtt_silo_client
         print("Thread oneM2M data started")
-        print("Mobius subscription" + " " + origin + " " + str(notification_URI) + " " + cnt_arn + " " + CSE_url)
+        print("Mobius subscription" + " " + origin + " " + " " + cnt_arn + " " + CSE_url)
         # notification topic actually is /oneM2M/req/Mobius/notify/json
         topic = "/oneM2M/req/Mobius/notify/json"
         nuri = ["mqtt://127.0.0.1/notify"]
@@ -155,6 +155,7 @@ if __name__ == '__main__':
     notification_URI = args.notificationURI
     sub_rn = "vSiloTestSub" 
     if (args.testMode == "MQTT"):
+        print("MQTT test mode")
         oneM2M_MQTT_silo_thread = oneM2MMQTTSiloThread()
         oneM2M_MQTT_silo_thread.start()
     else:

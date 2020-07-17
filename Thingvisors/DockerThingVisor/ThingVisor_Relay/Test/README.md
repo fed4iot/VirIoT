@@ -1,6 +1,6 @@
 # ThingVisor Relay Test
 
-This test uses the Relay ThingVisor to measure end-to-end latency between a producer and a consumer whode data items cross VirIoT system.
+This test uses the Relay ThingVisor to measure end-to-end latency between a producer and a consumer whose data items cross VirIoT system.
 
 ## Producer
 
@@ -21,26 +21,34 @@ The JSON objects schema is the following:
 
 ## MQTT Consumer
 
-`consumerMQTT.py` is a consumer which connects to a MQTT vSilo identified by a server IP address (e.g. 172.17.0.1) and port (e.g. 30031) of the MQTT broker of the vSilo. It receives data item produced by `producer.py` on the vThing (e.g. timestamp) of a Relay ThingVisor (e.g. RelayTV) and prints one-way delay statistics (producer and consumer clocks shoud be nearly syncronized). 
-
-Note: it is necessary to preliminary add the vThing the MQTT vSilo. 
+`consumerMQTT.py` is a consumer that connects to a MQTT vSilo identified by a server IP address (e.g. 172.17.0.2) and port (e.g. 1883) of the MQTT broker of the vSilo. It receives data items produced by `producer.py` on the vThing (e.g. timestamp) of a Relay ThingVisor (e.g. RelayTV) and prints one-way delay statistics (producer and consumer clocks should be nearly synchronized). 
 
 ```bash
-python3 consumerMQTT.py -s 172.17.0.1 -p 30031 -v relayTV/timestamp
+python3 consumerMQTT.py -s 172.17.0.2 -p 1883 -v relayTV/timestamp
+```
+
+Note: preliminary steps are: to add the MQTT flavour, create the vSilo, and add the vThing the vSilo. For instance:
+
+```bash
+python3 f4i.py add-flavour -y ../yaml/flavours-raw-mqtt-actuator.yaml -f Raw-base-actuator-f -s Raw -d "silo with a MQTT broker"
+python3 f4i.py create-vsilo -f Raw-base-actuator-f -t tenant1 -s Silo1
+python3 f4i.py add-vthing -t tenant1 -s Silo1 -v relayTV/timestamp
 ```
 
 ## oneM2M Consumer
 
-`consumeroneM2M.py` is a consumer which connects to a oneM2M Mobius vSilo identified by its server URL (e.g. 172.17.0.1:30035). It receives data item produced by `producer.py` through the vThing (e.g. timestamp) of a Relay ThingVisor (e.g. RelayTV). These data items are inserted in a oneM2M container with an Absolute Resource Name (e.g. relayTV:timestamp/urn:ngsi-ld:relayTV:timestamp/msg).
+`consumeroneM2M.py` is a consumer which connects to a oneM2M Mobius vSilo identified by its server IP (e.g. 172.17.0.2), HTTP port (e.g. 7579) and MQTT port (e.g. 1883). It receives data item produced by `producer.py` through the vThing (e.g. timestamp) of a Relay ThingVisor (e.g. RelayTV). These data items are inserted in a oneM2M container and from the oneM2M container they are pushed to `consumeroneM2M.py`
 
-The consumer can connect the Mobius broker either through HTTP or MQTT. In case of HTTP, the consumer shoud be reachable through a public URL (notification URI, nuri), where it is contacted by the Mobius broker when a data item arrives in the oneM2M container. The nuri is `http://consumerIP:5000/notify`. In case of MQTT, no notificatin URI is rquired.
-
-Note: it is necessary to preliminary add the vThing the MQTT vSilo.
+The consumer can connect the Mobius broker either through HTTP or MQTT. In the case of HTTP, the consumer should be reachable through a public URL (notification URI, nuri), where it is contacted by the Mobius broker when a data item arrives in the oneM2M container. The nuri is `http://consumerIP:consumerPort/notify`, where `consumerPort` can be selected by the user. In the case of MQTT, no notification URI is required. Possible examples are.
 
 ```bash
-python3 consumeroneM2M.py -su <Mobius vSilo Server URL> -cnt <Absolute Resource Name of oneM2M container> -m HTTP -nuri <http://consumerIP:5000/notify>
+python3 consumerOneM2M.py -s 172.17.0.2 -p 7579 -pm 1883 -m HTTP -nuri http://172.17.0.1:5000/notify -v relayTV/timestamp
 ```
 
+Note: preliminary steps are: to add the oneM2M flavour, create the vSilo, and add the vThing the vSilo. For instance:
+
 ```bash
-python3 consumeroneM2M.py -su <Mobius vSilo Server URL> -cnt <Absolute Resource Name of oneM2M container> -m MQTT 
+python3 f4i.py add-flavour -f Mobius-base-actuator-f -s Mobius -d "silo with a oneM2M Mobius broker" -y "../yaml/flavours-mobius-pub-sub-actuator.yaml"
+python3 f4i.py create-vsilo -f Mobius-base-actuator-f -t tenant1 -s Silo3
+python3 f4i.py add-vthing -t tenant1 -s Silo3 -v relayTV/timestamp
 ```

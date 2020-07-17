@@ -60,7 +60,11 @@ class httpRxThread(Thread):
     @app.route('/notify', methods=['POST'])
     def recv_notify():
         try:
-            jres = json.loads(request.get_json()) 
+            r = request.get_json()
+            if type(r) is dict:
+                jres = r
+            else:
+                jres = json.loads(r)
             ngsiLdEntity1 = {"id": "urn:ngsi-ld:" + v_thing_ID_LD,"type": v_thing_type_attr}
             msg={}
             msg['type'] = "Property"

@@ -97,9 +97,14 @@ def mqtt_control_on_disconnect(client, userdata, rc):
 # Utility function
 def message_to_jres(message):
     payload = message.payload.decode("utf-8", "ignore")
-    # jres = json.loads(payload.replace("\'", "\""))
-    jres = json.loads(payload)
+    try:
+        jres = json.loads(payload)
+    except Exception as ex:
+        traceback.print_exc()
+        print("Error in message_to_jres", ex)
+        return 'error in message_to_jres'
     return jres
+
 
 
 # This is the set of callbacks that receive ALL messages (both

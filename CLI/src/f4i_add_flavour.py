@@ -52,16 +52,32 @@ def run(args):
     #             yaml_list.append(a)
     #             pprint(a)
 
-
+    try:
+        payload = {"imageName": args.imageName,
+                   "thingVisorID": args.name,
+                   "params": json.loads(args.params),
+                   "description": args.description,
+                   "debug_mode": False if args.debug_mode == "false" else True,
+                   "tvZone": args.tvZone,
+                   "yamlFiles": yaml_list}
+    except Exception as err:
+        print("Error adding ThingVisor:", err)
+        exit()
     # payload = "{\n\t\"flavourID\":\"" + args.flavourID + "\",\n\t\"flavourParams\":\"" + args.flavourParams + "\",\n\t\"imageName\":\"" + args.imageName + "\",\n\t\"flavourDescription\":\"" + args.description + "\"\n,\n\t\"yamlFile\":" + json.dumps(j_yaml) + "\n}"
-    print(args.flavourParams)
-    print(type(json.loads(args.flavourParams)))
-    payload = {"flavourID": args.flavourID,
-               "flavourParams": json.loads(args.flavourParams),
-               "imageName": args.imageName,
-               "flavourDescription": args.description,
-               "yamlFiles": yaml_list}
-    # printj(payload)
+
+    try:
+        print(args.flavourParams)
+        print(type(json.loads(args.flavourParams)))
+        payload = {"flavourID": args.flavourID,
+                   "flavourParams": json.loads(args.flavourParams),
+                   "imageName": args.imageName,
+                   "flavourDescription": args.description,
+                   "yamlFiles": yaml_list}
+        # printj(payload)
+    except Exception as err:
+        print("Error adding ThingVisor:", err)
+        exit()
+
     print(payload)
 
     token = get_token()
@@ -74,12 +90,14 @@ def run(args):
         'cache-control': "no-cache",
     }
 
-    response = requests.request("POST", url, data=json.dumps(payload), headers=headers)
+    try:
+        response = requests.request("POST", url, data=json.dumps(payload), headers=headers)
+        print(json.loads(response.text)['message'] + "\n")
+        print("Status can be controlled also with 'f4i.py list-flavours' CLI command")
 
-    print(json.loads(response.text)['message'] + "\n")
-    print("Status can be controlled also with 'f4i.py list-flavours' CLI command")
-
-
+    except Exception as err:
+        print("Error adding Flavour:", err)
+        exit()
 
 def init_args(parser):
     # insert here the parser argument. This function is used by parent f4i.py

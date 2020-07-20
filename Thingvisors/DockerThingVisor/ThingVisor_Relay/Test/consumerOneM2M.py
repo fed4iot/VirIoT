@@ -14,11 +14,13 @@ from flask import json
 from flask import request
 import signal
 import F4Im2m
+import logging
 
 UNIT = 10**3
 
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 app = Flask(__name__)
-flask_port = 5000
 
 class oneM2MMQTTSiloThread(Thread):
     def __init__(self):
@@ -28,7 +30,7 @@ class oneM2MMQTTSiloThread(Thread):
     def run(self):
         global total_timestamp, samples, mqtt_silo_client
         print("Thread oneM2M data started")
-        print("Mobius subscription" + " " + origin + " " + str(notification_URI) + " " + cnt_arn + " " + CSE_url)
+        print("Mobius subscription for " + cnt_arn + " on " + CSE_url)
         # notification topic actually is /oneM2M/req/Mobius/notify/json
         topic = "/oneM2M/req/Mobius/notify/json"
         nuri = ["mqtt://127.0.0.1/notify"]
@@ -41,7 +43,7 @@ class oneM2MMQTTSiloThread(Thread):
         time.sleep(0.05)
 
         mqtt_silo_client = mqtt.Client()
-        mqtt_silo_client.connect(urllib.parse.urlparse(CSE_url).hostname, 1883, 30)
+        mqtt_silo_client.connect(urllib.parse.urlparse(CSE_url).hostname, int(MQTT_port), 30)
         mqtt_silo_client.message_callback_add(topic, self.on_receive_MQTT)
         mqtt_silo_client.subscribe(topic)
         mqtt_silo_client.loop_forever()
@@ -104,9 +106,10 @@ def on_receive(jres):
     try:
         if 'm2m:sgn' in jres:
             samples = samples + 1
-            con = jres['m2m:sgn']['nev']['rep']['m2m:cin']['con']  # TODO could be a list?
-            send_timestamp=con['value']['timestamp']
+            con = json.loads(jres['m2m:sgn']['nev']['rep']['m2m:cin']['con'].replace("'","\""))
+            send_timestamp = con['value']['timestamp']
             msg_num = con['value']['sqn']
+            
             delta_timestamp = received_timestamp - send_timestamp
             total_timestamp += delta_timestamp
             print("msg: %d, ∆ timestamp %.4f (ms), average: %.4f" % (msg_num, delta_timestamp, total_timestamp/samples))
@@ -131,36 +134,39 @@ if __name__ == '__main__':
 
     try:
         parser = argparse.ArgumentParser()
-        parser.add_argument('-t', action='store', dest='tenantID',
-                            help='tenantID (default: tenant1)', default='tenant1')
-        parser.add_argument('-su', action='store', dest='serverURL', 
-                            help='Mobius vSilo Server URL (default: http://172.17.0.5:7579) ', default='http://172.17.0.5:7579')
-        parser.add_argument('-cnt', action='store', dest='cnt_arn', 
-                            help='oneM2M container Absoulute Resource Name (default: relayTV:timestamp/urn:ngsi-ld:relayTV:timestamp/msg) ', default='relayTV:timestamp/urn:ngsi-ld:relayTV:timestamp/msg')
+    
+        parser.add_argument('-s', action='store', dest='serverIP', 
+                            help='Mobius vSilo Server IP (default: 172.17.0.5) ', default='172.17.0.5')
+        parser.add_argument('-p', action='store', dest='serverPort', 
+                            help='Mobius vSilo Server HTTP Port (default: 7579) ', default='7579')
+        parser.add_argument('-pm', action='store', dest='serverMQTTPort', 
+                            help='Mobius vSilo Server MQTT Port (default: 1883) ', default='1883')
         parser.add_argument('-nuri', action='store', dest='notificationURI', 
-                            help='Client URL where to receive notification (default http://172.17.0.1:5000/notify)', default='http://172.17.0.1:5000/notify')
+                            help='Client HTTP URL where to receive notification (default http://172.17.0.1:5000/notify) in case of HTTP mode', default='http://172.17.0.1:5000/notify')
         parser.add_argument('-m', action='store', dest='testMode', 
                             help='Test mode [HTTP, MQTT]: HTTP notification or MQTT notification (default HTTP)', default='HTTP')
+        parser.add_argument('-v', action='store', dest='vThingID', 
+                            help='vThingID (default: relayTV/timestamp) ', default='relayTV/timestamp')
         argcomplete.autocomplete(parser)
         args = parser.parse_args()
 
     except Exception:
         traceback.print_exc()
     
-    CSE_url = args.serverURL
-    cnt_arn = args.cnt_arn
-    tenantID = args.tenantID
-    origin="S"
+    CSE_url = "http://"+args.serverIP+":"+args.serverPort
+    MQTT_port = args.serverMQTTPort
+    tmp = args.vThingID.replace("/",":")
+    cnt_arn = tmp + "/urn:ngsi-ld:"+tmp+"/msg"
+    origin = "S"
     notification_URI = args.notificationURI
-    sub_rn="vSiloTestSub"
-    
-    if (args.testMode=="MQTT"):
+    sub_rn = "vSiloTestSub" 
+    if (args.testMode == "MQTT"):
+        print("MQTT test mode")
         oneM2M_MQTT_silo_thread = oneM2MMQTTSiloThread()
         oneM2M_MQTT_silo_thread.start()
     else:
         oneM2M_HTTP_silo_thread = oneM2MHTTPSiloThread()
         oneM2M_HTTP_silo_thread.start()
-
 
     time.sleep(2)
     signal.signal(signal.SIGINT, clean)

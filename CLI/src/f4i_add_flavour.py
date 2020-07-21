@@ -52,14 +52,33 @@ def run(args):
     #             yaml_list.append(a)
     #             pprint(a)
 
-
+    try:
+        payload = {"imageName": args.imageName,
+                   "thingVisorID": args.name,
+                   "params": json.loads(args.params),
+                   "description": args.description,
+                   "debug_mode": False if args.debug_mode == "false" else True,
+                   "tvZone": args.tvZone,
+                   "yamlFiles": yaml_list}
+    except Exception as err:
+        print("Error adding ThingVisor:", err)
+        print("The syntax of the arguments \"-s\" must be like: \'{\"key1\":\"value\", \"key2\":[\"value1\", \"value2\"]}\'")
+        exit()
     # payload = "{\n\t\"flavourID\":\"" + args.flavourID + "\",\n\t\"flavourParams\":\"" + args.flavourParams + "\",\n\t\"imageName\":\"" + args.imageName + "\",\n\t\"flavourDescription\":\"" + args.description + "\"\n,\n\t\"yamlFile\":" + json.dumps(j_yaml) + "\n}"
-    payload = {"flavourID": args.flavourID,
-               "flavourParams": args.flavourParams,
-               "imageName": args.imageName,
-               "flavourDescription": args.description,
-               "yamlFiles": yaml_list}
-    # printj(payload)
+
+    try:
+        print(args.flavourParams)
+        print(type(json.loads(args.flavourParams)))
+        payload = {"flavourID": args.flavourID,
+                   "flavourParams": json.loads(args.flavourParams),
+                   "imageName": args.imageName,
+                   "flavourDescription": args.description,
+                   "yamlFiles": yaml_list}
+        # printj(payload)
+    except Exception as err:
+        print("Error adding ThingVisor:", err)
+        exit()
+
     print(payload)
 
     token = get_token()
@@ -72,12 +91,14 @@ def run(args):
         'cache-control': "no-cache",
     }
 
-    response = requests.request("POST", url, data=json.dumps(payload), headers=headers)
+    try:
+        response = requests.request("POST", url, data=json.dumps(payload), headers=headers)
+        print(json.loads(response.text)['message'] + "\n")
+        print("Status can be controlled also with 'f4i.py list-flavours' CLI command")
 
-    print(json.loads(response.text)['message'] + "\n")
-    print("Status can be controlled also with 'f4i.py list-flavours' CLI command")
-
-
+    except Exception as err:
+        print("Error adding Flavour:", err)
+        exit()
 
 def init_args(parser):
     # insert here the parser argument. This function is used by parent f4i.py
@@ -86,7 +107,7 @@ def init_args(parser):
     parser.add_argument('-f', action='store', dest='flavourID',
                         help='flavourID (default: Mobius-base-f)', default='Mobius-base-f')
     parser.add_argument('-s', action='store', dest='flavourParams',
-                        help='flavourParams (default: Mobius)', default='Mobius')
+                        help='flavourParams (default: Mobius)', default='"Mobius"')
     parser.add_argument('-i', action='store', dest='imageName',
                         help='image name (default: '')', default='')
     parser.add_argument('-d', action='store', dest='description',

@@ -41,18 +41,18 @@ class VThing(metaclass=abc.ABCMeta) :
         message = {"command": "createVThing",
                    "thingVisorID": thingvisor.tvid,
                    "vThing":  {"label": self.label, "id": self.id, "description": self.description}}        
-        self.thingvisor.publish(f"vThing/{self.id}/c_out",str(message).replace("\'", "\""))
+        self.thingvisor.publish(f"vThing/{self.id}/c_out", json.dumps(message))
 
     def destroy(self):
         msg = {"command": "deleteVThing", "vThingID": self.id, "vSiloID": "ALL"}
-        self.thingvisor.publish(f"vThing/{self.id}/c_out", str(msg).replace("\'", "\""))
+        self.thingvisor.publish(f"vThing/{self.id}/c_out", json.dumps(msg))
 
     def on_control_message(self, msg):
         log.debug("on_control_message")
         try:
             payload = msg.payload.decode("utf-8", "ignore")
             print(msg.topic + " " + str(payload))
-            jres = json.loads(payload.replace("\'", "\""))
+            jres = json.loads(payload)
             command_type = jres["command"]
             if command_type == "getContextRequest":
                 self.on_message_get_thing_context(jres)
@@ -66,7 +66,7 @@ class VThing(metaclass=abc.ABCMeta) :
             silo_id = jres["vSiloID"]
             v_thing_id = jres["vThingID"]
             message = {"command": "getContextResponse", "data": self.get_context(), "meta": {"vThingID": self.id}}
-            self.thingvisor.publish(f"vSilo/{silo_id}/c_in", str(message).replace("\'", "\""))
+            self.thingvisor.publish(f"vSilo/{silo_id}/c_in", json.dumps(message))
         except:
             log.error(traceback.format_exc())
             
@@ -93,7 +93,7 @@ class ThingVisor(MqttBroker):
         
     def send_destroy_thing_visor_ack_message(self):
         msg = {"command": "destroyTVAck", "thingVisorID": self.tvid}
-        mqtt_control_client.publish(f"TV/{self.tvid}/c_out",str(msg).replace("\'", "\""))
+        mqtt_control_client.publish(f"TV/{self.tvid}/c_out", json.dumps(msg))
         return
 
     def on_message_destroy_thing_visor(self, jres):
@@ -104,8 +104,8 @@ class ThingVisor(MqttBroker):
 
     def on_message_in_control_TV(self, mosq, obj, msg):
         payload = msg.payload.decode("utf-8", "ignore")
-        jres = json.loads(payload.replace("\'", "\""))
         try:
+            jres = json.loads(payload)
             command_type = jres["command"]
             if command_type == "destroyTV":
                 self.on_message_destroy_thing_visor(jres)

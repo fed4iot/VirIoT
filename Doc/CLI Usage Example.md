@@ -2,7 +2,7 @@
 
 After the initial configuration, it is possible to interact with the VirIoT platform using the Command Line Interface (CLI) or Postman.
 
-To activate python3 and bash autocomplete:  
+To activate `python3` and bash autocomplete:  
 
 ```bash  
 sudo apt-get install python3-argcomplete   
@@ -66,9 +66,9 @@ Mobius is a [oneM2M](http://www.onem2m.org) server implementation.
 It got the oneM2M certification and it is designated as one of the golden samples.
 
 ```bash  
-python3 f4i.py add-flavour -c http://[master_controller_ip]:[master_controller_port] -f Mobius-base-f -s Mobius -i fed4iot/mobius-base-f:2.2 -d "silo with a oneM2M Mobius broker"  
+python3 f4i.py add-flavour -c http://[master_controller_ip]:[master_controller_port] -f Mobius-base-f -s '"Mobius"' -i fed4iot/mobius-base-f:2.2 -d "silo with a oneM2M Mobius broker"  
 # Kubernetes: add the flavour yaml argument using -y   
-python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -f Mobius-base-f -s Mobius -d "silo with a oneM2M Mobius broker" -y "../yaml/flavours-mobius-base.yaml"   
+python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -f Mobius-base-f -s '"Mobius"' -d "silo with a oneM2M Mobius broker" -y "../yaml/flavours-mobius-base.yaml"   
 ```  
 
 
@@ -78,9 +78,9 @@ Orion is a C++ implementation of the [NGSIv2](https://fiware.github.io/specifica
 binding developed as a part of the FIWARE platform.
 
 ```bash  
-python3 f4i.py add-flavour -c http://[master_controller_ip]:[master_controller_port] -f orion-f -i fed4iot/orion-f:2.2 -d "silo with a FIWARE Orion broker" -s ""  
+python3 f4i.py add-flavour -c http://[master_controller_ip]:[master_controller_port] -f orion-f -i fed4iot/orion-f:2.2 -d "silo with a FIWARE Orion broker" -s '""'  
 # Kubernetes: add the flavour yaml argument using -y   
-python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -f orion-f -d "silo with a FIWARE Orion broker" -s "" -y "../yaml/flavours-orion.yaml"  
+python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -f orion-f -d "silo with a FIWARE Orion broker" -s '""' -y "../yaml/flavours-orion.yaml"  
 ```  
 
 #### SCORPIO (for developers that want to use the ETSI NGSI-LD standard for IoT and context data)
@@ -91,9 +91,9 @@ NGSI-LD is an open API and Datamodel specification for context management publis
 Scorpio is developed in Java using the SpringCloud microservices framework.
 
 ```bash  
-python3 f4i.py add-flavour -c http://[master_controller_ip]:[master_controller_port] -f ngsild-scorpio-f -i fed4iot/ngsild-scorpio-f:2.2 -d "silo with a Scorpio NGSI-LD broker" -s ""  
+python3 f4i.py add-flavour -c http://[master_controller_ip]:[master_controller_port] -f ngsild-scorpio-f -i fed4iot/ngsild-scorpio-f:2.2 -d "silo with a Scorpio NGSI-LD broker" -s '""'  
 # Kubernetes: add the flavour yaml argument using -y   
-python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -f ngsild-scorpio-f -d "silo with a Scorpio NGSI-LD broker" -s "" -y "../yaml/flavours-ngsild-scorpio.yaml"  
+python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -f ngsild-scorpio-f -d "silo with a Scorpio NGSI-LD broker" -s '""' -y "../yaml/flavours-ngsild-scorpio.yaml"  
 ```  
 
 
@@ -101,9 +101,9 @@ python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -f ngsild-scorpio-
 Add a vSilo flavour for exporting your raw IoT data to MQTT topics.
 
 ```bash  
-python3 f4i.py add-flavour -c http://[master_controller_ip]:[master_controller_port] -f mqtt-f -i fed4iot/raw-mqtt-f:2.2 -d "silo with a Mosquitto broker" -s ""  
+python3 f4i.py add-flavour -c http://[master_controller_ip]:[master_controller_port] -f mqtt-f -i fed4iot/raw-mqtt-f:2.2 -d "silo with a Mosquitto broker" -s '""'  
 # Kubernetes: add the flavour yaml argument using -y   
-python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -f mqtt-f -d "silo with a Mosquitto broker" -s "" -y "../yaml/flavours-raw-mqtt.yaml"  
+python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -f mqtt-f -d "silo with a Mosquitto broker" -s '""' -y "../yaml/flavours-raw-mqtt.yaml"  
 ```  
   
 
@@ -137,7 +137,7 @@ python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n weather -p '
 Add thingVisor for oneM2M container on oneM2M of EGM in Grasse: 
 
 ```bash  
-python3 f4i.py add-thingvisor -c http://[master_controller_ip]:[master_controller_port] -i fed4iot/onem2m-tv:2.2 -n EGM-Abbass -d "OneM2M data from EGM Abbass sensor" -p '{"CSEurl":"https://fed4iot.eglobalmark.com","origin":"Superman","cntArn":"Abbas123456/humidity/value","vThingName":"EGM-Abbas123456-humidity","vThingDescription":"OneM2M humidity data from EGM Abbass sensor"}'  
+python3 f4i.py add-thingvisor -c http://[master_controller_ip]:[master_controller_port] -i fed4iot/onem2m-multisub-tv:2.2 -n EGM-Abbass-multiple -d "OneM2M data from EGM Abbass sensor (temperature and humidity)" -p '{"CSEurl":"https://fed4iot.eglobalmark.com","origin":"Superman","cntArns":["Abbas123456/humidity/value","Abbas123456/temperature/value"],"vThingName":"EGM-Abbas123456","vThingDescription":"OneM2M data from multiple EGM Abbass sensors"}'
 # Kubernetes: add the flavour yaml argument using -y and the optional zone to deploy the pod -z  
 python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n EGM-Abbass -d "OneM2M data from EGM Abbass sensor" -p '{"CSEurl":"https://fed4iot.eglobalmark.com","origin":"Superman","cntArn":"Abbas123456/humidity/value","vThingName":"EGM-Abbas123456-humidity","vThingDescription":"OneM2M humidity data from EGM Abbass sensor"}' -y "../yaml/thingVisor-oneM2M.yaml" -z Japan  
 ```  

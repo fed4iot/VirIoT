@@ -47,7 +47,7 @@ def init_args(parser):
     parser.add_argument('-n', action='store', dest='name',
                         help='ThingVisor ID (default: helloWorld)', default='helloWorld')
     parser.add_argument('-p', action='store', dest='params',
-                        help='ThingVisor params, JSON object (default: "") ', default="")
+                        help='ThingVisor params, JSON object (default: "") ', default='""')
     parser.add_argument('-d', action='store', dest='description',
                         help='ThingVisor description (default: hello thingVisor)', default='hello thingVisor')
     parser.add_argument('-y', action='store', dest='yamlFilesPath',
@@ -66,13 +66,18 @@ def run(args):
 
     yaml_list = get_yaml_file(args.yamlFilesPath)
 
-    payload = {"imageName": args.imageName,
-               "thingVisorID": args.name,
-               "params": args.params,
-               "description": args.description,
-               "debug_mode": False if args.debug_mode == "false" else True,
-               "tvZone": args.tvZone,
-               "yamlFiles": yaml_list}
+    try:
+        payload = {"imageName": args.imageName,
+                   "thingVisorID": args.name,
+                   "params": json.loads(args.params),
+                   "description": args.description,
+                   "debug_mode": False if args.debug_mode == "false" else True,
+                   "tvZone": args.tvZone,
+                   "yamlFiles": yaml_list}
+    except Exception as err:
+        print("Error adding ThingVisor:", err)
+        print("The syntax of the arguments \"-p\" must be like: \'{\"key1\":\"value\", \"key2\":[\"value1\", \"value2\"]}\'")
+        exit()
 
     pprint(payload)
     token = get_token()
@@ -85,9 +90,12 @@ def run(args):
         'cache-control': "no-cache",
         }
 
-    response = requests.request("POST", url, data=json.dumps(payload), headers=headers)
-    print(response.json().get('message')+"\n")
-
+    try:
+        response = requests.request("POST", url, data=json.dumps(payload), headers=headers)
+        print(response.json().get('message')+"\n")
+    except Exception as err:
+        print("Error adding ThingVisor:", err)
+        exit()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

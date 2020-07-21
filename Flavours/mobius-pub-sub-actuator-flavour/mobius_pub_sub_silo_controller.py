@@ -41,7 +41,7 @@ def on_in_control_msg(mosq, obj, msg):
     payload = msg.payload.decode("utf-8", "ignore")
     print("In control message received by vSilo "+payload)
     try:
-        jres = json.loads(payload.replace("\'", "\""))
+        jres = json.loads(payload)
         commandType = jres["command"]
         if commandType == "addVThing":
             on_message_add_vThing(jres)
@@ -111,10 +111,10 @@ def on_message_delete_vThing(jres):
 def on_vThing_data(mosq, obj, msg):
     try:
         if isinstance(msg, str):
-            jres = json.loads(msg.replace("\'", "\""))
+            jres = json.loads(msg)
         else:
             payload = msg.payload.decode("utf-8", "ignore")
-            jres = json.loads(payload.replace("\'", "\""))
+            jres = json.loads(payload)
         on_vThing_data_on_Broker(jres)
     except Exception as ex:
         traceback.print_exc()
@@ -128,7 +128,7 @@ def on_vThing_out_control(mosq, obj, msg):
     payload = msg.payload.decode("utf-8", "ignore")
     print("Out control message received by vThing "+payload)
     try:
-        jres = json.loads(payload.replace("\'", "\""))
+        jres = json.loads(payload)
         if jres["command"] == "deleteVThing":
             msg = {"vThingID": jres["vThingID"]}
             on_message_delete_vThing(msg)

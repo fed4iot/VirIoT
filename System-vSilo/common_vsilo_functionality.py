@@ -97,7 +97,13 @@ def mqtt_control_on_disconnect(client, userdata, rc):
 # Utility function
 def message_to_jres(message):
     payload = message.payload.decode("utf-8", "ignore")
-    jres = json.loads(payload.replace("\'", "\""))
+
+    try:
+        jres = json.loads(payload)
+    except Exception as ex:
+        traceback.print_exc()
+        print("Error in message_to_jres")
+        return 'error in message_to_jres'
     return jres
 
 
@@ -345,7 +351,7 @@ def control_destroy_vSilo():
 
 def send_destroy_v_silo_ack_message():
     msg = {"command": "destroyVSiloAck", "vSiloID": v_silo_id}
-    mqtt_control_client.publish(out_vsilo_control_topic, str(msg).replace("\'", "\""))
+    mqtt_control_client.publish(out_vsilo_control_topic, json.dumps(msg))
 
 
 # vthing outgoing control messages switch and process
@@ -365,7 +371,7 @@ def process_out_vthing_control_msg(jres):
 
 def fetch_last_context_for_vthing(v_thing_id):
     message = {"command": "getContextRequest", "vSiloID": v_silo_id, "vThingID": v_thing_id}
-    mqtt_control_client.publish(v_thing_prefix + "/" + v_thing_id + "/" + in_control_suffix, str(message).replace("\'", "\""))
+    mqtt_control_client.publish(v_thing_prefix + "/" + v_thing_id + "/" + in_control_suffix, json.dumps(message))
     print("... command to fetch last context for vthing " + v_thing_id + " SENT")
 
 
@@ -574,7 +580,7 @@ def start_silo_controller(broker_specific_module_name):
   # via a POST to /addVThing REST interfce of master controller 
   print(v_silo_id + " got flavour params: " + flavour_params)
   try: 
-    params = json.loads(flavour_params.replace("'", '"'))
+    params = json.loads(flavour_params)
     flavourtype = params['flavourtype']
     adminpassword = params['adminpassword']
     controllerurl = params['controllerurl']

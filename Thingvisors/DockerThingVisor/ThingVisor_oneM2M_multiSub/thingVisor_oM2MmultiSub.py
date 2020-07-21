@@ -124,7 +124,7 @@ class httpThread(Thread):
                 message = {"data": [ngsiLdEntity1], "meta": {"vThingID": v_thing_ID}}
                 print("topic name: " + v_thing_topic + '/' + v_thing_data_suffix + " ,message: " + json.dumps(message))
                 mqtt_data_client.publish(v_thing_topic + '/' + v_thing_data_suffix,
-                                         str(message).replace("\'", "\""))  # publish received data to data topic by using neutral format
+                                         json.dumps(message))  # publish received data to data topic by using neutral format
                 return 'OK', 201
 
             else:
@@ -154,16 +154,16 @@ class mqttControlThread(Thread):
     def on_message_get_thing_context(self, jres):
         silo_id = jres["vSiloID"]
         message = {"command": "getContextResponse", "data": context_vThing.get_all(), "meta": {"vThingID": v_thing_ID}}
-        mqtt_control_client.publish(v_silo_prefix + "/" + silo_id + "/" + in_control_suffix, str(message).replace("\'", "\""))
+        mqtt_control_client.publish(v_silo_prefix + "/" + silo_id + "/" + in_control_suffix, json.dumps(message))
 
     def send_destroy_v_thing_message(self):
         msg = {"command": "deleteVThing", "vThingID": v_thing_ID, "vSiloID": "ALL"}
-        mqtt_control_client.publish(v_thing_prefix + "/" + v_thing_ID + "/" + out_control_suffix, str(msg).replace("\'", "\""))
+        mqtt_control_client.publish(v_thing_prefix + "/" + v_thing_ID + "/" + out_control_suffix, json.dumps(msg))
         return
 
     def send_destroy_thing_visor_ack_message(self):
         msg = {"command": "destroyTVAck", "thingVisorID": thing_visor_ID}
-        mqtt_control_client.publish(tv_control_prefix + "/" + thing_visor_ID + "/" + out_control_suffix, str(msg).replace("\'", "\""))
+        mqtt_control_client.publish(tv_control_prefix + "/" + thing_visor_ID + "/" + out_control_suffix, json.dumps(msg))
         return
 
     def on_message_destroy_thing_visor(self, jres):
@@ -181,7 +181,7 @@ class mqttControlThread(Thread):
     def on_message_in_control_vThing(self, mosq, obj, msg):
         payload = msg.payload.decode("utf-8", "ignore")
         print(msg.topic + " " + str(payload))
-        jres = json.loads(payload.replace("\'", "\""))
+        jres = json.loads(payload)
         try:
             command_type = jres["command"]
             if command_type == "getContextRequest":
@@ -193,7 +193,7 @@ class mqttControlThread(Thread):
     def on_message_in_control_TV(self, mosq, obj, msg):
         payload = msg.payload.decode("utf-8", "ignore")
         print(msg.topic + " " + str(payload))
-        jres = json.loads(payload.replace("\'", "\""))
+        jres = json.loads(payload)
         try:
             command_type = jres["command"]
             if command_type == "destroyTV":
@@ -212,7 +212,7 @@ class mqttControlThread(Thread):
                            "thingVisorID": thing_visor_ID,
                            "vThing": v_thing}
         mqtt_control_client.publish(tv_control_prefix + "/" + thing_visor_ID + "/" + out_control_suffix,
-                                    str(v_thing_message).replace("\'", "\""))
+                                    json.dumps(v_thing_message))
 
         # Add message callbacks that will only trigger on a specific subscription match
         mqtt_control_client.message_callback_add(v_thing_topic + "/" + in_control_suffix,
@@ -309,15 +309,13 @@ if __name__ == '__main__':
         MQTT_control_broker_IP = tv_entry["MQTTControlBroker"]["ip"]
         MQTT_control_broker_port = int(tv_entry["MQTTControlBroker"]["port"])
 
-        parameters = tv_entry["params"]
-        if parameters:
-            params = json.loads(parameters.replace("'", '"'))
-            CSE_url = params['CSEurl']
-            cnt_arns = params['cntArns']  # array of source container absolute resource names
-            v_thing_name = params["vThingName"]
-            v_thing_label = v_thing_name
-            v_thing_description = params["vThingDescription"]
-            origin = params["origin"]
+        params = tv_entry["params"]
+        CSE_url = params['CSEurl']
+        cnt_arns = params['cntArns']  # array of source container absolute resource names
+        v_thing_name = params["vThingName"]
+        v_thing_label = v_thing_name
+        v_thing_description = params["vThingDescription"]
+        origin = params["origin"]
 
 
     except json.decoder.JSONDecodeError:

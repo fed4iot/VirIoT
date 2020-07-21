@@ -161,7 +161,8 @@ class DataThread(Thread):
     def on_message_data_in_vThing(self, mosq, obj, msg):
         payload = msg.payload.decode("utf-8", "ignore")
         print("Message received on "+msg.topic + "\n" + payload+"\n")
-        jres = json.loads(payload.replace("\'", "\""))
+
+        jres = json.loads(payload)
         try:
             data = jres["data"]
             for entity in data:
@@ -245,7 +246,8 @@ class ControlThread(Thread):
     def on_message_control_in_vThing(self, mosq, obj, msg):
         payload = msg.payload.decode("utf-8", "ignore")
         print(msg.topic + " " + str(payload)+"\n")
-        jres = json.loads(payload.replace("\'", "\""))
+
+        jres = json.loads(payload)
         try:
             command_type = jres["command"]
             if command_type == "getContextRequest":
@@ -257,7 +259,8 @@ class ControlThread(Thread):
     def on_message_control_in_TV(self, mosq, obj, msg):
         payload = msg.payload.decode("utf-8", "ignore")
         print(msg.topic + " " + str(payload)+"\n")
-        jres = json.loads(payload.replace("\'", "\""))
+
+        jres = json.loads(payload)
         try:
             command_type = jres["command"]
             if command_type == "destroyTV":
@@ -349,13 +352,7 @@ if __name__ == '__main__':
         MQTT_control_broker_port = int(tv_entry["MQTTControlBroker"]["port"])
 
         # read paramenters from DB
-        # parameters = tv_entry["params"]
-        parameters = tv_entry["params"].replace("'", '"')
-        if parameters:
-            params = json.loads(parameters)
-        # param = []
-        # if parameters:
-        #     params = json.loads(parameters)
+        params = tv_entry["params"]
     except json.decoder.JSONDecodeError:
         print("error on params (JSON) decoding" + "\n")
         exit()

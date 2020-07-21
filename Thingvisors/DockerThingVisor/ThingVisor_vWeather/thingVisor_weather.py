@@ -129,7 +129,7 @@ class mqttControlThread(Thread):
     def on_message_in_control_vThing(self, mosq, obj, msg):
         payload = msg.payload.decode("utf-8", "ignore")
         print(msg.topic + " " + str(payload))
-        jres = json.loads(payload.replace("\'", "\""))
+        jres = json.loads(payload)
         try:
             command_type = jres["command"]
             if command_type == "getContextRequest":
@@ -141,7 +141,7 @@ class mqttControlThread(Thread):
     def on_message_in_control_TV(self, mosq, obj, msg):
         payload = msg.payload.decode("utf-8", "ignore")
         print(msg.topic + " " + str(payload))
-        jres = json.loads(payload.replace("\'", "\""))
+        jres = json.loads(payload)
         try:
             command_type = jres["command"]
             if command_type == "destroyTV":
@@ -220,9 +220,7 @@ if __name__ == '__main__':
         MQTT_control_broker_IP = tv_entry["MQTTControlBroker"]["ip"]
         MQTT_control_broker_port = int(tv_entry["MQTTControlBroker"]["port"])
 
-        parameters = tv_entry["params"]
-        if parameters:
-            params = json.loads(parameters.replace("'", '"'))
+        params = tv_entry["params"]
 
     except json.decoder.JSONDecodeError:
         print("error on params (JSON) decoding" + "\n")
@@ -245,7 +243,7 @@ if __name__ == '__main__':
 
     # refresh_rate = int(params.get('rate','300'))
     if params and "rate" in params.keys():
-        refresh_rate = params["rate"]
+        refresh_rate = int(params["rate"])
     else:
         refresh_rate = 300
 

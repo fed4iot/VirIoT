@@ -104,7 +104,7 @@ docker build -t fed4iot/fiware-rpz-tv -f buildImages/RPZ-TV/Dockerfile  ./
 Use the terminal with the CLI and execute
   
 ```bash  
-python3 f4i.py add-thingvisor -i fed4iot/fiware-rpz-tv -n thingVisorID_RPZ -d "thingVisorID_RPZ" -p "{'ocb_ip':'<OCB_Public_IP>', 'ocb_port':'<OCB_Port>'}"
+python3 f4i.py add-thingvisor -i fed4iot/fiware-rpz-tv -n thingVisorID_RPZ -d "thingVisorID_RPZ" -p '{"ocb_ip":"<OCB_Public_IP>", "ocb_port":"<OCB_Port>"}'
 ```  
 
 JSON parameters are: 

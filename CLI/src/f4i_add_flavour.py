@@ -62,6 +62,7 @@ def run(args):
                    "yamlFiles": yaml_list}
     except Exception as err:
         print("Error adding ThingVisor:", err)
+        print("The syntax of the arguments \"-s\" must be like: \'{\"key1\":\"value\", \"key2\":[\"value1\", \"value2\"]}\'")
         exit()
     # payload = "{\n\t\"flavourID\":\"" + args.flavourID + "\",\n\t\"flavourParams\":\"" + args.flavourParams + "\",\n\t\"imageName\":\"" + args.imageName + "\",\n\t\"flavourDescription\":\"" + args.description + "\"\n,\n\t\"yamlFile\":" + json.dumps(j_yaml) + "\n}"
 

@@ -76,6 +76,7 @@ def run(args):
                    "yamlFiles": yaml_list}
     except Exception as err:
         print("Error adding ThingVisor:", err)
+        print("The syntax of the arguments \"-p\" must be like: \'{\"key1\":\"value\", \"key2\":[\"value1\", \"value2\"]}\'")
         exit()
 
     pprint(payload)

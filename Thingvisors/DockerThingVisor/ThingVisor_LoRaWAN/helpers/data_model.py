@@ -93,7 +93,7 @@ class SmartCamera(NgsiLdEntity) :
             "type":"Device",
             "name":{
                 "type":"Property",
-                "value":"Grasse Camera"
+                "value":self.id
             },
             "@context":[
                 "http://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
@@ -154,7 +154,7 @@ class Thermometer(NgsiLdEntity) :
             "type":"Device",
             "name":{
                 "type":"Property",
-                "value":"Grasse Camera"
+                "value":self.id
             },
             "@context":[
                 "http://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",

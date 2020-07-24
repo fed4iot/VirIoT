@@ -127,9 +127,7 @@ def create_file_with_content(fname,content):
 
 if __name__ == '__main__':
 
-    log.info("-- Starting Smartcam ThingVisor --")
-    log.info(f"VERSION {VERSION}")
-    log.debug(f"Environment : {os.environ}")
+    #log.debug(f"Environment : {os.environ}")
     
     # Viriot pub/sub system
     MQTT_data_broker_IP = os.environ["MQTTDataBrokerIP"]

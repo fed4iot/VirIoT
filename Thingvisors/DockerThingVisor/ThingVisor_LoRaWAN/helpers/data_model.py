@@ -18,6 +18,9 @@ class NgsiLdEntity :
         payload.update(self._get_payload())
         return payload
 
+    def _get_payload(self):
+        return {}
+
     
 class Context :
     def __init__(self):
@@ -32,6 +35,20 @@ class Context :
 class Site(NgsiLdEntity):
     def __init__(self,id):
         NgsiLdEntity.__init__(self,id)
+        self.temperature = None
+        self.humidity = None
+
+    def _get_payload(self):
+        return {                        #TODO: fix missing ObservedBy relation
+        	"temperature":{
+		        "type":"Property",
+		        "value":self.temperature
+            },   
+        	"humidity":{
+		        "type":"Property",
+		        "value":self.humidity
+            }
+        }
     
 class CameraEventDetector(NgsiLdEntity) :
     def __init__(self, id, camera):
@@ -40,7 +57,7 @@ class CameraEventDetector(NgsiLdEntity) :
         self.camera = camera
         
     def _get_payload(self):
-        return  {
+        return {
             "type": "Sensor",
             "connectsTo": {
                 "type": "Relationship",
@@ -52,7 +69,7 @@ class CameraEventDetector(NgsiLdEntity) :
             ]
         }
 
-    
+       
 class SmartCamera(NgsiLdEntity) :
     def __init__(self, id):
         NgsiLdEntity.__init__(self, id)
@@ -114,4 +131,50 @@ class SmartCamera(NgsiLdEntity) :
             #     "unitCode": "5K"
             # },
             
+        return payload
+
+
+
+class Thermometer(NgsiLdEntity) :
+    def __init__(self, id):
+        NgsiLdEntity.__init__(self, id)
+        self.baseid = "urn:ngsi-ld"
+        self.id = id
+        self.site = None
+        self.location = None #array [latitude, longitude]
+
+    def set_site(self, site):
+        self.site = site
+
+    def set_location(self, location):
+        self.location = location
+
+    def _get_payload(self) :
+        payload = {
+            "type":"Device",
+            "name":{
+                "type":"Property",
+                "value":"Grasse Camera"
+            },
+            "@context":[
+                "http://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+                "http://models.eglobalmark.com/grasse/waste-management-context.jsonld"
+            ]
+        }
+        if (self.site):
+            payload["monitors"]={
+                "type":"Relationship",
+                "object":f"urn:ngsi-ld:Site:{self.site.id}"
+            }
+
+        if (self.location is not None) :
+            payload["location"] = {
+                "type":"GeoProperty",
+                "value":{
+                    "type":"Point",
+                    "coordinates": self.location
+                }
+            }
+            
+        
         return payload

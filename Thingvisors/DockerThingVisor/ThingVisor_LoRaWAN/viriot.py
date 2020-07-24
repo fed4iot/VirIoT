@@ -17,6 +17,7 @@ class VThing(metaclass=abc.ABCMeta) :
         self.context = Context()
 
 
+<<<<<<< HEAD
     @abc.abstractmethod
     def get_context(self):
         """ 
@@ -24,6 +25,13 @@ class VThing(metaclass=abc.ABCMeta) :
         Abstract function : Must be implemented by subclasses
         """
         None
+=======
+    def get_context(self):
+        """ 
+        Returns the NGSI-LD structure as a python dictionnary
+        """
+        return self.context.serialize()
+>>>>>>> added thermometer vthing in lorawan thingvisor
 
     def publish_data(self, data):
         self.thingvisor.publish(f"vThing/{self.id}/data_out", data)

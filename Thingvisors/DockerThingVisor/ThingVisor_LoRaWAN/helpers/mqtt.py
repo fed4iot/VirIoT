@@ -111,8 +111,14 @@ class MqttBroker(Thread):
                 tls_version=ssl.PROTOCOL_TLS,
                 ciphers=None
             )            
-        self.client.connect(self.host, self.port, self.keepalive)
-        log.info(f"MQTT loop start")
-        self.client.loop_forever()
+        
+        try:
+            self.client.connect(self.host, self.port, self.keepalive)
+            log.info(f"MQTT loop start")
+            self.client.loop_forever()
+        except:
+            log.error(f"Unexpected exception in MQTT thread for host:{self.host} - restarting loop")
+            log.error(traceback.format_exc())
+            
 
         

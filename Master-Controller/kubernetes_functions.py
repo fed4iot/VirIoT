@@ -3,8 +3,8 @@ from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 from pprint import pprint
 
-# This variable set the node anti affinity to deploy the resources in the default zone, composed of the node without label "zone"
-zone_affinity = {'nodeAffinity': {'requiredDuringSchedulingIgnoredDuringExecution': {'nodeSelectorTerms': [{'matchExpressions': [{'key': 'zone', 'operator': 'DoesNotExist'}]}]}}}
+# This variable set the node anti affinity to deploy the resources in the default zone, composed of the node without label "viriot-zone"
+zone_affinity = {'nodeAffinity': {'requiredDuringSchedulingIgnoredDuringExecution': {'nodeSelectorTerms': [{'matchExpressions': [{'key': 'viriot-zone', 'operator': 'DoesNotExist'}]}]}}}
 
 def create_deployment(namespace, image_name, name, container_port = None, environment=None):
     api_instance_apps = kubernetes.client.AppsV1Api()
@@ -127,10 +127,10 @@ def discover_mongodb_nodeport_debug(mongodb_svc_name, working_namespace):
         return api_response.spec.ports[0].node_port
 
 
-def discover_mqtt_nodeport_debug(mongodb_svc_name, working_namespace):
+def discover_mqtt_nodeport_debug(mqtt_svc_name, working_namespace):
     api_instance_core = kubernetes.client.CoreV1Api()
     try:
-        api_response = api_instance_core.read_namespaced_service_status(mongodb_svc_name, working_namespace)
+        api_response = api_instance_core.read_namespaced_service_status(mqtt_svc_name, working_namespace)
     except ApiException as e:
         # print("Exception when calling AppsV1Api->read_namespaced_deployment_status: %s\n" % e)
         api_response = e
@@ -139,6 +139,17 @@ def discover_mqtt_nodeport_debug(mongodb_svc_name, working_namespace):
     else:
         return api_response.spec.ports[0].node_port
 
+def discover_mqtt_serviceIP_debug(mqtt_svc_name, working_namespace):
+    api_instance_core = kubernetes.client.CoreV1Api()
+    try:
+        api_response = api_instance_core.read_namespaced_service_status(mqtt_svc_name, working_namespace)
+    except ApiException as e:
+        # print("Exception when calling AppsV1Api->read_namespaced_deployment_status: %s\n" % e)
+        api_response = e
+    if api_response.status == 404:
+        return False
+    else:
+        return api_response.spec.cluster_ip
 
 def list_available_node_zone():
     api_instance = kubernetes.client.CoreV1Api()
@@ -150,7 +161,7 @@ def list_available_node_zone():
                 if "viriot-gw" in node.metadata.labels.keys():
                     zones[node.metadata.labels["viriot-zone"]] = node.metadata.labels["viriot-gw"]
                 else:
-                    # Alredy have an entry {"zone": "gw"}
+                    # Alredy have an entry {"viriot-zone": "gw"}
                     if node.metadata.labels["viriot-zone"] not in zones.keys():
                         zones[node.metadata.labels["viriot-zone"]] = ""
         return zones

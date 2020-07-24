@@ -85,7 +85,7 @@ function fromNGSILDtoNGSI(body, param, ldContext){
   for(let i in bodyData){
     //if ( i != "id" && i != "type"){
 
-    if ( i != "id" && i != "type" && i != "@context" && i != "observedAt" && i != "createdAt" && i != "modifiedAt"){//Processing attributes
+    if ( i != "id" && i != "type" && i != "@context" && i != "observedAt" && i != "createdAt" && i != "modifiedAt" && i != "TimeInstant"){//Processing attributes
       if (param.toUpperCase()=="v2".toUpperCase()) { //To NGSIv2
         matchKeyResponse =  match_key_v2_NGSILD(i, bodyData[i], "", "", "", "")
       } else if (param.toUpperCase()=="v1".toUpperCase()) { //To NGSIv1
@@ -119,6 +119,36 @@ function fromNGSILDtoNGSI(body, param, ldContext){
       } else if (param.toUpperCase()=="v1".toUpperCase()) {
         attributesv1.push({name: "dateModified", type: "DateTime", value: bodyData[i]})
       }
+
+    } else if (i == "TimeInstant"){
+      if (param.toUpperCase()=="v2".toUpperCase()) {
+        var valueTimeInstant
+
+        if (typeof bodyData[i].value["@value"] != "undefined") { //More frecuent option
+          valueTimeInstant = bodyData[i].value["@value"]
+        } else if (typeof bodyData[i].value.value != "undefined") { //Less frecuent option
+          valueTimeInstant = bodyData[i].value.value
+        } else { //Never access option...
+          valueTimeInstant = bodyData[i].value
+        }
+
+        attributes["TimeInstant"] = {value: valueTimeInstant, type: "ISO8601", metadata: {} }
+
+      } else if (param.toUpperCase()=="v1".toUpperCase()) {
+        var valueTimeInstant
+
+        if (typeof bodyData[i]["@value"] != "undefined") { //More frecuent option
+          valueTimeInstant = bodyData[i]["@value"]
+        } else if (typeof bodyData[i].value.value != "undefined") { //Less frecuent option
+          valueTimeInstant = bodyData[i].value.value
+        } else { //Never access option...
+          valueTimeInstant = bodyData[i].value
+        }
+
+        attributesv1.push({name: "TimeInstant", type: "ISO8601", value: valueTimeInstant})
+
+      }
+
     } else if (i == "observedAt"){
       //NGSI-LD DateTime format "observedAt"
       if (param.toUpperCase()=="v2".toUpperCase()) {
@@ -243,6 +273,21 @@ function match_key_v2_NGSILD(key, attribute, paramIn, paramOut, parentKey, ldRev
       //NGSI-LD DateTime format.
       metadataObject.timestamp = {value: attribute[attr], type: "DateTime"}
 
+    } else if (attr.toUpperCase() == "TimeInstant".toUpperCase()) {
+      //NGSI-LD DateTime format.
+
+      var valueTimeInstant
+
+      if (typeof attribute[attr].value["@value"] != "undefined") { //More frecuent option
+        valueTimeInstant = attribute[attr].value["@value"]
+      } else if (typeof attribute[attr].value.value != "undefined") { //Less frecuent option
+        valueTimeInstant = attribute[attr].value.value
+      } else { //Never access option...
+        valueTimeInstant = attribute[attr].value
+      }
+
+      metadataObject.TimeInstant = {value: valueTimeInstant, type: "ISO8601"}
+
     } else if (attr.toUpperCase() == "unitCode".toUpperCase()) {
 
       metadataObject.unitCode = {value: attribute[attr], type: libWrapperUtils.obtain_NGSIAttributeValue(typeof attribute[attr])}
@@ -350,6 +395,21 @@ function match_key_v1_NGSILD(key, attribute, paramIn, paramOut, parentKey, ldRev
     } else if (attr.toUpperCase() == "observedAt".toUpperCase()) {
       //metadataObject.timestamp = {name: "timestamp", value: attribute[attr], type: "DateTime"}
       metadataObject.push({name: "timestamp", value: attribute[attr], type: "DateTime"})
+
+    } else if (attr.toUpperCase() == "TimeInstant".toUpperCase()) {
+      //metadataObject.timestamp = {name: "timestamp", value: attribute[attr], type: "DateTime"}
+
+      var valueTimeInstant
+
+      if (typeof attribute["@value"] != "undefined") { //More frecuent option
+        valueTimeInstant = attribute["@value"]
+      } else if (typeof attribute[attr].value != "undefined") { //Less frecuent option
+        valueTimeInstant = attribute[attr].value
+      } else { //Never access option...
+        valueTimeInstant = attribute[attr]
+      }
+
+      metadataObject.push({name: "TimeInstant", value: valueTimeInstant, type: "ISO8601"})
 
     } else if (attr.toUpperCase() == "unitCode".toUpperCase()) {
       //metadataObject.unitCode = {name: "unitCode", value: attribute[attr], type: libWrapperUtils.obtain_NGSIAttributeValue(typeof attribute[attr])}

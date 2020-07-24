@@ -34,24 +34,12 @@ module.exports = {
 
                     "payMthd": { "type": "StructuredValue", "value": [ "Cash", "PayPal"] },
                     "payMthdCreditCard": { "type": "StructuredValue", "value": ["AmericanExpress","Discover","MasterCard","VISA"] },
-/*
-                    "policyMc": {
-                        "type": "RelationShip",
-                        "object": "urn:ngsi-ld:policy:Aparcamiento:101:Motorcycle"
-                    },
-                    "policyPC": {
-                        "type": "RelationShip",
-                        "object": "urn:ngsi-ld:policy:Aparcamiento:101:PrivateCar"
-                    },
-                    "policyMcPHolidays": {
-                        "type": "RelationShip",
-                        "object": "urn:ngsi-ld:policy:Aparcamiento:101:MotorcyclePublicHoliday"
-                    },
-                    "policyPCPHolidays": {
-                        "type": "RelationShip",
-                        "object": "urn:ngsi-ld:policy:Aparcamiento:101:PrivateCarPublicHoliday"
-                    },
-*/
+
+                    "policyMc": { "type": "Relationship", "value": "" },
+                    "policyPC": { "type": "Relationship", "value": "" },
+                    "policyMcPHolidays": { "type": "Relationship", "value": "" },
+                    "policyPCPHolidays": { "type": "Relationship", "value": "" },
+
                     "isOpen": { "type": "boolean", "value": true},
                     "monday": { "type": "StructuredValue", "value": [ { "opens": "00:00", "closes": "23:59" } ] },
                     "tuesday": { "type": "StructuredValue", "value": [ { "opens": "00:00", "closes": "23:59" } ] },
@@ -104,83 +92,55 @@ module.exports = {
                         "type" : "StructuredValue",
                         "value" : [
                             "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
-                            "https://odins.es/smartParkingOntology/parkingsite-context.jsonld"
-/* Can replace "https://odins.es/smartParkingOntology/parkingsite-context.jsonld" link
-                            {
-                                "name" : "http://purl.org/goodrelations/v1#name",
-                                //**********Places&Occupancy**********
-                                "disSpaceMc" : "http://ontology.eil.utoronto.ca/icity/Parking/hasNumDisSpaceMotorcycle",
-                                "disSpaceMcCapacity" : "http://ontology.eil.utoronto.ca/icity/Parking/hasVehicleCapacity",
-                                "disSpacePC" : "http://ontology.eil.utoronto.ca/icity/Parking/hasNumDisSpacePrivateCar",
-                                "disSpacePCCapacity" : "http://ontology.eil.utoronto.ca/icity/Parking/hasVehicleCapacity",
-                                "EVSpaceMc" : "http://ontology.eil.utoronto.ca/icity/Parking/hasNumEVSpaceMotorcycle",
-                                "EVSpaceMcCapacity" : "http://ontology.eil.utoronto.ca/icity/Parking/hasVehicleCapacity",
-                                "EVSpacePC" : "http://ontology.eil.utoronto.ca/icity/Parking/hasNumEVSpacePrivateCar",
-                                "EVSpacePCCapacity" : "http://ontology.eil.utoronto.ca/icity/Parking/hasVehicleCapacity",
-                                "numSpaceMc" : "http://ontology.eil.utoronto.ca/icity/Parking/hasNumSpaceMotorcycle",
-                                "totSpaceMcCapacity" : "http://ontology.eil.utoronto.ca/icity/Parking/hasVehicleCapacity",
-                                "numSpacePC" : "http://ontology.eil.utoronto.ca/icity/Parking/hasNumSpacePrivateCar",
-                                "totSpacePCCapacity" : "http://ontology.eil.utoronto.ca/icity/Parking/hasVehicleCapacity",
-                                //**********Maximumdimensions**********
-                                "maxHeight" : "http://ontology.eil.utoronto.ca/icity/Parking/maxAdmittableHeight",
-                                "maxLength" : "http://ontology.eil.utoronto.ca/icity/Parking/maxAdmittableLength",
-                                "maxWidth" : "http://ontology.eil.utoronto.ca/icity/Parking/maxAdmittableWidth",
-                                //**********AcceptedPaymentMethods**********
-                                "payMthd" : "http://purl.org/goodrelations/v1#acceptedPaymentMethods",
-                                "payMthdCreditCard" : "http://purl.org/goodrelations/v1#acceptedPaymentMethods",
-                                //**********Policy&Rate**********
-//                                "policyMc" : "http://ontology.eil.utoronto.ca/icity/Parking/ParkingPolicy",
-//                                "policyPC" : "http://ontology.eil.utoronto.ca/icity/Parking/ParkingPolicy",
-//                                "policyMcPHolidays" : "http://ontology.eil.utoronto.ca/icity/Parking/ParkingPolicy",
-//                                "policyPCPHolidays" : "http://ontology.eil.utoronto.ca/icity/Parking/ParkingPolicy",
-                                
-                                //**********Openhours**********
-                                "isOpen" : "http://ontology.eil.utoronto.ca/icity/Parking/isOpen",
-                                "monday" : "http://purl.org/goodrelations/v1#Monday",
-                                "tuesday" : "http://purl.org/goodrelations/v1#Tuesday",
-                                "wednesday" : "http://purl.org/goodrelations/v1#Wednesday",
-                                "thursday" : "http://purl.org/goodrelations/v1#Thursday",
-                                "friday" : "http://purl.org/goodrelations/v1#Friday",
-                                "saturday" : "http://purl.org/goodrelations/v1#Saturday",
-                                "sunday" : "http://purl.org/goodrelations/v1#Sunday",
-                                "opens" : "http://purl.org/goodrelations/v1#opens",
-                                "closes" : "http://purl.org/goodrelations/v1#closes",
-                                "pHolidays" : "http://purl.org/goodrelations/v1#PublicHolidays",
-                                
-                                //**********Services**********
-                                "carWash" : "http://ontology.eil.utoronto.ca/icity/Parking/CarWash",
-                                "valet" : "http://ontology.eil.utoronto.ca/icity/Parking/Valet",
-                                "EVCharger" : "http://ontology.eil.utoronto.ca/icity/Parking/EVCharger",
-                                "mediumEVCharger" : "http://ontology.eil.utoronto.ca/icity/Parking/MediumEVCharger",
-                                "quickEVCharger" : "http://ontology.eil.utoronto.ca/icity/Parking/QuickEVCharger",
-                                "standardEVCharger" : "http://ontology.eil.utoronto.ca/icity/Parking/StandardEVCharger",
-                                
-//                                "forzado" : "https://odins.es/smartParkingOntology/parkingProbability",
-                                
-                                //**********Contacts**********
-                                "phoneNumber" : "http://ontology.eil.utoronto.ca/icontact.owl#PhoneNumber",
-                                "phoneType" : "http://ontology.eil.utoronto.ca/icontact.owl#hasPhoneType",
-                                "areaCode" : "http://ontology.eil.utoronto.ca/icontact.owl#hasAreaCode",
-                                "countryCode" : "http://ontology.eil.utoronto.ca/icontact.owl#hasCountryCode",
-                                "contactNumber" : "http://ontology.eil.utoronto.ca/icontact.owl#hasPhoneNumber",
-                                "webSite" : "http://ontology.eil.utoronto.ca/icontact.owl#hasWebSite",
-                                "mail" : "http://ontology.eil.utoronto.ca/icontact.owl#hasEmail",
-                                
-                                //**********Location**********
-                                "address" : "http://ontology.eil.utoronto.ca/icontact.owl#Address",
-                                "country" : "http://ontology.eil.utoronto.ca/icontact.owl#hasCountry",
-                                "state" : "http://ontology.eil.utoronto.ca/icontact.owl#hasState",
-                                "city" : "http://ontology.eil.utoronto.ca/icontact.owl#hasCity",
-                                "citySection" : "http://ontology.eil.utoronto.ca/icontact.owl#hasCitySection",
-                                "streetType" : "http://ontology.eil.utoronto.ca/icontact.owl#hasStreetType",
-                                "streetDirection" : "http://ontology.eil.utoronto.ca/icontact.owl#hasStreetDirection",
-                                "streetNumber" : "http://ontology.eil.utoronto.ca/icontact.owl#hasStreetNumber",
-                                "postalCode" : "http://ontology.eil.utoronto.ca/icontact.owl#hasPostalCode",
-                                "location" : "https://schema.org/location"
-                                }
-*/                                
+                            "https://gitlab.com/Odins/fed4iot/contextfiles/-/blob/master/parkingsite-context.jsonld"
                         ]
                     }
     },
-    parkingmeter: {}   
+    parkingmeter: {},
+    policy: { 
+                "id": "urn:ngsi-ld:policy:---",
+                "type": "policy",
+                "appliesDuring": {
+                    "type": "StructuredValue",
+                    "value": [
+                        {
+                            "startTime": "00:00",
+                            "endTime": "23:59",
+                            "parkingRateWeekDay": [
+                                {
+                                    "forDuration": { "minutes": 1 },
+                                    "fromDuration": 0,
+                                    "toDuration": 0,
+                                    "monetaryCost": 0,
+                                    "minParkingCharge": { "minutes": 0 },
+                                    "maxParkingCost": 0
+                                }
+                            ],
+                            "parkingRateWeekEnd": [],
+                            "parkingRatePHolidays": [],
+                            "parkingRateWeekDayDis": [],
+                            "parkingRateWeekEndDis": [],
+                            "parkingRatePHolidaysDis": []
+                        }
+                    ]
+                },
+                "currency": { "type": "Text", "value": "EUR" },
+                "exclPHolidays": { "type": "boolean", "value": false },
+                "gracePeriod": {
+                    "type": "StructuredValue",
+                    "value": { "minutes": 0 }
+                },
+                "maxDuration": {
+                    "type": "StructuredValue",
+                    "value": { "minutes": 0 }
+                },
+                "@context": {
+                    "type": "StructuredValue",
+                    "value": [
+                        "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+                        "https://gitlab.com/Odins/fed4iot/contextfiles/-/blob/master/policy-context.jsonld"
+                    ]
+                 }
+    },
+    sector: {}
 }

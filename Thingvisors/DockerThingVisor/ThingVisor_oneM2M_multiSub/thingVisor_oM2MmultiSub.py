@@ -59,30 +59,41 @@ class httpThread(Thread):
         vtype = "None"
         ngsiLdEntities = []
         for cnt_arn in cnt_arns:
-            status, cin = F4Im2m.get_cin_latest("Mobius/"+cnt_arn, origin, CSE_url)
-            if status == 200:
-                try:
-                    value = cin['m2m:cin']['con']
-                except:
-                    print("No CIN in the container "+cnt_arn)
-            else:
-                 print("No CIN in the container "+cnt_arn)
+            try:
+                status, cin = F4Im2m.get_cin_latest("Mobius/" + cnt_arn, origin, CSE_url)
 
-            status, cnt = F4Im2m.container_get("Mobius/"+cnt_arn,origin,CSE_url)
-            if status == 200:
-                try:
-                    lbl=cnt['m2m:cnt']['lbl']
-                    vtype=lbl[0]
-                    for i in range(1,len(lbl)):
-                        vtype=vtype+","+lbl[i]
-                except:
+                if status == 200:
+                    try:
+                        value = cin['m2m:cin']['con']
+                    except:
+                        print("No CIN in the container " + cnt_arn)
+                else:
+                    print("HTTP status code:", status)
+                    print("No CIN in the container " + cnt_arn)
+            except Exception as err:
+                print("Error in F4Im2m.get_cin_latest:", err)
+
+            try:
+                status, cnt = F4Im2m.container_get("Mobius/" + cnt_arn, origin, CSE_url)
+                if status == 200:
+                    try:
+                        lbl = cnt['m2m:cnt']['lbl']
+                        vtype = lbl[0]
+                        for i in range(1, len(lbl)):
+                            vtype = vtype + "," + lbl[i]
+                    except:
+                        print("No labels for the container "+cnt_arn)
+                else:
                     print("No labels for the container "+cnt_arn)
-            else:
-                print("No labels for the container "+cnt_arn)
+            except Exception as err:
+                print("Error in F4Im2m.container_get:", err)
 
-            ngsiLdEntity1 = {"id": "urn:ngsi-ld:"+v_thing_name,
-                                     "type": vtype,
-                                     cnt_arn.replace('/', ':'): {"type": "Property", "value": value}}
+            ngsildentity_id = "urn:ngsi-ld:"+v_thing_name+':'+cnt_arn.replace('/', ':')
+            ngsildentity_cnt_arn = cnt_arn.replace('/', ':')
+
+            ngsiLdEntity1 = {"id": ngsildentity_id,
+                             "type": vtype,
+                             ngsildentity_cnt_arn: {"type": "Property", "value": value}}
             ngsiLdEntities.append(ngsiLdEntity1)
 
         data = ngsiLdEntities
@@ -101,9 +112,14 @@ class httpThread(Thread):
                 sur = str(jres['m2m:sgn']['sur'])
                 cnt_arn = '/'.join(sur.split('/')[:-1]).replace('Mobius/', '')
                 value = jres['m2m:sgn']['nev']['rep']['m2m:cin']['con']  # TODO could be a list?
-                ngsiLdEntity1 = {"id": "urn:ngsi-ld:" + v_thing_name,
+
+                ngsildentity_id = "urn:ngsi-ld:" + v_thing_name + ':' + cnt_arn.replace('/', ':')
+                ngsildentity_cnt_arn = cnt_arn.replace('/', ':')
+
+                ngsiLdEntity1 = {"id": ngsildentity_id,
                                  "type": vtype,
-                                 cnt_arn.replace('/', ':'): {"type": "Property", "value": value}}
+                                 ngsildentity_cnt_arn: {"type": "Property", "value": value}}
+
                 context_vThing.update([ngsiLdEntity1])
                 message = {"data": [ngsiLdEntity1], "meta": {"vThingID": v_thing_ID}}
                 print("topic name: " + v_thing_topic + '/' + v_thing_data_suffix + " ,message: " + json.dumps(message))
@@ -115,8 +131,8 @@ class httpThread(Thread):
                 print("Bad notification format")
                 return 'Bad notification format', 401
 
-        except:
-            print("Bad notification format")
+        except Exception as err:
+            print("Bad notification format, error:", err)
             return 'Bad notification format', 401
 
 
@@ -212,8 +228,8 @@ class mqttControlThread(Thread):
 def add_mobius_sub():
     global cnt_arns, v_thing_ID, notification_URI, CSE_url, origin, sub_rn
     for cnt_arn in cnt_arns:
-        print("Mobius subscription" + " "+origin+" "+str(notification_URI)+" "+cnt_arn+" "+CSE_url)
-        status, sub = F4Im2m.sub_create(sub_rn, origin, notification_URI, "Mobius/"+cnt_arn, CSE_url)
+        print("Mobius subscription" + " " + origin + " " + str(notification_URI) + " " + cnt_arn + " " + CSE_url)
+        status, sub = F4Im2m.sub_create(sub_rn, origin, notification_URI, "Mobius/" + cnt_arn, CSE_url)
         if status == 404:
             print(sub)
             sys.exit()
@@ -233,42 +249,29 @@ def clean():
 # main
 if __name__ == '__main__':
 
+    # For debugging purposes
+    # os.environ = {'MQTTDataBrokerIP': '172.17.0.1',
+    #                 'MQTTDataBrokerPort': 1883,
+    #                 'MQTTControlBrokerIP': '172.17.0.1',
+    #                 'MQTTControlBrokerPort': 1883,
+    #                 'params': {
+    #                            # 'CSEurl': 'https://fed4iot.eglobalmark.com',
+    #                            'CSEurl': 'http://172.17.0.1:32793',
+    #                            'origin': 'Superman',
+    #                            # 'cntArns': 'weather:Tokyo_temp/Tokyo:temp/thermometer',
+    #                            'cntArns': ['weather:Tokyo_temp/Tokyo:temp/thermometer'],
+    #                            # 'cntArns': ["Abbas123456/humidity/value","Abbas123456/temperature/value"],
+    #                            'vThingName': 'mobius_weather/Tokyo_temp',
+    #                            # 'vThingName': 'EGM-Abbas123456',
+    #                            'vThingDescription': 'OneM2M temp'
+    #                             },
+    #                 'thingVisorID': 'test-oneM2M',
+    #                 'systemDatabaseIP': '172.17.0.1',
+    #                 'systemDatabasePort': 32768}
+
+    MAX_RETRY = 3
+
     thing_visor_ID = os.environ["thingVisorID"]
-    parameters = os.environ["params"]
-    if parameters:
-        try:
-            params = json.loads(parameters.replace("'", '"'))
-            CSE_url = params['CSEurl']
-            cnt_arns = params['cntArns']  # array of source container absolute resource names
-            v_thing_name = params["vThingName"]
-            v_thing_label = v_thing_name
-            v_thing_description = params["vThingDescription"]
-            origin = params["origin"]
-        except json.decoder.JSONDecodeError:
-            # TODO manage exception
-            print("error on params (JSON) decoding")
-            os._exit(1)
-        except KeyError:
-            print(Exception.with_traceback())
-            os._exit(1)
-
-    v_thing_ID = thing_visor_ID + "/" + v_thing_name
-    v_thing = {"label": v_thing_label,
-               "id": v_thing_ID,
-               "description": v_thing_description}
-
-    MQTT_data_broker_IP = os.environ["MQTTDataBrokerIP"]
-    MQTT_data_broker_port = int(os.environ["MQTTDataBrokerPort"])
-    MQTT_control_broker_IP = os.environ["MQTTControlBrokerIP"]
-    MQTT_control_broker_port = int(os.environ["MQTTControlBrokerPort"])
-
-    sub_rn = v_thing_ID.replace("/",":") + "_subF4I"
-    vtype = ""
-
-    # Context is a "map" of current virtual thing state
-    context_vThing = Context()
-    # mapping of virtual thing with its context object. Useful in case of multiple virtual things
-    contexts = {v_thing_ID: context_vThing}
 
     # Mqtt settings
     tv_control_prefix = "TV"  # prefix name for controller communication topic
@@ -286,6 +289,57 @@ if __name__ == '__main__':
     db_port = os.environ['systemDatabasePort']  # port of system database
     db_client = MongoClient('mongodb://' + db_IP + ':' + str(db_port) + '/')
     db = db_client[db_name]
+    tv_entry = db[thing_visor_collection].find_one({"thingVisorID": thing_visor_ID})
+
+    valid_tv_entry = False
+    for x in range(MAX_RETRY):
+        if tv_entry is not None:
+            valid_tv_entry = True
+            break
+        time.sleep(3)
+
+    if not valid_tv_entry:
+        print("Error: ThingVisor entry not found for thing_visor_ID:", thing_visor_ID)
+        exit(1)
+
+    try:
+        # import paramenters from DB
+        MQTT_data_broker_IP = tv_entry["MQTTDataBroker"]["ip"]
+        MQTT_data_broker_port = int(tv_entry["MQTTDataBroker"]["port"])
+        MQTT_control_broker_IP = tv_entry["MQTTControlBroker"]["ip"]
+        MQTT_control_broker_port = int(tv_entry["MQTTControlBroker"]["port"])
+
+        parameters = tv_entry["params"]
+        if parameters:
+            params = json.loads(parameters.replace("'", '"'))
+            CSE_url = params['CSEurl']
+            cnt_arns = params['cntArns']  # array of source container absolute resource names
+            v_thing_name = params["vThingName"]
+            v_thing_label = v_thing_name
+            v_thing_description = params["vThingDescription"]
+            origin = params["origin"]
+
+
+    except json.decoder.JSONDecodeError:
+        print("error on params (JSON) decoding" + "\n")
+        exit(1)
+    except Exception as e:
+        print("Error: Parameters not found in tv_entry", e)
+        exit(1)
+
+    v_thing_ID = thing_visor_ID + "/" + v_thing_name
+    v_thing = {"label": v_thing_label,
+               "id": v_thing_ID,
+               "description": v_thing_description}
+
+    sub_rn = v_thing_ID.replace("/",":") + "_subF4I"
+    vtype = ""
+
+    # Context is a "map" of current virtual thing state
+    context_vThing = Context()
+    # mapping of virtual thing with its context object. Useful in case of multiple virtual things
+    contexts = {v_thing_ID: context_vThing}
+
     port_mapping = db[thing_visor_collection].find_one({"thingVisorID": thing_visor_ID}, {"port": 1, "_id": 0})
     poa_IP_dict = db[thing_visor_collection].find_one({"thingVisorID": thing_visor_ID}, {"IP": 1, "_id": 0})
     poa_IP = str(poa_IP_dict['IP'])

@@ -44,7 +44,8 @@ module.exports = {
 
     isGreedy: false,
     isAggregated: true,
-    isGroupingByType: true, //This param will be considered only if isGreedy has true value.
+    //isGroupingByType: true,
+    isActuator: false, //This param will be considered only if isGreedy and isAggregated have false value.
     vThingLocalIDAggregated: 'parkingsite', //To define the topic to aggregatedValue use case. 
 
     providerParams: process.env.params,
@@ -82,8 +83,8 @@ module.exports = {
     noGreedyListService: ['aparcamiento'],
 
     //Greedy Flexible configuration... define data provider servicePath in service
-    //Wildcard : '/#' (to recover all servicePath into the service).
-    noGreedyListServicePath: '/#',
+    //Wildcard : '/#' (to recover all servicePath into the service), no use '/#' in actuator TV.
+    //noGreedyListServicePath: ['/#'],
     //TODO:
     //Improvement in consideration (NO SUPPORTED):
     //Considerer specific servicepaths in each service : noGreedyListServicePath: [['/murcia','madrid','barcelona'],['/murcia']],
@@ -163,7 +164,7 @@ module.exports = {
     */
 
     smartParkingStandardDM_Service: [''],
-    
+/* DEPRECATED    
     "parkingsite_id": [],
     "parkingsite_disSpacePCCapacity": [],
     "parkingsite_maxHeight": [],
@@ -173,6 +174,6 @@ module.exports = {
     "parkingsite_webSite": [],
     "parkingsite_mail": [],
     "parkingsite_address": [],
-
+*/
     frecuency_mseg: 10000
 }

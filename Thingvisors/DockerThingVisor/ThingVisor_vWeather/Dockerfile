@@ -10,4 +10,4 @@ COPY . /app
 WORKDIR /app
 
 ENTRYPOINT []
-CMD /app/start.sh
+CMD ["/bin/bash", "./start.sh"]

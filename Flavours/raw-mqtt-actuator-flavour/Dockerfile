@@ -16,5 +16,6 @@ WORKDIR /app
 # End debug
 
 ENTRYPOINT []
-CMD /app/start.sh
+#CMD /app/start.sh
+CMD ["/bin/bash", "./start.sh"]
 EXPOSE 1883 9001

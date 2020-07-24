@@ -104,7 +104,7 @@ docker build -t fed4iot/fiware-rpz-tv -f buildImages/RPZ-TV/Dockerfile  ./
 Use the terminal with the CLI and execute
   
 ```bash  
-python3 f4i.py add-thingvisor -i fed4iot/fiware-rpz-tv -n thingVisorID_RPZ -d "thingVisorID_RPZ" -p "{'ocb_ip':'[OCB_Public_IP]', 'ocb_port':'[OCB_Port]'}"
+python3 f4i.py add-thingvisor -i fed4iot/fiware-rpz-tv -n thingVisorID_RPZ -d "thingVisorID_RPZ" -p "{'ocb_ip':'<OCB_Public_IP>', 'ocb_port':'<OCB_Port>'}"
 ```  
 
 JSON parameters are: 
@@ -138,9 +138,19 @@ If ThingVisor is properly connected you should see `vThings` information in the 
                 "label": "Service:ora # ServicePath:/#",
                 "id": "thingVisorID_RPZ/parkingmeter",
                 "description": ""
+            },
+            {
+                "label": "Service:ora # ServicePath:/#",
+                "id": "thingVisorID_RPZ/policy",
+                "description": ""
+            },
+            {
+                "label": "Service:ora # ServicePath:/#",
+                "id": "thingVisorID_RPZ/sector",
+                "description": ""
             }
         ],
-        "params": "{'ocb_ip':'[OCB_Public_IP]', 'ocb_port':'[OCB_Port]'}",
+        "params": "{'ocb_ip':'<OCB_Public_IP>', 'ocb_port':'<OCB_Port>'}",
         "MQTTDataBroker": {
             "ip": "172.17.0.1",
             "port": 1883
@@ -164,6 +174,16 @@ Open a new terminal, and make a subscription on the MQTT internal bridge to see 
 
 ```bash
 mosquitto_sub -t "#" -v
+```
+
+## End to end tests with a ORION vSilo
+
+This test shows how to receive information from Orion Context Broker (NGSIv2) of a provider in an ORION vSilo whose Docker image fed4iot/fiware-f is assumed available. The same test can be repeated for other vSilo flavours.
+
+If fed4iot/fiware-f isn't available, you can build changing  directory to `VirIoT/Flavours/orion-flavour` and running:
+
+```bash  
+./build.sh
 ```
 
 ### Add the vSilo flavours
@@ -202,5 +222,5 @@ vSilo/tenant1_Silo1/c_in {"command":"getContextResponse","data":[ ... ],"meta":{
 Finally, if you are using Orion vSilo, you can access to vSilo Broker (Orion Context Broker) to recover RPZ information, using NGSIv2 API:
 
 ```bash
-curl --location --request GET 'http://[vSiloPublicIP]:[vSiloBrokerExposePort]/v2/entities?limit=100&options=count' --header 'Accept: application/json'
+curl --location --request GET 'http://<vSiloPublicIP>:<vSiloBrokerExposePort>/v2/entities?limit=100&options=count' --header 'Accept: application/json'
 ```

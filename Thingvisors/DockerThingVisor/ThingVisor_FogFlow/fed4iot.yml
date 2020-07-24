@@ -1,0 +1,14 @@
+version: "3.5"
+services:     
+    broker:
+        image: eclipse-mosquitto        
+        ports:
+            - "1883:1883"
+        restart: always
+
+    mongo:
+        image: mongo:3.4.18        
+        ports:
+            - "27017:27017"
+        restart: always
+        

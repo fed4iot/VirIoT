@@ -44,7 +44,8 @@ module.exports = {
 
     isGreedy: false,
     isAggregated: false,
-    isGroupingByType: true, //This param will be considered only if isGreedy has true value.
+    //isGroupingByType: true,
+    isActuator: false, //This param will be considered only if isGreedy and isAggregated have false value.
     vThingLocalIDAggregated: 'parkingsite', //To define the topic to aggregatedValue use case. 
 
     providerParams: process.env.params,
@@ -83,8 +84,8 @@ module.exports = {
     noGreedyListService: ['ora'],
 
     //Greedy Flexible configuration... define data provider servicePath in service
-    //Wildcard : '/#' (to recover all servicePath into the service).
-    noGreedyListServicePath: '/#',
+    //Wildcard : '/#' (to recover all servicePath into the service), no use '/#' in actuator TV.
+    //noGreedyListServicePath: ['/#'],
     //TODO:
     //Improvement in consideration (NO SUPPORTED):
     //Considerer specific servicepaths in each service : noGreedyListServicePath: [['/murcia','madrid','barcelona'],['/murcia']],
@@ -93,7 +94,7 @@ module.exports = {
     //[], [''], or regular expresions is NO SUPPORTED.
     //noGreedyListTypes: [['Sensor'],['Sensor']],
     //noGreedyListTypes: [['Sensor','SensorBici'],['SensorTest','SensorBiciTest']],
-    noGreedyListTypes: [['Punto']],
+    noGreedyListTypes: [['Punto','policy','Sector']],
     //noGreedyListTypes: [['Sensor'],['Sensor']],
     //TODO:
     //Improvement in consideration (NO SUPPORTED):
@@ -103,21 +104,29 @@ module.exports = {
     //Wildcard : [] (to recover all attributes into the specific service/servicepath/type)
     //noGreedyListTypesAttributes: [[['libres','totales','geoposicion']],[['libres','geoposicion']]],
     //noGreedyListTypesAttributes: [[[],['libres','geoposicion']],[[],['libres','geoposicion']]],
-    noGreedyListTypesAttributes: [[['nombre','geoposicion']]],
+    noGreedyListTypesAttributes: [[
+                                    ['nombre','parkingProbability','sector','geoposicion'],  //Punto attributes to map
+                                    ['appliesDuring','currency','exclPHolidays','gracePeriod','maxDuration'],  //policy attributes to map
+                                    ['name','policy','policyPHolidays','area'] //sector attributes to map
+                                ]],
     //noGreedyListTypesAttributes: [[['nombre','libres','totales','geoposicion']],[[]]],
 
     //Greedy Flexible configuration... define destiny type for each data provider type
     //[], [''], or regular expresions is NO SUPPORTED.
     //noGreedyListDestTypes: [['parkingsite'],['bikeparkingsite']],
     //noGreedyListDestTypes: [['Sensor','SensorBici'],['parkingsite','parkingsitebike']],
-    noGreedyListDestTypes: [['parkingmeter']],
+    noGreedyListDestTypes: [['parkingmeter','policy','sector']],
     //noGreedyListDestTypes: [['parkingsite'],['Point']],
 
     //Greedy Flexible configuration... define destiny attribute name for each data provider attributes list in service/servicepath/type
     //[], [''] or regular expresions is NO SUPPORTED.
     //noGreedyListDestAttributesTypes: [[['freeParkingSpaces','totalParkingSpaces','location']],[['freeParkingSpaces','location']]],
     //noGreedyListDestAttributesTypes: [[[],['freeParkingSpaces','location']],[[],['freeParkingSpaces2','location2']]],
-    noGreedyListDestAttributesTypes: [[['name','location']]],
+    noGreedyListDestAttributesTypes: [[
+                                        ['name','parkingProbability','sector','location'], //parkingmeter attributes mapped
+                                        ['appliesDuring','currency','exclPHolidays','gracePeriod','maxDuration'], //policy attributes mapped
+                                        ['name','policy','policyPHolidays','location'] //sector attributes to mapped
+                                    ]],
     //noGreedyListDestAttributesTypes: [[['name','numSpacePC','totSpacePCCapacity','location']],[[]]],
 
     /*
@@ -169,6 +178,7 @@ module.exports = {
 
     smartParkingStandardDM_Service: [''],
 
+/* DEPRECATED
     "parkingsite_id": [],
     "parkingsite_disSpacePCCapacity": [],
     "parkingsite_maxHeight": [],
@@ -178,6 +188,6 @@ module.exports = {
     "parkingsite_webSite": [],
     "parkingsite_mail": [],
     "parkingsite_address": [],
-
+*/
     frecuency_mseg: 10000
 }

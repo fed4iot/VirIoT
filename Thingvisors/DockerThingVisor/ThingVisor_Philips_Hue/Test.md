@@ -112,7 +112,7 @@ docker build -t fed4iot/phue-actuator-tv .
 Use the terminal with the CLI and execute
   
 ```bash  
-python3 f4i.py add-thingvisor -i fed4iot/phue-actuator-tv -n pHueActuator -d "pHue actuator" -p "{'bridgeIP':'172.17.0.1', 'bridgePort':'8000'}"
+python3 f4i.py add-thingvisor -i fed4iot/phue-actuator-tv -n pHueActuator -d "pHue actuator" -p '{"bridgeIP":"172.17.0.1", "bridgePort":"8000"}'
 ```  
 
 JSON parameters are: `bridgeIP`, the IP address of the bridge (172.17.0.1 for Hue Emulator), and `bridgePort`, the port of the bridge (e.g. 5000 for the emulator, 80 for a real Hue bridge)

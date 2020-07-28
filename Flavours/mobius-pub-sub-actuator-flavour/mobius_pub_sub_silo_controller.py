@@ -1,22 +1,5 @@
 #!/usr/bin/python3
 
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-# Fed4IoT virtual Silo controller for oneM2M internal broker
-
-
-
 from bson.json_util import dumps
 from pymongo import MongoClient
 from threading import Thread
@@ -31,6 +14,8 @@ import sys
 
 sys.path.insert(0, '/app/PyLib/')
 import F4Im2m
+
+from concurrent.futures import ThreadPoolExecutor
 
 # -*- coding: utf-8 -*-
 
@@ -202,7 +187,8 @@ def send_command_out(cmd_LD_ID, cmd_LD_Type, cmd_name, cmd_value, vThingID):
     # publish changed status
     message = {"data": data, "meta": {
         "vSiloID": v_silo_id}}  # neutral-format
-    publish_on_virIoT(message, topic)
+    future = executor.submit(publish_on_virIoT, message, topic)
+    #publish_on_virIoT(message, topic)
     return
 
 
@@ -548,6 +534,9 @@ if __name__ == '__main__':
 
     db_client.close()   # Close DB connection
     print("Starting vSilo controller")
+
+    # threadPoolExecutor of size one to handle one command at a time in a fifo order
+    executor = ThreadPoolExecutor(1)
 
     # function mapping
     init_Broker = init_Mobius

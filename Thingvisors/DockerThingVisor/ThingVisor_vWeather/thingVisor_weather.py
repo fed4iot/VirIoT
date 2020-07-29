@@ -24,6 +24,8 @@ import urllib
 from pymongo import MongoClient
 from context import Context
 
+from concurrent.futures import ThreadPoolExecutor
+
 # -*- coding: utf-8 -*-
 
 
@@ -47,6 +49,9 @@ class FetcherThread(Thread):
                 # set initial context
                 contexts[v_thing_id].set_all([ngsi_ld_entity1])
 
+    def send_message(self, url, message):
+        mqtt_data_client.publish(url, message)
+    
     def run(self):
         while True:
             for city in cities:
@@ -77,7 +82,8 @@ class FetcherThread(Thread):
                     message = {"data": [ngsi_ld_entity1], "meta": {"vThingID": v_thing_id}}
                     print(str(message))
                     # publish received data to data topic by using neutral format
-                    mqtt_data_client.publish(v_thing["topic"] + '/'+v_thing_data_suffix, json.dumps(message))
+                    future = executor.submit(self.send_message, v_thing["topic"] + '/'+v_thing_data_suffix, json.dumps(message))
+                    #mqtt_data_client.publish(v_thing["topic"] + '/'+v_thing_data_suffix, json.dumps(message))
                     time.sleep(0.2)
             time.sleep(refresh_rate)
 
@@ -265,6 +271,9 @@ if __name__ == '__main__':
     port_mapping = db[thing_visor_collection].find_one({"thingVisorID": thing_visor_ID}, {"port": 1, "_id": 0})
     print("port mapping: " + str(port_mapping))
 
+    # threadPoolExecutor of size one to handle one command at a time in a fifo order
+    executor = ThreadPoolExecutor(1)
+    
     data_thread = FetcherThread()  # Thread used to fetch data
     data_thread.start()
 

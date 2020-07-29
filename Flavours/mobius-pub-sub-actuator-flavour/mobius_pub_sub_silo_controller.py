@@ -15,6 +15,8 @@ import sys
 sys.path.insert(0, '/app/PyLib/')
 import F4Im2m
 
+from concurrent.futures import ThreadPoolExecutor
+
 # -*- coding: utf-8 -*-
 
 # in control messages messages
@@ -185,7 +187,8 @@ def send_command_out(cmd_LD_ID, cmd_LD_Type, cmd_name, cmd_value, vThingID):
     # publish changed status
     message = {"data": data, "meta": {
         "vSiloID": v_silo_id}}  # neutral-format
-    publish_on_virIoT(message, topic)
+    future = executor.submit(publish_on_virIoT, message, topic)
+    #publish_on_virIoT(message, topic)
     return
 
 
@@ -531,6 +534,9 @@ if __name__ == '__main__':
 
     db_client.close()   # Close DB connection
     print("Starting vSilo controller")
+
+    # threadPoolExecutor of size one to handle one command at a time in a fifo order
+    executor = ThreadPoolExecutor(1)
 
     # function mapping
     init_Broker = init_Mobius

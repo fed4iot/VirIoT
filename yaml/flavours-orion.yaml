@@ -14,10 +14,11 @@ spec:
     spec:
       containers:
       - name: f4i-orion-f
-        image: fed4iot/orion-f:2.2
+        image: fed4iot/orion-f:latest
         ports:
         - containerPort: 27017
         - containerPort: 1026
+        - containerPort: 1030
 ---
 apiVersion: v1
 kind: Service
@@ -32,5 +33,10 @@ spec:
   ports:
   - port: 27017
     nodePort:
+    name: f4i-mongo
   - port: 1026
     nodePort:
+    name: f4i-orion
+  - port: 1030
+    nodePort:
+    name: f4i-vscontroller

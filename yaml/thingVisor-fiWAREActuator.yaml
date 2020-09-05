@@ -1,29 +1,29 @@
 apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
 kind: Deployment
 metadata:
-  name: f4i-tv-fiware
+  name: f4i-tv-fiware-actuator
 spec:
   selector:
     matchLabels:
-      app: f4i-fiware
+      app: f4i-fiware-actuator
   replicas: 1
   template:
     metadata:
       labels:
-        app: f4i-fiware
+        app: f4i-fiware-actuator
     spec:
       containers:
-      - name: f4i-fiware
-        image: fed4iot/fiware-greedy-tv:latest
+      - name: f4i-fiware-actuator
+        image: fed4iot/fiware-actuator-tv:latest
         ports:
         - containerPort: 1030
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: f4i-tv-svc-fiware
+  name: f4i-tv-svc-fiware-actuator
   labels:
-    app: f4i-fiware
+    app: f4i-fiware-actuator
 spec:
   type: NodePort
   ports:
@@ -31,4 +31,4 @@ spec:
     targetPort:
     nodePort:
   selector:
-    app: f4i-fiware
+    app: f4i-fiware-actuator

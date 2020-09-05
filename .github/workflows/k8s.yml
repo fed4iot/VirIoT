@@ -39,10 +39,13 @@ jobs:
         ./f4i.py list-thingvisors -c http://$MC_ADDR:$MC_PORT
         ./f4i.py inspect-thingvisor -c http://$MC_ADDR:$MC_PORT
         cd ..
+#    - name: Setup tmate session for debug
+#      uses: mxschmitt/action-tmate@v2
     - name: thingvisor test
       run: |
+        MQ_IP=`kubectl get svc -o wide  |grep vernemq-mqtt | awk '{print $3}' | cut -d':' -f2 | cut -d'/' -f1`
         MQ_PORT=`kubectl get svc -o wide  |grep vernemq-mqtt | awk '{print $5}' | cut -d':' -f2 | cut -d'/' -f1`
-        mosquitto_sub -C 3 -v -h 172.17.0.2 -p $MQ_PORT -t 'vThing/helloWorld/hello/data_out'
+        mosquitto_sub -C 3 -v -h $MQ_IP -p $MQ_PORT -t 'vThing/helloWorld/hello/data_out'
     - name: collect logs
       if: always()
       run: |

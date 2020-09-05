@@ -9,13 +9,11 @@ import signal
 import traceback
 import paho.mqtt.client as mqtt
 import json
-import re
 from threading import Thread
 from pymongo import MongoClient
 from bson.json_util import dumps
 
 
-regex=re.compile('^[a-z0-9](?:[a-z0-9\-]{0,61}[a-z0-9])?')
 SVC_SUFFIX = ".default.svc.cluster.local"
 # MQTT settings
 v_silo_prefix = "vSilo"  # prefix name for virtual IoT System communication topic
@@ -31,7 +29,7 @@ mqtt_virIoT_data_client = mqtt.Client()
 proxies = {
         "http": "http://viriot-nginx.default.svc.cluster.local",
 }
-vThingList = list()
+vStreams = {}
 
 
 class MqttControlThread(Thread):
@@ -52,7 +50,7 @@ class MqttControlThread(Thread):
 
 
 class proxy_thread(Thread):
-    global SVC_SUFFIX, vThingList
+    global SVC_SUFFIX, vStreams
     app = Flask(__name__)
     
     def __init__(self):
@@ -66,19 +64,23 @@ class proxy_thread(Thread):
     
     @app.route("/vstream/<path:path>",methods=["GET"])
     def proxy(path):
-        global SVC_SUFFIX
-        path_parts= path.split("/",1)
-        if len(path_parts)<1:
-            abort(404) 
-        vThingID = path_parts[0]
-        if vThingID not in vThingList:
+        found_tv_id=None
+        found_svc=None
+        for v_thing_id,tv_stream_service in vStreams.items():
+            if path.startswith(v_thing_id):
+                found_tv_id = v_thing_id.split('/',0)
+                found_svc = tv_stream_service
+                break
+        if found_tv_id is None:
             abort(404) 
         if request.method=="GET":
-            uri = "http://"+vThingID+SVC_SUFFIX+"/"+"".join(path_parts[1:])
+            path_uri=path.replace(found_tv_id+'/','')
+            uri = "http://"+tv_stream_service+'/'+path_uri
             print(uri)
             req = requests.get(uri, stream=True, proxies=proxies)
             return Response(stream_with_context(req.iter_content(chunk_size=1024000)), content_type = req.headers['content-type'])
-
+        abort(404)
+        
 # topic messages
 def on_in_control_msg(mosq, obj, msg):
     payload = msg.payload.decode("utf-8", "ignore")
@@ -98,32 +100,39 @@ def on_in_control_msg(mosq, obj, msg):
         traceback.print_exc()
         return 'invalid command'
 
+def get_vstream(v_thing_id):
+     thing_visor_id=v_thing_id.split("/")[0]
+     ########################################## STAVO LAVORANDO QUI
+
 
 def on_message_add_vThing(jres):
     # print("on_message_add_vThing")
     try:
         v_thing_id = jres['vThingID']
-        res = vThingList.append(v_thing_id.replace("/","-").replace("_","-").replace(".","-").lower())
-        print(vThingList)
-        if res:
-            # add subscription for virtual Thing control topic (on mqtt control client)
-            mqtt_virIoT_control_client.subscribe(
-                v_thing_prefix + '/' + v_thing_id + '/' + out_control_suffix)
-            mqtt_virIoT_control_client.message_callback_add(v_thing_prefix + '/' + v_thing_id + '/' + out_control_suffix,
-                                                            on_vThing_out_control)
-            return 'OK'
-        else:
-            return 'Creation fails'
+        tv_id = v_thing_id.split('/',1)[0]
+        
+        # get stream information from db
+        tvServiceName = db[thing_visor_collection].find_one({"thingVisorID": tv_id})['serviceName']
+        tv_stream_service = tvServiceName+SVC_SUFFIX
+        if tv_stream_service == "":
+            return 'no possible vstreams' 
+        vStreams[v_thing_id] = tv_stream_service
+        print(tv_stream_service)
+        # add subscription for virtual Thing control topic (on mqtt control client)
+        mqtt_virIoT_control_client.subscribe(
+            v_thing_prefix + '/' + v_thing_id + '/' + out_control_suffix)
+        mqtt_virIoT_control_client.message_callback_add(v_thing_prefix + '/' + v_thing_id + '/' + out_control_suffix,
+                                                     on_vThing_out_control)
+        return 'OK'
     except Exception as ex:
         traceback.print_exc()
         return 'ERROR'
-
 
 def on_message_delete_vThing(jres):
     print("on_message_delete_vThing")
     try:
         v_thing_id = jres['vThingID']
-        res = vThingList.delete(v_thing_id.replace("/","-").replace("_","-").replace(".","-").lower())
+        res = vStreams.delete(v_thing_id.replace("/","-").replace("_","-").replace(".","-").lower())
         # removing mqtt subscriptions and callbacks
         mqtt_virIoT_control_client.message_callback_remove(
             v_thing_prefix + '/' + v_thing_id + '/out_control')
@@ -154,10 +163,13 @@ def restore_virtual_things():
     db_client = MongoClient('mongodb://' + db_IP + ':' + str(db_port) + '/')
     db = db_client[db_name]
     connected_v_things = json.loads(
-        dumps(db[v_thing_collection].find({"vSiloID": v_silo_id}, {"vThingID": 1, "_id": 0})))
+        dumps(db[v_thing_collection].find({"vSiloID": v_silo_id}, {"vThingID": 1, "tvServiceName":1, "_id": 0})))
     if len(connected_v_things) > 0:
         for vThing in connected_v_things:
             if "vThingID" in vThing:
+                tv_id = vThing['vThingID'].split('/',1)[0]
+                tv_stream_service = db[thing_visor_collection].find_one({"thingVisorID": tv_id})['serviceName']
+                
                 print("restoring virtual thing with ID: " + vThing['vThingID'])
                 on_message_add_vThing(vThing)
 
@@ -203,6 +215,7 @@ if __name__ == '__main__':
     db_name = "viriotDB"  # name of system database
     v_thing_collection = "vThingC"
     v_silo_collection = "vSiloC"
+    thing_visor_collection = "thingVisorC"
     db_client = MongoClient('mongodb://' + db_IP + ':' + str(db_port) + '/')
     db = db_client[db_name]
     silo_entry = db[v_silo_collection].find_one({"vSiloID": v_silo_id})
@@ -248,8 +261,6 @@ if __name__ == '__main__':
 
     virIoT_proxy_broker_thread = proxy_thread()
     virIoT_proxy_broker_thread.start()
-    #virIoT_mqtt_data_thread = MqttDataThread()
-    #virIoT_mqtt_data_thread.start()
     virIoT_mqtt_control_thread = MqttControlThread()
     virIoT_mqtt_control_thread.start()
 

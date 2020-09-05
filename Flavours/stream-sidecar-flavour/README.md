@@ -1,47 +1,43 @@
-# README  (development in progress)
+# Stream Sidecar for flavour
 
-This flavour expose vThing information through a MQTT [Mosquitto](https://mosquitto.org/) broker.
-
-The flavour includes also an HTTP proxy for ThingVisor HTTP services. For each, vThing an HTTP endpoint is opened on internal port 80 (see Docker of Kubernetes port mapping to access). A VirIoT vThingID is equal to ThingVisorID/vThingName (e.g. WeatherTV/Rome_temp). The exposed HTTP endpoint is equal to `http://vstreams/ThingVisorID/vThingName`, lowercase and with not DNS subdomain characters () remapped to "-". E.g.  
-
+This sidecar container can be inserted within the Kubernetes Pod of a vSilo Flavour to provide streaming services on port 80. For each vThing of the vSilo, the sidecar connect the uri `silo-service-ip:80/vstream/vThingID` to the external HTTP endpoint bound with the vThing by the ThingVisor.
 
 ## How To Run
 
 ### Local Docker deployment
 
-Use the VirIoT CLI as admin and run the following command  (use "f4i.py add-flavour --help" for CLI parameters).
-
-```bash  
-python3 f4i.py add-flavour -f Raw-base-actuator-f -s Raw -i fed4iot/raw-mqtt-actuator-flavour -d "silo with a MQTT broker"
-```
-
-To create a vSilo run the following command (use "f4i.py create-vsilo --help" for CLI parameters).
-
-```bash  
-python3 f4i.py create-vsilo -f Raw-base-actuator-f -t tenant1 -s Silo1
-```
+Not working on Docker because it uses the POD abstraction of Kubernetes 
 
 ### Kubernetes deployment
 
-Use the VirIoT CLI as admin and run the following command  (use "f4i.py add-flavour --help" for CLI parameters).
+Update the yaml file of the Flavour by adding the sidecar container to the Deployment section, e.g.
 
-```bash  
-python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -f Raw-base-actuator-f -s Raw -d "silo with a MQTT broker" -y "yaml/flavours-raw-mqtt-actuator.yaml"
+```yaml
+    - name: stream-sidecar-f
+      image: fed4iot/stream-sidecar-flavour:latest
+      ports:
+      - containerPort: 5001
 ```
 
-To create a vSilo run the following command (use "f4i.py create-vsilo --help" for CLI parameters).
+Update the yaml file of the Flavour by adding the sidecar container port 80 to the Service section, e.g.
 
-```bash  
-python3 f4i.py create-vsilo -c http://[k8s_node_ip]:[NodePort] -f Raw-base-actuator-f -t tenant1 -s Silo1
+```yaml
+  - port: 80
+    targetPort: 5001
+    name: stream
 ```
 
+See the [flavours-raw-mqtt-actuator-stream.yaml](../../yaml/flavours-raw-mqtt-actuator-stream.yaml) as an example of the YAML of mqtt flavour with stream sidecar.
 
-## NGSI-LD Mapping
+Use the VirIoT CLI and run the following command to run the Flavour example.  The example assume that the relay thingVisor with stream is tunning, see [here](../../Thingvisors/DockerThingVisor/ThingVisor_stream_sidecar/README.md).
 
-| NGSI-LD                            |    | vSilo MQTT Topic                     |
-|------------------------------------|----|--------------------------------------|
-| entity JSON-LD                     | -> | tenantID/vThingID/NGSI-LD-Entity-ID  |
+```bash
+python3 f4i.py add-flavour -f Raw-base-actuator-f -s Raw -d "silo with a MQTT broker and HTTP proxy" -y ../yaml/flavours-raw-mqtt-actuator-stream.yaml 
+python3 f4i.py create-vsilo -f Raw-base-actuator-f -t tenant1 -s Silo1
+python3 f4i.py add-vthing -v relay-tv/timestamp
+```
 
-Each received NGSI-LD Entity information is published on the topic tenantID/vThingID/NGSI-LD-Entity-ID, where tenantID is the identifier of the tenant, vThingID is the identifier of the vThing and NGSI-LD-Entity-ID is the id of the NGSI-LD entity.
-
-To issue a command whose name is *cmd_name*, the user should connect with vSilo MQTT Topic and publish the cmd-request on the tenantID/vThingID/NGSI-LD-Entity-ID/*cmd_name* topic (see examples in the Philips Hue Actuator ThingVisor folder).
+Test with curl, where 'vsilo-service-ip' is the IP address (cluster IP, or NodePort) of the ThingVisor
+```bash
+curl vsilo-service-ip/vstream/relay-tv/timestamp/20MB.zip
+```

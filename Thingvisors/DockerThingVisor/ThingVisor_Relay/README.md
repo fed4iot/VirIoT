@@ -17,7 +17,7 @@ python3 f4i.py add-thingvisor -i fed4iot/relay-tv -n relayTV -d "relay thingviso
 Use the VirIoT CLI and run the following command to run the ThingVisor example.  The name of the ThingVisor (relayTV), the vThingName (timestamp) and the vThingType (timestamp) can be customized.
 
 ```bash
-python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -y ../yaml/thingVisor-relay.yaml -n relayTV -d "relay thingvisor in japan" -p "{'vThingName':'timestamp','vThingType':'timestamp'}"
+python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -y ../yaml/thingVisor-relay-stream.yaml -n relayTV -d "relay thingvisor with stream" -p "{'vThingName':'timestamp','vThingType':'timestamp'}"
 ```
 
 ### Data injection

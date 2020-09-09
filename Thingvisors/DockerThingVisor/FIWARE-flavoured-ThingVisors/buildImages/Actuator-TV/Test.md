@@ -134,7 +134,7 @@ docker build -t fed4iot/fiware-actuator-tv -f buildImages/Actuator-TV/Dockerfile
 Use the terminal with the CLI and execute
   
 ```bash  
-python3 f4i.py add-thingvisor -i fed4iot/fiware-actuator-tv -n thingVisorID_Actuator -d "thingVisorID_Actuator" -p "{'ocb_ip':'<OCB_Public_IP>', 'ocb_port':'<OCB_Port>', 'ocb_service':['demo1'],'ocb_servicePath':['/demo']}"
+python3 f4i.py add-thingvisor -i fed4iot/fiware-actuator-tv -n thingvisorid-actuator -d "thingvisorid-actuator" -p "{'ocb_ip':'<OCB_Public_IP>', 'ocb_port':'<OCB_Port>', 'ocb_service':['demo1'],'ocb_servicePath':['/demo']}"
 ```  
 
 JSON parameters are: 
@@ -175,12 +175,12 @@ If ThingVisor is properly connected you should see `vThings` information in the 
             "1030/tcp": "33220"
         },
         "status": "running",
-        "thingVisorID": "thingVisorID_Actuator",
-        "tvDescription": "thingVisorID_Actuator",
+        "thingVisorID": "thingvisorid-actuator",
+        "tvDescription": "thingvisorid-actuator",
         "vThings": [
             {
                 "description": "",
-                "id": "thingVisorID_Actuator/Device0",
+                "id": "thingvisorid-actuator/Device0",
                 "label": "Type:Device # Service:demo1 # ServicePath:/demo"
             }
         ],
@@ -219,19 +219,19 @@ You should observe the following messages on the internal MQTT broker.
 ### command request
 
 ```bash
-vThing/thingVisorID_Actuator/Device0/data_in {"meta":{"vSiloID":"tenant1_Silo1"},"data":[{"id":"urn:ngsi-ld:Device:001","type":"Device","start":{"type":"Property","value":{"cmd-value": "","cmd-qos":"0","cmd-id":"001","cmd-nuri":["viriot:vSilo/tenant1_Silo1/data_in"]}}}]}
+vThing/thingvisorid-actuator/Device0/data_in {"meta":{"vSiloID":"tenant1_Silo1"},"data":[{"id":"urn:ngsi-ld:Device:001","type":"Device","start":{"type":"Property","value":{"cmd-value": "","cmd-qos":"0","cmd-id":"001","cmd-nuri":["viriot:vSilo/tenant1_Silo1/data_in"]}}}]}
 ```
 
 ### Provider property update
 
 ```bash
-vThing/thingVisorID_Actuator/Device0/data_out {"data":[{"type":"Device","TimeInstant":{"type":"Property","value":"2020-06-04T13:28:44.639Z"},"isOpen":{"type":"Property","value":"true","TimeInstant":{"type":"Property","value":"2020-06-04T13:28:44.639Z"}},"name":{"type":"Property","value":"Device:001 provision","TimeInstant":{"type":"Property","value":"2020-06-04T13:28:44.639Z"}},"commands":{"type":"Property","value":["start","stop"]},"@context":["https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"],"id":"urn:ngsi-ld:Device:001"}],"meta":{"vThingID":"thingVisorID_Actuator/Device0"}}
+vThing/thingvisorid-actuator/Device0/data_out {"data":[{"type":"Device","TimeInstant":{"type":"Property","value":"2020-06-04T13:28:44.639Z"},"isOpen":{"type":"Property","value":"true","TimeInstant":{"type":"Property","value":"2020-06-04T13:28:44.639Z"}},"name":{"type":"Property","value":"Device:001 provision","TimeInstant":{"type":"Property","value":"2020-06-04T13:28:44.639Z"}},"commands":{"type":"Property","value":["start","stop"]},"@context":["https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"],"id":"urn:ngsi-ld:Device:001"}],"meta":{"vThingID":"thingvisorid-actuator/Device0"}}
 ```
 
 ### command request & result
 
 ```bash
-vSilo/tenant1_Silo1/data_in {"data":[{"id":"urn:ngsi-ld:Device:001","type":"Device","start-result":{"type":"Property","value":{"cmd-value":"","cmd-qos":"0","cmd-id":"001","cmd-nuri":["viriot:vSilo/tenant1_Silo1/data_in"],"cmd-result":"OK"},"TimeInstant":{"type":"Property","value":"2020-06-04T13:28:44.643Z"}},"start-status":{"type":"Property","value":{"cmd-value":"","cmd-qos":"0","cmd-id":"001","cmd-nuri":["viriot:vSilo/tenant1_Silo1/data_in"],"cmd-status":"OK"},"TimeInstant":{"type":"Property","value":"2020-06-04T13:28:44.643Z"}}}],"meta":{"vThingID":"thingVisorID_Actuator/Device0"}}
+vSilo/tenant1_Silo1/data_in {"data":[{"id":"urn:ngsi-ld:Device:001","type":"Device","start-result":{"type":"Property","value":{"cmd-value":"","cmd-qos":"0","cmd-id":"001","cmd-nuri":["viriot:vSilo/tenant1_Silo1/data_in"],"cmd-result":"OK"},"TimeInstant":{"type":"Property","value":"2020-06-04T13:28:44.643Z"}},"start-status":{"type":"Property","value":{"cmd-value":"","cmd-qos":"0","cmd-id":"001","cmd-nuri":["viriot:vSilo/tenant1_Silo1/data_in"],"cmd-status":"OK"},"TimeInstant":{"type":"Property","value":"2020-06-04T13:28:44.643Z"}}}],"meta":{"vThingID":"thingvisorid-actuator/Device0"}}
 
 ```
 
@@ -281,14 +281,14 @@ python3 f4i.py list-vsilos
 ### Add the vThing to the vSilo
 
 ```bash
-python3 f4i.py add-vthing -v thingVisorID_Actuator/Device0 -t tenant1 -s Silo1
+python3 f4i.py add-vthing -v thingvisorid-actuator/Device0 -t tenant1 -s Silo1
 ```
 
 Now, you must find the message exchange on the MQTT broker monitor:
 
 ```bash
-vThing/thingVisorID_Actuator/Device0/c_in {"command":"getContextRequest","vSiloID":"tenant1_Silo1","vThingID":"thingVisorID_Actuator/Device0"}
-vSilo/tenant1_Silo1/c_in {"command":"getContextResponse","data":[{"type":"Device","TimeInstant":{"type":"Property","value":"2020-06-04T14:06:02.304Z"},"isOpen":{"type":"Property","value":"true","TimeInstant":{"type":"Property","value":"2020-06-04T14:06:02.304Z"}},"name":{"type":"Property","value":"Device:001 provision","TimeInstant":{"type":"Property","value":"2020-06-04T14:06:02.304Z"}},"commands":{"type":"Property","value":["start","stop"]},"@context":["https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"],"id":"urn:ngsi-ld:Device:001"}],"meta":{"vThingID":"thingVisorID_Actuator/Device0"}}
+vThing/thingvisorid-actuator/Device0/c_in {"command":"getContextRequest","vSiloID":"tenant1_Silo1","vThingID":"thingvisorid-actuator/Device0"}
+vSilo/tenant1_Silo1/c_in {"command":"getContextResponse","data":[{"type":"Device","TimeInstant":{"type":"Property","value":"2020-06-04T14:06:02.304Z"},"isOpen":{"type":"Property","value":"true","TimeInstant":{"type":"Property","value":"2020-06-04T14:06:02.304Z"}},"name":{"type":"Property","value":"Device:001 provision","TimeInstant":{"type":"Property","value":"2020-06-04T14:06:02.304Z"}},"commands":{"type":"Property","value":["start","stop"]},"@context":["https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"],"id":"urn:ngsi-ld:Device:001"}],"meta":{"vThingID":"thingvisorid-actuator/Device0"}}
 ```
 
 Finally, if you are using Orion vSilo, you can access to vSilo Broker (Orion Context Broker) to recover entities information, you change to [Test subfolder](./Test) and run [broker-vSilo-monitor.sh](./Test/broker-vSilo-monitor.sh), to do it you need the broker exposed port of vSilo previously obtained:

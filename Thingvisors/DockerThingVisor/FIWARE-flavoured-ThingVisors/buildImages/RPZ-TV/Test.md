@@ -104,7 +104,7 @@ docker build -t fed4iot/fiware-rpz-tv -f buildImages/RPZ-TV/Dockerfile  ./
 Use the terminal with the CLI and execute
   
 ```bash  
-python3 f4i.py add-thingvisor -i fed4iot/fiware-rpz-tv -n thingVisorID_RPZ -d "thingVisorID_RPZ" -p "{'ocb_ip':'<OCB_Public_IP>', 'ocb_port':'<OCB_Port>'}"
+python3 f4i.py add-thingvisor -i fed4iot/fiware-rpz-tv -n thingvisorid-rpz -d "thingvisorid-rpz" -p "{'ocb_ip':'<OCB_Public_IP>', 'ocb_port':'<OCB_Port>'}"
 ```  
 
 JSON parameters are: 
@@ -124,11 +124,11 @@ If ThingVisor is properly connected you should see `vThings` information in the 
 ```json
 [
     {
-        "thingVisorID": "thingVisorID_RPZ",
+        "thingVisorID": "thingvisorid-rpz",
         "status": "running",
         "yamlFiles": null,
         "creationTime": "****-**-**T**:**:**.******",
-        "tvDescription": "thingVisorID_RPZ",
+        "tvDescription": "thingvisorid-rpz",
         "containerID": "66ba4e567f5d100c527c02f53a6fc39c191a4d5609fca9b2d91a8adbaf1a90c5",
         "imageName": "fed4iot/fiware-rpz-tv",
         "ipAddress": "172.17.0.3",
@@ -136,17 +136,17 @@ If ThingVisor is properly connected you should see `vThings` information in the 
         "vThings": [
             {
                 "label": "Service:ora # ServicePath:/#",
-                "id": "thingVisorID_RPZ/parkingmeter",
+                "id": "thingvisorid-rpz/parkingmeter",
                 "description": ""
             },
             {
                 "label": "Service:ora # ServicePath:/#",
-                "id": "thingVisorID_RPZ/policy",
+                "id": "thingvisorid-rpz/policy",
                 "description": ""
             },
             {
                 "label": "Service:ora # ServicePath:/#",
-                "id": "thingVisorID_RPZ/sector",
+                "id": "thingvisorid-rpz/sector",
                 "description": ""
             }
         ],
@@ -209,14 +209,14 @@ python3 f4i.py list-vsilos
 ### Add the vThing parkingmeter one to the vSilo
 
 ```bash
-python3 f4i.py add-vthing -v thingVisorID_RPZ/parkingmeter -t tenant1 -s Silo1
+python3 f4i.py add-vthing -v thingvisorid-rpz/parkingmeter -t tenant1 -s Silo1
 ```
 
 Now, you must find the message exchange on the MQTT broker monitor:
 
 ```bash
-vThing/thingVisorID_RPZ/parkingmeter/c_in ; payload: {"command":"getContextRequest","vSiloID":"tenant1_Silo1","vThingID":"thingVisorID_RPZ/parkingmeter"}
-vSilo/tenant1_Silo1/c_in {"command":"getContextResponse","data":[ ... ],"meta":{"vThingID":"thingVisorID_RPZ/parkingmeter"}}
+vThing/thingvisorid-rpz/parkingmeter/c_in ; payload: {"command":"getContextRequest","vSiloID":"tenant1_Silo1","vThingID":"thingvisorid-rpz/parkingmeter"}
+vSilo/tenant1_Silo1/c_in {"command":"getContextResponse","data":[ ... ],"meta":{"vThingID":"thingvisorid-rpz/parkingmeter"}}
 ```
 
 Finally, if you are using Orion vSilo, you can access to vSilo Broker (Orion Context Broker) to recover RPZ information, using NGSIv2 API:

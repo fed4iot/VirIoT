@@ -643,7 +643,7 @@ clientMosquittoMqttData.on("message", async function(topic, payload) {
                             }
                     ],
                     "meta":{
-                            "vThingID":"thingVisorID_Actuator/Device"
+                            "vThingID":"thingvisorid-actuator/Device"
                     }
                 }
             */

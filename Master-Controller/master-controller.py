@@ -47,6 +47,7 @@ import data.settings as settings
 import db_setup
 import kubernetes_functions as k8s
 import requests
+import re
 
 # public IP address through the which it is possible to access thingvisors, database, vSilos, etc.
 default_gateway_IP = settings.default_gateway_IP
@@ -220,7 +221,9 @@ def create_virtual_silo_on_kubernetes(v_silo_id, v_silo_name, tenant_id, flavour
                     print("Deployment Creation")
                     yaml["spec"]["selector"]["matchLabels"]["siloID"] = label_app
                     yaml["spec"]["template"]["metadata"]["labels"]["siloID"] = label_app
-                    yaml["spec"]["template"]["spec"]["containers"][0]["env"] = k8s.convert_env(env)
+                    for container in yaml["spec"]["template"]["spec"]["containers"]:
+                        container["env"] = k8s.convert_env(env)
+                    #yaml["spec"]["template"]["spec"]["containers"][0]["env"] = k8s.convert_env(env)
                     if deploy_zone is not None and deploy_zone:
                         yaml["spec"]["template"]["spec"]["nodeSelector"] = {"viriot-zone": deploy_zone["zone"]}
                         gateway_IP = deploy_zone["gw"] if "gw" in deploy_zone.keys() else default_gateway_IP
@@ -449,16 +452,18 @@ def create_thing_visor_on_kubernetes(tv_img_name, debug_mode, tv_id, tv_params, 
                 if yaml["kind"] == "Deployment":
                     print("Deployment Creation")
                     yaml["metadata"]["name"] += "-" + tv_id.lower().replace("_", "-")
-                    yaml["spec"]["template"]["spec"]["containers"][0]["env"] = k8s.convert_env(env)
+                    #yaml["spec"]["template"]["spec"]["containers"][0]["env"] = k8s.convert_env(env)
+                    #tv_img_name = yaml["spec"]["template"]["spec"]["containers"][0]["image"]
+                    for container in  yaml["spec"]["template"]["spec"]["containers"]:
+                        container["env"] = k8s.convert_env(env)
+                        tv_img_name = container["image"]
+                        url = "https://hub.docker.com/v2/repositories/%s" % tv_img_name.split(":")[0]
+                        response = requests.head(url, allow_redirects=True)
+                        if not response.status_code == 200:
+                            raise docker.errors.ImageNotFound("ImageNotFound")
                     yaml["spec"]["selector"]["matchLabels"]["thingVisorID"] = label_app
                     yaml["spec"]["template"]["metadata"]["labels"]["thingVisorID"] = label_app
-                    tv_img_name = yaml["spec"]["template"]["spec"]["containers"][0]["image"]
-
-                    url = "https://hub.docker.com/v2/repositories/%s" % tv_img_name.split(":")[0]
-                    response = requests.head(url, allow_redirects=True)
-                    if not response.status_code == 200:
-                        raise docker.errors.ImageNotFound("ImageNotFound")
-
+                    
                     if deploy_zone is not None and deploy_zone:
 
                         yaml["spec"]["template"]["spec"]["nodeSelector"] = {"viriot-zone": deploy_zone["zone"]}
@@ -616,14 +621,13 @@ def add_flavour_on_kubernetes(image_name, flavour_id, flavour_params, flavour_de
 
         for yaml in yaml_files:
             if yaml["kind"] == "Deployment":
-                image_name = yaml["spec"]["template"]["spec"]["containers"][0]["image"]
-                break
-
-        url = "https://hub.docker.com/v2/repositories/%s" % image_name.split(":")[0]
-        response = requests.head(url, allow_redirects=True)
-        if not response.status_code == 200:
-            raise docker.errors.ImageNotFound("ImageNotFound")
-
+                for container in yaml["spec"]["template"]["spec"]["containers"]:
+                    image_name = container["image"]
+                    url = "https://hub.docker.com/v2/repositories/%s" % image_name.split(":")[0]
+                    response = requests.head(url, allow_redirects=True)
+                    if not response.status_code == 200:
+                        raise docker.errors.ImageNotFound("ImageNotFound")
+                        
         print("Creation of Flavour on k8s")
         db[flavour_collection].update_one({"flavourID": flavour_id},
                                           {"$set": {"flavourParams": flavour_params,
@@ -1092,6 +1096,11 @@ class httpThread(Thread):
                 return json.dumps({"message": "operation not allowed"}), 401
             # docker image name must do not contains upper case characters
 
+            tv_id_dns = dns_subdomain_converter(tv_id)
+            if tv_id != tv_id_dns:
+                print ("Add fails - ThingVisorID must be a subdomain name")
+                return json.dumps({"message": "Add fails - ThingVisorID must be a subdomain name, regex('^[a-z0-9](?:[a-z0-9\-]{0,61}[a-z0-9])?') - suggested name is: "+tv_id_dns}), 409
+
             if not (tv_img_name.islower() or tv_img_name == ""):
                 return json.dumps({"message": "Add fails - image name must be lowercase"}), 409
             # check thingVisor ID in the database
@@ -1353,6 +1362,97 @@ class httpThread(Thread):
             print(traceback.format_exc())
             return json.dumps({"message": 'Inspect fails'}), 401
 
+    @app.route('/setVThingEndpoint', methods=['POST'])
+    @jwt_required
+    def recv_set_vthing_endpoint():
+        global db, mqttc
+        # print ("enter create, POST body: "+str(jres))
+        # create the message mqttMsg to be sent to the stream sidecar of the thingvisor        try:
+        try:    
+            print(request.json)
+            v_thing_id = request.json.get('vThingID', None)
+            endpoint = request.json.get('endpoint', None)
+            
+            if not User(get_jwt_identity()).check_admin_permission(db, user_collection):
+                httpThread.app.logger.warn('%s tried to set vThing endpoint', get_jwt_identity())
+                return json.dumps({"message": "operation not allowed"}), 401
+
+            # check presence of necessary paramenters in the request
+            if  (v_thing_id is None) or (endpoint is None):
+                return json.dumps({"message": 'Set endpoint fails - request must contain vThingID and endpoint keys'}), 409
+            
+            # check on system database if the virtual thing exists
+            if db[thing_visor_collection].count({"vThings.id": v_thing_id}) == 0:
+                return json.dumps({"message": 'Set endpoint fails - virtual thing does not exist'}), 409
+            
+            # check TV status, must be "running"
+            tv_id = v_thing_id.split('/',1)[0]
+            if (db[thing_visor_collection].find_one(
+                {"thingVisorID": tv_id}, {"status": 1, "_id": 0}))["status"] != STATUS_RUNNING:
+                return json.dumps({"message": 'Set endpoint fails - ThingVisor ' + tv_id + 'is not ready'}), 409
+                
+            mqtt_msg = {"command": "setVThingEndpoint", "vThingID": v_thing_id,"endpoint": endpoint}
+
+        except Exception:
+            print(traceback.format_exc())
+            return json.dumps({"message": 'Set fails'}), 401
+
+        mqttc.publish(thing_visor_prefix + "/" + tv_id + "/" + in_control_suffix, json.dumps(mqtt_msg))
+
+        # update system database
+        vthings_of_tv = db[thing_visor_collection].find_one({"vThings.id": v_thing_id})['vThings']
+        for vt in vthings_of_tv:
+            if vt['id'] == v_thing_id:
+                vt['endpoint'] = endpoint
+                db[thing_visor_collection].update_one({"vThings.id": v_thing_id},{"$set" : {"vThings" :vthings_of_tv}})
+                break
+        return json.dumps({"message": 'vThing endpoint created'}), 201
+
+    @app.route('/delVThingEndpoint', methods=['POST'])
+    @jwt_required
+    def recv_del_vthing_endpoint():
+        global db, mqttc
+        # print ("enter create, POST body: "+str(jres))
+        # create the message mqttMsg to be sent to the stream sidecar of the thingvisor        try:
+        try:    
+            print(request.json)
+            v_thing_id = request.json.get('vThingID', None)
+            
+            if not User(get_jwt_identity()).check_admin_permission(db, user_collection):
+                httpThread.app.logger.warn('%s tried to set vThing endpoint', get_jwt_identity())
+                return json.dumps({"message": "operation not allowed"}), 401
+
+            # check presence of necessary paramenters in the request
+            if  (v_thing_id is None) :
+                return json.dumps({"message": 'Del endpoint fails - request must contain vThingID'}), 409
+            
+            # check on system database if the virtual thing exists
+            if db[thing_visor_collection].count({"vThings.id": v_thing_id}) == 0:
+                return json.dumps({"message": 'Add endpoint fails - virtual thing does not exist'}), 409
+            
+            # check TV status, must be "running"
+            tv_id = v_thing_id.split('/',1)[0]
+            if (db[thing_visor_collection].find_one(
+                {"thingVisorID": tv_id}, {"status": 1, "_id": 0}))["status"] != STATUS_RUNNING:
+                return json.dumps({"message": 'Del endpoint fails - ThingVisor ' + tv_id + 'is not ready'}), 409
+                
+            mqtt_msg = {"command": "delVThingEndpoint", "vThingID": v_thing_id}
+
+        except Exception:
+            print(traceback.format_exc())
+            return json.dumps({"message": 'Del fails'}), 401
+
+        mqttc.publish(thing_visor_prefix + "/" + tv_id + "/" + in_control_suffix, json.dumps(mqtt_msg))
+
+        # update system database
+        vthings_of_tv = db[thing_visor_collection].find_one({"vThings.id": v_thing_id})['vThings']
+        for vt in vthings_of_tv:
+            if vt['id'] == v_thing_id:
+                if 'endpoint' in vt.keys():
+                    del vt['endpoint']
+                    db[thing_visor_collection].update_one({"vThings.id": v_thing_id},{"$set" : {"vThings" :vthings_of_tv}})
+                break
+        return json.dumps({"message": 'vThing endpoint deleted'}), 201
 
 # Follow the definition of mqtt callbacks
 def on_message_destroy_TV_ack_on_docker(jres):
@@ -1379,7 +1479,7 @@ def on_message_destroy_TV_ack_on_kubernetes(jres):
         tv_entry = db[thing_visor_collection].find_one_and_delete({"thingVisorID": tv_id})
         if not tv_entry["debug_mode"]:
 
-            print("Delete Deployment %s" % tv_id)
+            print("Delete Deployment and Service of %s" % tv_id)
             deployment_name = tv_entry["deploymentName"]
             service_name = tv_entry["serviceName"]
 
@@ -1434,7 +1534,7 @@ def on_message_destroy_v_silo_ack_on_docker(jres):
         # Remove mqtt subscription to silo control topics
         mqttc.message_callback_remove(v_silo_prefix + '/' + v_silo_id + '/' + out_control_suffix)
         mqttc.unsubscribe(v_silo_prefix + '/' + v_silo_id + '/' + out_control_suffix)
-        print('destroyed ' + str(silo_res.deleted_count) + ' silos')
+        print('destroyed ' + str(silo_res.deleted_count) + ' vSilos')
         print('destroyed ' + str(thing_res.deleted_count) + ' vThings')
         print('Silo ' + v_silo_id + ' destroyed')
         return
@@ -1477,9 +1577,9 @@ def on_message_destroy_v_silo_ack_on_kubernetes(jres):
         # Remove mqtt subscription to silo control topics
         mqttc.message_callback_remove(v_silo_prefix + '/' + v_silo_id + '/' + out_control_suffix)
         mqttc.unsubscribe(v_silo_prefix + '/' + v_silo_id + '/' + out_control_suffix)
-        print('destroyed ' + str(silo_res.deleted_count) + ' silos')
+        print('destroyed ' + str(silo_res.deleted_count) + ' vSilos')
         print('destroyed ' + str(thing_res.deleted_count) + ' vThings')
-        print('Silo ' + v_silo_id + ' destroyed')
+        print('vSilo ' + v_silo_id + ' destroyed')
         return
     else:
         print('VSilo destroy fails with vSiloID ' + v_silo_id)
@@ -1494,7 +1594,7 @@ def on_message_create_vThing(jres):
         # check TV status, must be "running"
         if (db[thing_visor_collection].find_one(
                 {"thingVisorID": tv_id}, {"status": 1, "_id": 0}))["status"] != STATUS_RUNNING:
-            print("WARNING Add fails - thing Visor " + tv_id + " is not ready")
+            print("WARNING Add fails - ThingVisor " + tv_id + " is not ready")
             return
 
         # Check if vThing already exists
@@ -1797,6 +1897,17 @@ def mqtt_broker_connection_on_kubernetes():
     else:
         mqttc.connect(MQTT_control_broker_IP, MQTT_control_broker_port, 30)
 
+def dns_subdomain_converter(s):
+    regex=re.compile('^[a-z0-9](?:[a-z0-9\-]{0,61}[a-z0-9])?')
+    s = s.lower()
+    ls = list(s)
+    while True:
+        last=regex.match(s).span()[1]
+        if last == len(s):
+            break
+        ls[last]='-'
+        s=''.join(ls)
+    return(s)
 
 if __name__ == '__main__':
     global working_namespace

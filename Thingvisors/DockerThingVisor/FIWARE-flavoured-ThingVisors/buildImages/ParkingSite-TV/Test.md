@@ -104,7 +104,7 @@ docker build -t fed4iot/fiware-parkingsite-tv -f buildImages/ParkingSite-TV/Dock
 Use the terminal with the CLI and execute
   
 ```bash  
-python3 f4i.py add-thingvisor -i fed4iot/fiware-parkingsite-tv -n thingVisorID_ParkingSite -d "thingVisorID_ParkingSite" -p "{'ocb_ip':'<OCB_Public_IP>', 'ocb_port':'<OCB_Port>'}"
+python3 f4i.py add-thingvisor -i fed4iot/fiware-parkingsite-tv -n thingvisorid-parkingsite -d "thingvisorid-parkingsite" -p "{'ocb_ip':'<OCB_Public_IP>', 'ocb_port':'<OCB_Port>'}"
 ```  
 
 JSON parameters are: 
@@ -143,17 +143,17 @@ If ThingVisor is properly connected you should see `vThings` information in the 
             "1030/tcp": "32803"
         },
         "status": "running",
-        "thingVisorID": "thingVisorID_ParkingSite",
-        "tvDescription": "thingVisorID_ParkingSite",
+        "thingVisorID": "thingvisorid-parkingsite",
+        "tvDescription": "thingvisorid-parkingsite",
         "vThings": [
             {
                 "label": "Service:aparcamiento # ServicePath:/#",
-                "id": "thingVisorID_ParkingSite/parkingsite",
+                "id": "thingvisorid-parkingsite/parkingsite",
                 "description": ""
             },
             {
                 "label": "Service:aparcamiento # ServicePath:/#",
-                "id": "thingVisorID_ParkingSite/policy",
+                "id": "thingvisorid-parkingsite/policy",
                 "description": ""
             }
         ],
@@ -204,14 +204,14 @@ python3 f4i.py list-vsilos
 ### Add the vThing parkingsite one to the vSilo
 
 ```bash
-python3 f4i.py add-vthing -v thingVisorID_ParkingSite/parkingsite -t tenant1 -s Silo1
+python3 f4i.py add-vthing -v thingvisorid-parkingsite/parkingsite -t tenant1 -s Silo1
 ```
 
 Now, you must find the message exchange on the MQTT broker monitor:
 
 ```bash
-vThing/thingVisorID_ParkingSite/parkingsite/c_in {"command":"getContextRequest","vSiloID":"tenant1_Silo1","vThingID":"thingVisorID_ParkingSite/parkingsite"}
-vSilo/tenant1_Silo1/c_in {"command":"getContextResponse","data":[ ... ],"meta":{"vThingID":"thingVisorID_ParkingSite/parkingsite"}}
+vThing/thingvisorid-parkingsite/parkingsite/c_in {"command":"getContextRequest","vSiloID":"tenant1_Silo1","vThingID":"thingvisorid-parkingsite/parkingsite"}
+vSilo/tenant1_Silo1/c_in {"command":"getContextResponse","data":[ ... ],"meta":{"vThingID":"thingvisorid-parkingsite/parkingsite"}}
 ```
 
 Finally, if you are using Orion vSilo, you can access to vSilo Broker (Orion Context Broker) to recover parking sites information, using NGSIv2 API:

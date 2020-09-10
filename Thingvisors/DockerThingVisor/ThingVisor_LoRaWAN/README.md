@@ -6,7 +6,7 @@ Provide a framework to implement thingVisors connecting vThings to devices throu
 
 The base command is like this:
 ```bash
-python f4i.py add-thingvisor -c http://127.0.0.1:8090 -i fed4iot/lorawan-tv -n CSCAM01 -p "{'chirpstack_mqtt_server':'172.17.0.2','chirpstack_mqtt_port':'8883', 'chirpstack_cafile':$(base64 -w0 '/path/to/ca.crt'), 'chirpstack_crtfile':$(base64 -w0 '/path/to/user.crt'), 'chirpstack_keyfile':$(base64 -w0 '/path/to/user.key'), 'devices=[{{'type':'smartcam', 'label':'SC-ABC', 'appid':'12', 'deveui':'0123456789ABCDEF'}}]}
+python f4i.py add-thingvisor -c http://127.0.0.1:8090 -i fed4iot/lorawan-tv -n cscam01 -p "{'chirpstack_mqtt_server':'172.17.0.2','chirpstack_mqtt_port':'8883', 'chirpstack_cafile':$(base64 -w0 '/path/to/ca.crt'), 'chirpstack_crtfile':$(base64 -w0 '/path/to/user.crt'), 'chirpstack_keyfile':$(base64 -w0 '/path/to/user.key'), 'devices=[{{'type':'smartcam', 'label':'SC-ABC', 'appid':'12', 'deveui':'0123456789ABCDEF'}}]}
 ```
 
 The thingVisor connects to the MQTT broker of the Chirpstack LoRaWAN server, it thus needs to know the server address and port (variables chirpstack_mqtt_server, chirpstack_mqtt_port). Optionally it can also identify itself using a certificate (variables chirpstack_cafile, chirpstack_crtfile, chirpstack_keyfile), note that it's the content of these files which is base64 encoded into the parameters string. 

@@ -17,13 +17,11 @@ class VThing(metaclass=abc.ABCMeta) :
         self.context = Context()
 
 
-    @abc.abstractmethod
     def get_context(self):
         """ 
         Returns the NGSI-LD structure as a python dictionnary
-        Abstract function : Must be implemented by subclasses
         """
-        None
+        return self.context.serialize()
 
     def publish_data(self, data):
         self.thingvisor.publish(f"vThing/{self.id}/data_out", data)

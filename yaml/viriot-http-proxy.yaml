@@ -1,0 +1,96 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: viriot-nginx-conf
+data:
+  viriot-nginx.conf: |
+    user nginx;
+    worker_processes  1;
+    error_log  /var/log/nginx/error.log;
+    events {
+      worker_connections  10240;
+    }
+    http {
+        log_format  main
+                'remote_addr:$remote_addr\t'
+                'time_local:$time_local\t'
+                'method:$request_method\t'
+                'uri:$request_uri\t'
+                'host:$host\t'
+                'status:$status\t'
+                'bytes_sent:$body_bytes_sent\t'
+                'referer:$http_referer\t'
+                'useragent:$http_user_agent\t'
+                'forwardedfor:$http_x_forwarded_for\t'
+                'request_time:$request_time';
+
+        # access_log	/var/log/nginx/access.log main;
+        access_log off;
+        proxy_cache_path /tmp/cache levels=1:2 keys_zone=my_cache:10m max_size=10g inactive=60m;
+        server {
+                listen       80;
+                server_name  _;
+                location / {
+                    resolver 10.96.0.10 ; # may or may not be necessary.
+                    proxy_cache my_cache;
+                    proxy_cache_valid any 48h;
+                    proxy_buffering on;
+                    add_header X-Proxy-Cache $upstream_cache_status;
+                    proxy_pass http://$http_host$uri$is_args$args;
+                }
+        }
+    }
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: viriot-nginx
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+        app: viriot-nginx
+  template:
+    metadata:
+      labels:
+        app: viriot-nginx
+    spec:
+      containers:
+      - name: viriot-nginx
+        image: nginx
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - mountPath: /etc/nginx # mount nginx-conf volumn to /etc/nginx
+          readOnly: true
+          name: viriot-nginx-conf
+        - mountPath: /var/log/nginx
+          name: log
+      volumes:
+      - name: viriot-nginx-conf
+        configMap:
+          name: viriot-nginx-conf # place ConfigMap `nginx-conf` on /etc/nginx
+          items:
+            - key: viriot-nginx.conf
+              path: nginx.conf
+      - name: log
+        emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: viriot-nginx
+spec:
+  ports:
+    - port: 80
+      protocol: TCP
+  selector:
+    app: viriot-nginx
+  topologyKeys:
+    - kubernetes.io/hostname
+    - "*"
+
+
+

@@ -1,6 +1,7 @@
 VERSION = "0.1.0"
 
 import logging
+import json
 
 log_handler = logging.StreamHandler()
 log_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -10,7 +11,7 @@ root_logger.addHandler(log_handler)
 root_logger.setLevel(logging.DEBUG)
 
 log = logging.getLogger(__name__)
-log.info("Logging setup done")
+log.info(f"LoRaWAN ThingVisor - {VERSION}")
 
 # ####
 
@@ -18,15 +19,39 @@ import os, json, time
 from base64 import b64decode
 
 from viriot import VThing, ThingVisor
+from ThermometerController import ThermometerController
 from SmartCamController import SmartCamController
 from helpers.mqtt import MqttBroker
 from helpers.chirpstack import AppController
-from helpers.data_model import SmartCamera, CameraEventDetector, Site
+from helpers.data_model import SmartCamera, CameraEventDetector, Site, Thermometer
 
 def do_nothing():
     """ A small helper function that does nothing """
     None
 
+
+class VThing_Thermometer(VThing, ThermometerController):
+    def __init__(self, id, label, deveui, csapp, params):
+        log.debug(f"Creating thermometer vThing:{id}:{label}:{deveui}")
+        VThing.__init__(self, id, label, label)
+        ThermometerController.__init__(self,deveui,csapp)
+        self.thermometer = Thermometer(f"{deveui}")
+        self.context.register(self.thermometer)
+
+        site_params = params.get("site")
+        self.site = Site(site_params["id"])
+        self.thermometer.set_site(self.site)
+        self.context.register(self.site)
+        
+    def on_uplink_decoded(self, msg):
+        log.debug(f"THERMOMETER UPLINK : {msg.topic} : {msg.payload}")
+        data = json.loads(msg.payload)
+        temperature = next((prop['v'] for prop in data if prop['n']=='temperature'), None)
+        humidity =  next((prop['v'] for prop in data if prop['n']=='humidity'), None)
+        self.site.temperature = temperature
+        self.site.humidity = humidity
+        log.info(f"THERMOMETER {self.id} update T:{temperature} H:{humidity}")
+        self.publish_context()
     
 class VThing_SmartCam(VThing, SmartCamController):
     def __init__(self, id, label, deveui, csapp, params):
@@ -48,9 +73,6 @@ class VThing_SmartCam(VThing, SmartCamController):
             self.context.register(self.data_model_site)
             # TODO : more Site parameters
 
-    def get_context(self):
-        return self.context.serialize()
-
     def event_person_count(self):
         None
 
@@ -59,12 +81,11 @@ class VThing_SmartCam(VThing, SmartCamController):
     
 
 device_manager_builder = {
-    'smartcam' : VThing_SmartCam
+    'smartcam' : VThing_SmartCam,
+    'thermometer' : VThing_Thermometer
 }
-        
 
 
-    
 def after_connect():
 
     log.debug("ThingVisor connected to MQTT brokers. Now configuring devices.")
@@ -79,6 +100,7 @@ def after_connect():
         device_params = device.get("params")
         csapp = csapp_list.get(appid)
         if(csapp is None):
+            log.debug(f"Creating new app controller:{appid}")
             csapp = AppController(appid, csbroker)
             csapp_list[appid] = csapp
         
@@ -89,11 +111,11 @@ def after_connect():
         
         vthing_creator = device_manager_builder.get(devtype)
         if (vthing_creator) :
-            vthing = vthing_creator(devid, label, deveui, csapp, params)
+            vthing = vthing_creator(devid, label, deveui, csapp, device_params)
             thingvisor.register(vthing)
             v_things.append(vthing)
         else :
-            log.error(f"Unknown device type:{devtype}")
+            log.error(f"Unknown device type:{devtype} / {device_manager_builder}")
 
 
 def create_file_with_content(fname,content):
@@ -105,9 +127,7 @@ def create_file_with_content(fname,content):
 
 if __name__ == '__main__':
 
-    log.info("-- Starting Smartcam ThingVisor --")
-    log.info(f"VERSION {VERSION}")
-    log.debug(f"Environment : {os.environ}")
+    #log.debug(f"Environment : {os.environ}")
     
     # Viriot pub/sub system
     MQTT_data_broker_IP = os.environ["MQTTDataBrokerIP"]
@@ -122,9 +142,6 @@ if __name__ == '__main__':
     thingvisor.start()
     
     params = os.environ["params"]
-    print('---')
-    print(params)
-    print('---')
     params = json.loads(params.replace("'", '"'))
 
     # Smart cams broker

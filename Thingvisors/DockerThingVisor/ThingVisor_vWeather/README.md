@@ -9,7 +9,7 @@ This ThingVisor fetches  data from [OpenWeatherMap](openweathermap.org) and crea
 Use the VirIoT CLI and run the following command in case of Rome and Tokyo, with a refresh rate equal to 10 seconds  
 
 ```bash
-f4i.py add-thingvisor -i fed4iot/v-weather-tv:2.2 -n WeatherTV -d "Weather ThingVisor fetching data from open weather" -p "{'cities':['Rome', 'Tokyo'], 'rate':'10'}"
+f4i.py add-thingvisor -i fed4iot/v-weather-tv:2.2 -n weathertv -d "Weather ThingVisor fetching data from open weather" -p "{'cities':['Rome', 'Tokyo'], 'rate':'10'}"
 ```
 
 ## Kubernetes deployment
@@ -19,7 +19,7 @@ The `-z` argument is optional, it can be used to specify the deployment zone. If
 Kubernetes will randomly choose a node in the default zone.
 
 ```bash
-python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n WeatherTV -d "Weather ThingVisor fetching data from open weather" -p '{"cities":["Rome", "Tokyo"], "rate":10}' -y "../yaml/thingVisor-weather.yaml" -z Japan  
+python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n weathertv -d "Weather ThingVisor fetching data from open weather" -p '{"cities":["Rome", "Tokyo"], "rate":10}' -y "../yaml/thingVisor-weather.yaml" -z Japan  
 ```
 
 
@@ -27,7 +27,7 @@ python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n WeatherTV -d
 
 Each vThing of a city (e.g. Tokyo) is internally represented by the following entities
 
-## Thermometer vThingID: "WeatherTV/Tokyo_temp"
+## Thermometer vThingID: "weathertv/Tokyo_temp"
 
 ```json
 {
@@ -37,7 +37,7 @@ Each vThing of a city (e.g. Tokyo) is internally represented by the following en
 }
 ```
 
-## Hygrometer vThingID : "WeatherTV/Tokyo_humidity"
+## Hygrometer vThingID : "weathertv/Tokyo_humidity"
 
 ```json
 {
@@ -47,7 +47,7 @@ Each vThing of a city (e.g. Tokyo) is internally represented by the following en
 }
 ```
 
-## Barometer vThingID : "WeatherTV/Tokyo_pressure"
+## Barometer vThingID : "weathertv/Tokyo_pressure"
 
 ```json
 {

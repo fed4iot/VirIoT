@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: f4i-murcia-parkingsite
-        image: fed4iot/fiware-parkingsite-tv:2.4
+        image: fed4iot/fiware-parkingsite-tv:latest
         ports:
         - containerPort: 1030
 ---

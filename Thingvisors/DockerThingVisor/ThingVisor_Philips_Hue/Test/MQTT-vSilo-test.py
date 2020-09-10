@@ -8,8 +8,8 @@ vSiloBrokerIP = "172.17.0.4"
 vSiloBrokerPort = 1883
 client_mqtt = mqtt.Client()
 client_mqtt.connect(vSiloBrokerIP, vSiloBrokerPort, 10)
-entity_id = "pHueActuator:light1"
-vThingID = "pHueActuator/light1"
+entity_id = "phueactuator:light1"
+vThingID = "phueactuator/light1"
 tenantID = "tenant1"
 topic_prefix = tenantID+"/"+vThingID+"/"+entity_id+"/"
 
@@ -35,7 +35,7 @@ for hue in range(1,65535,5000):
     time.sleep(0.5)  
 
 time.sleep(1) 
-# switch off light 2
+# switch off light 1
 command = "set-on"
 topic = topic_prefix + command  
 print(topic)

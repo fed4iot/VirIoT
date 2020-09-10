@@ -9,7 +9,7 @@ This ThingVisor is a dummy ThingVisor showing basic actuator functionality. It e
 Use the VirIoT CLI and run the following command to run the ThingVisor actuator example.  
 
 ```bash
-python3 f4i.py add-thingvisor -i fed4iot/helloworld-actuator-tv -n helloWorldTV -d "hello thingvisor"
+python3 f4i.py add-thingvisor -i fed4iot/helloworld-actuator-tv -n helloworldtv -d "hello thingvisor"
 ```
 
 ### Kubernetes deployment
@@ -19,7 +19,7 @@ The `-z` argument is optional, it can be used to specify the deployment zone. If
 Kubernetes will randomly choose a node in the default zone.
 
 ```bash
-python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n helloWorldTV -d "hello thingvisor" -y "yaml/thinghVisor-helloWorldActuator.yaml"
+python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n helloworldtv -d "hello thingvisor" -y "yaml/thinghVisor-helloWorldActuator.yaml"
 ```
 
 
@@ -29,7 +29,7 @@ The NGSI-LD entity of Lamp01 is the following:
 
 ```json
 {
- "id": "urn:ngsi-ld:helloWorldTV:Lamp01",
+ "id": "urn:ngsi-ld:helloworldtv:Lamp01",
  "type": "Lamp",
  "status": {
   "type": "Property",

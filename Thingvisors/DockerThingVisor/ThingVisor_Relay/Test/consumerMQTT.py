@@ -57,7 +57,7 @@ if __name__ == '__main__':
         parser.add_argument('-p', action='store', dest='serverPort', 
                             help='MQTT vSilo Server Port (default: 32776) ', default='32776')
         parser.add_argument('-v', action='store', dest='vThingID', 
-                            help='vThingID (default: relayTV/timestamp) ', default='relayTV/timestamp')
+                            help='vThingID (default: relay-tv/timestamp) ', default='relay-tv/timestamp')
                             
         argcomplete.autocomplete(parser)
         args = parser.parse_args()

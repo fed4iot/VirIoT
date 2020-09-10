@@ -146,7 +146,7 @@ if __name__ == '__main__':
         parser.add_argument('-m', action='store', dest='testMode', 
                             help='Test mode [HTTP, MQTT]: HTTP notification or MQTT notification (default HTTP)', default='HTTP')
         parser.add_argument('-v', action='store', dest='vThingID', 
-                            help='vThingID (default: relayTV/timestamp) ', default='relayTV/timestamp')
+                            help='vThingID (default: relay-tv/timestamp) ', default='relay-tv/timestamp')
         argcomplete.autocomplete(parser)
         args = parser.parse_args()
 

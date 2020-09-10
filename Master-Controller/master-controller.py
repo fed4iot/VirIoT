@@ -100,6 +100,12 @@ container_manager = settings.container_manager
 
 # working_namespace = ""
 
+# kubernetes patch for list_node API
+from kubernetes.client.models.v1_container_image import V1ContainerImage
+def names(self, names):
+    self._names = names
+V1ContainerImage.names = names
+
 
 def create_virtual_silo_on_docker(v_silo_id, v_silo_name, tenant_id, flavour_params,
                                   debug_mode, flavour_image_name, flavour_id, yaml_files=None, deploy_zone=None):

@@ -13,8 +13,8 @@ Not working on Docker because it uses the POD abstraction of Kubernetes
 Update the yaml file of the ThingVisor by adding the sidecar container to the Deployment section, e.g.
 
 ```yaml
-    - name: f4i-stream-sidecar
-      image: fed4iot/stream-sidecar-tv
+    - name: f4i-http-sidecar
+      image: fed4iot/http-sidecar-tv
       ports:
       - containerPort: 5001
 ```
@@ -24,7 +24,7 @@ Update the yaml file of the ThingVisor by adding the sidecar container port 80 t
 ```yaml
   - port: 80
     targetPort: 5001
-    name: stream
+    name: http
 ```
 
 See the [thingVisor-relay-stream.yaml](../../../yaml/thingVisor-relay-stream.yaml) as an example of the YAML of relay ThingVisor with stream sidecar.
@@ -32,7 +32,7 @@ See the [thingVisor-relay-stream.yaml](../../../yaml/thingVisor-relay-stream.yam
 Use the VirIoT CLI and run the following command to run the ThingVisor example.  The name of the ThingVisor (relay-tv), the vThingName (timestamp) and the vThingType (timestamp) can be customized.
 
 ```bash
-python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -y ../yaml/thingVisor-relay-stream.yaml -n relay-tv -d "relay thingvisor with stream" -p "{'vThingName':'timestamp','vThingType':'timestamp'}"
+python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -y ../yaml/thingVisor-relay-http.yaml -n relay-tv -d "relay thingvisor with stream" -p "{'vThingName':'timestamp','vThingType':'timestamp'}"
 ```
 
 Add an endpoint to the `timestamp` vThing through the CLI

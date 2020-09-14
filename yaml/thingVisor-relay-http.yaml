@@ -17,8 +17,8 @@ spec:
         image: fed4iot/relay-tv
         ports:
         - containerPort: 8089
-      - name: f4i-stream-sidecar
-        image: fed4iot/stream-sidecar-tv
+      - name: f4i-http-sidecar
+        image: fed4iot/http-sidecar-tv
         ports:
         - containerPort: 5001
 ---
@@ -37,6 +37,6 @@ spec:
     name: input
   - port: 80
     targetPort: 5001
-    name: stream
+    name: http
   selector:
     app: f4i-relay

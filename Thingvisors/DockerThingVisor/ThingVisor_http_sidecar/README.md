@@ -1,6 +1,6 @@
-# ThingVisor Stream Sidecar
+# ThingVisor HTTP Sidecar
 
-This sidecar container can be inserted within the Kubernetes Pod of a ThingVisor to provide streaming services on port 80. For each vThing of the ThingVisor, the sidecar can connect the uri `tv-service-ip:80/vThingName` to an external HTTP endpoint. The endpoint can be configured through the Master-Controller REST resource `setVThingEndpoint` or the CLI `set-vthing-endpoint` command
+This sidecar container can be inserted within the Kubernetes Pod of a ThingVisor to provide HTTP services on port 80. For each vThing of the ThingVisor, the sidecar can connect the uri `tv-svc-ip:80/vThingName` to an external HTTP endpoint. The endpoint can be configured through the Master-Controller REST resource `setVThingEndpoint` or the CLI `set-vthing-endpoint` command
 
 ## How To Run
 
@@ -27,12 +27,12 @@ Update the yaml file of the ThingVisor by adding the sidecar container port 80 t
     name: http
 ```
 
-See the [thingVisor-relay-stream.yaml](../../../yaml/thingVisor-relay-stream.yaml) as an example of the YAML of relay ThingVisor with stream sidecar.
+See the [thingVisor-relay-http.yaml](../../../yaml/thingVisor-relay-http.yaml) as an example of the YAML of relay ThingVisor with http sidecar.
 
 Use the VirIoT CLI and run the following command to run the ThingVisor example.  The name of the ThingVisor (relay-tv), the vThingName (timestamp) and the vThingType (timestamp) can be customized.
 
 ```bash
-python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -y ../yaml/thingVisor-relay-http.yaml -n relay-tv -d "relay thingvisor with stream" -p "{'vThingName':'timestamp','vThingType':'timestamp'}"
+python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -y ../yaml/thingVisor-relay-http.yaml -n relay-tv -d "relay thingvisor with http" -p "{'vThingName':'timestamp','vThingType':'timestamp'}"
 ```
 
 Add an endpoint to the `timestamp` vThing through the CLI

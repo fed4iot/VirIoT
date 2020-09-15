@@ -62,6 +62,27 @@ kubectl label nodes <NodeName> topology.kubernetes.io/zone=<ZoneName>
 kubectl get nodes -L viriot-gw -L topology.kubernetes.io/zone  
 ```   
 
+A possible output for a configuratin made of a default (vm2,vm3,vm4) an a japan (vmjp1,vmjp2) zones is the following one
+
+
+```bash
+kubectl get nodes -L viriot-zone,viriot-gw,viriot-zone-gw,topology.kubernetes.io/zone
+
+NAME                  STATUS   ROLES    AGE   VERSION   VIRIOT-ZONE   VIRIOT-GW       VIRIOT-ZONE-GW   ZONE
+
+vm1                   Ready    master   61d   v1.18.5                                                  
+
+vm2                   Ready    <none>   61d   v1.18.5   default       13.80.153.4     true             default
+
+vm3                   Ready    <none>   61d   v1.18.5   default       13.80.153.4                      default
+
+vm4                   Ready    <none>   61d   v1.18.5   default       13.80.153.4                      default
+
+vmjp1                 Ready    <none>   61d   v1.17.0   japan         13.78.102.196   true             japan
+
+vmjp2                 Ready    <none>   61d   v1.17.4   japan         13.78.102.196                    japan
+
+``` 
 
 ### Setup MQTT cluster for control/telemetry data from k8s master node (one VerneMQ broker per node)
 

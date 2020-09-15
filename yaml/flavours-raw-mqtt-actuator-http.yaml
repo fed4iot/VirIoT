@@ -18,8 +18,8 @@ spec:
         ports:
         - containerPort: 1883
         - containerPort: 9001
-      - name: stream-sidecar-f
-        image: fed4iot/stream-sidecar-flavour:latest
+      - name: http-sidecar-f
+        image: fed4iot/http-sidecar-flavour:latest
         ports:
         - containerPort: 5001
 ---
@@ -43,4 +43,4 @@ spec:
   - port: 80
     targetPort: 5001
     nodePort:
-    name: stream
+    name: http

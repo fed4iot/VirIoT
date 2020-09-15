@@ -26,14 +26,14 @@ data:
 
         # access_log	/var/log/nginx/access.log main;
         access_log off;
-        proxy_cache_path /tmp/cache levels=1:2 keys_zone=my_cache:10m max_size=10g inactive=60m;
+        proxy_cache_path /tmp/cache levels=1:2 keys_zone=my_cache:10m max_size=10g inactive=10m;
         server {
                 listen       80;
                 server_name  _;
                 location / {
                     resolver 10.96.0.10 ; # may or may not be necessary.
                     proxy_cache my_cache;
-                    proxy_cache_valid any 48h;
+                    proxy_cache_valid any 5m;
                     proxy_buffering on;
                     add_header X-Proxy-Cache $upstream_cache_status;
                     proxy_pass http://$http_host$uri$is_args$args;
@@ -47,7 +47,7 @@ kind: Deployment
 metadata:
   name: viriot-nginx
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
         app: viriot-nginx
@@ -56,6 +56,8 @@ spec:
       labels:
         app: viriot-nginx
     spec:
+      nodeSelector:
+        viriot-zone-gw: "true"
       containers:
       - name: viriot-nginx
         image: nginx
@@ -90,6 +92,7 @@ spec:
     app: viriot-nginx
   topologyKeys:
     - kubernetes.io/hostname
+    - topology.kubernetes.io/zone
     - "*"
 
 

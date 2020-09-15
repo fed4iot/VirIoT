@@ -1,0 +1,42 @@
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: f4i-tv-relay
+spec:
+  selector:
+    matchLabels:
+      app: f4i-relay
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: f4i-relay
+    spec:
+      containers:
+      - name: f4i-relay
+        image: fed4iot/relay-tv
+        ports:
+        - containerPort: 8089
+      - name: f4i-http-sidecar
+        image: fed4iot/http-sidecar-tv
+        ports:
+        - containerPort: 5001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: f4i-tv-svc-relay
+  labels:
+    app: f4i-relay
+spec:
+  type: NodePort
+  ports:
+  - port: 8089
+    targetPort: 8089
+    nodePort:
+    name: input
+  - port: 80
+    targetPort: 5001
+    name: http
+  selector:
+    app: f4i-relay

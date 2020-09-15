@@ -35,6 +35,7 @@ spec:
   ports:
   - port: 7579
     nodePort:
+    name: mobius
   - port: 80
     targetPort: 5001
     nodePort:

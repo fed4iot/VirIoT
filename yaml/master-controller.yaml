@@ -22,7 +22,7 @@ spec:
                 operator: DoesNotExist
       containers:
       - name: f4i-master-controller
-        image: fed4iot/master-controller:3.0
+        image: fed4iot/master-controller:latest
         ports:
         - containerPort: 8090
         volumeMounts:

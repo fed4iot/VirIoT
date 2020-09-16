@@ -23,17 +23,22 @@ jobs:
     - name: thingvisor setup
       run: |
         MC_ADDR=172.17.0.2
-        kubectl label nodes kind-control-plane gw=$MC_ADDR
+        kubectl label nodes kind-control-plane viriot-gw=$MC_ADDR
+        kubectl label nodes kind-control-plane viriot-zone=default
+        
+        kubectl label nodes kind-control-plane viriot-zone-gw=true
+        
         kubectl apply -f ./yaml/viriot-configmap-setup.yaml
         kubectl apply -f ./yaml/mongo-statefulset-noauth.yaml
-        kubectl apply -f ./yaml/vernemq-affinity.yaml
+        kubectl apply -f ./yaml/vernemq-affinity-nodeport.yaml
         sleep 15
+        kubectl expose statefulset/
         kubectl apply -f ./yaml/master-controller.yaml
         sleep 50
         MC_PORT=`kubectl get svc -o wide  |grep master-contro | awk '{print $5}' | cut -d':' -f2 | cut -d'/' -f1`
         cd CLI
         ./f4i.py login -u admin -p passw0rd -c http://$MC_ADDR:$MC_PORT
-        ./f4i.py add-thingvisor -y ../yaml/thingVisor-helloWorld${{ matrix.runtime }}.yaml -c http://$MC_ADDR:$MC_PORT
+        ./f4i.py add-thingvisor -y ../yaml/thingVisor-helloWorld${{ matrix.runtime }}.yaml -c http://$MC_ADDR:$MC_PORT -n helloworld-tv
         ./f4i.py add-thingvisor -y ../yaml/thingVisor-weather.yaml -n weather -c http://$MC_ADDR:$MC_PORT
         sleep 15
         ./f4i.py list-thingvisors -c http://$MC_ADDR:$MC_PORT
@@ -45,7 +50,7 @@ jobs:
       run: |
         MQ_IP=`kubectl get svc -o wide  |grep vernemq-mqtt | awk '{print $3}' | cut -d':' -f2 | cut -d'/' -f1`
         MQ_PORT=`kubectl get svc -o wide  |grep vernemq-mqtt | awk '{print $5}' | cut -d':' -f2 | cut -d'/' -f1`
-        mosquitto_sub -C 3 -v -h $MQ_IP -p $MQ_PORT -t 'vThing/helloWorld/hello/data_out'
+        mosquitto_sub -C 3 -v -h $MQ_IP -p $MQ_PORT -t 'vThing/helloworld-tv/hello/data_out'
     - name: collect logs
       if: always()
       run: |

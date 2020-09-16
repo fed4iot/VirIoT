@@ -60,8 +60,12 @@ $python3 consumer.py
 
 ### Usage
 
+First you need to download model parameters  
+"yolov3-tiny.weights"
+
 ```bash
 $cd onem2m-yolo-counter/src/
+$wget https://pjreddie.com/media/files/yolov3-tiny.weights
 $python3 main.py
 ```
 

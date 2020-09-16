@@ -7,7 +7,7 @@ import time
 vSiloBrokerIP = "172.17.0.5"
 port = "7579"
 
-url_prefix = "http://"+vSiloBrokerIP+":" + port +"/Mobius/pHueActuator:light2/pHueActuator:light1/"
+url_prefix = "http://"+vSiloBrokerIP+":" + port +"/Mobius/phueactuator:light1/phueactuator:light1/"
 
 headers = {
         'accept': "application/json",
@@ -17,7 +17,7 @@ headers = {
         'cache-control': "no-cache",
 }
 
-# switch on light 2
+# switch on light 1
 for i in range(2):
     command = "set-on"
     url = url_prefix+command

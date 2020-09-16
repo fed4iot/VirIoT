@@ -24,6 +24,8 @@ import f4i_logout
 import f4i_register
 import f4i_unregister
 import f4i_update_thingvisor
+import f4i_set_vthing_endpoint
+import f4i_del_vthing_endpoint
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -68,6 +70,14 @@ if __name__ == '__main__':
     # delete-thingvisor
     parser_dh = subparsers.add_parser('del-thingvisor', help='delete thing thingvisor')
     f4i_delete_thingvisor.init_args(parser_dh)
+
+    # set-vthing-endpoint
+    parser_at = subparsers.add_parser('set-vthing-endpoint', help='set virtual thing http endpoint for streaming services')
+    f4i_set_vthing_endpoint.init_args(parser_at)
+
+    # del-vthing-endpoint
+    parser_at = subparsers.add_parser('del-vthing-endpoint', help='del virtual thing http endpoint for streaming services')
+    f4i_del_vthing_endpoint.init_args(parser_at)
 
     # add-vthing
     parser_at = subparsers.add_parser('add-vthing', help='add virtual thing to a tenant')

@@ -10,7 +10,7 @@ For instance, next CLI command runs a ThingVisor connected to the OneM2M server 
 the "Abbas123456/humidity/value" and "Abbas123456/temperature/value" oneM2M containers and creates a vThing named "EGM-Abbas123456". The related oneM2M applicatin entity (AE) is "Abbas123456"
 
 ```bash
-python3 f4i.py add-thingvisor -i fed4iot/onem2m-multisub-tv:2.2 -n EGM-Abbass-multiple -d "OneM2M data from EGM Abbass sensor (temperature and humidity)" -p '{"CSEurl":"https://fed4iot.eglobalmark.com","origin":"Superman","cntArns":["Abbas123456/humidity/value","Abbas123456/temperature/value"],"vThingName":"EGM-Abbas123456","vThingDescription":"OneM2M data from multiple EGM Abbass sensors"}'
+python3 f4i.py add-thingvisor -i fed4iot/onem2m-multisub-tv:latest -n egm-abbass-multiple -d "OneM2M data from EGM Abbass sensor (temperature and humidity)" -p '{"CSEurl":"https://fed4iot.eglobalmark.com","origin":"Superman","cntArns":["Abbas123456/humidity/value","Abbas123456/temperature/value"],"vThingName":"EGM-Abbas123456","vThingDescription":"OneM2M data from multiple EGM Abbass sensors"}'
 ```
 
 ## NGSI-LD data model
@@ -19,7 +19,7 @@ The vThing of the ThingVisor internally publishes a NGSI-LD entity whose name is
 
 ```json
 [{
-    "id": "urn:ngsi-ld:EGM-Abbas123456:Abbas123456:humidity:value",
+    "id": "urn:ngsi-ld:egm-abbas123456:Abbas123456:humidity:value",
     "type": "Abbas123456",
     "Abbas123456:humidity:value": {
       "type": "Property", 

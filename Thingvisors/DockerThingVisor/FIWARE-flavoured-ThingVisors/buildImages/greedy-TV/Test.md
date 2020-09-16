@@ -104,7 +104,7 @@ docker build -t fed4iot/fiware-greedy-tv -f buildImages/greedy-TV/Dockerfile  ./
 Use the terminal with the CLI and execute
   
 ```bash  
-python3 f4i.py add-thingvisor -i fed4iot/fiware-greedy-tv -n thingVisorID_Greedy -d "thingVisorID_Greedy" -p "{'ocb_ip':'<OCB_Public_IP>', 'ocb_port':'<OCB_Port>','ocb_service':['bicis','aparcamiento','ora']}"
+python3 f4i.py add-thingvisor -i fed4iot/fiware-greedy-tv -n thingvisorid-greedy -d "thingvisorid-greedy" -p "{'ocb_ip':'<OCB_Public_IP>', 'ocb_port':'<OCB_Port>','ocb_service':['bicis','aparcamiento','ora']}"
 ```  
 
 JSON parameters are: 
@@ -123,11 +123,11 @@ If ThingVisor is properly connected you should see `vThings` information in the 
 
 ```json
     {
-        "thingVisorID": "thingVisorID_Greedy",
+        "thingVisorID": "thingvisorid-greedy",
         "status": "running",
         "yamlFiles": null,
         "creationTime": "****-**-**T**:**:**.******",
-        "tvDescription": "thingVisorID_Greedy",
+        "tvDescription": "thingvisorid-greedy",
         "containerID": "980f33b6154afce21ee01df18c680d5c25551a122d30d27d8ac7578dbb8527b2",
         "imageName": "fed4iot/fiware-greedy-tv",
         "ipAddress": "172.17.0.3",
@@ -135,27 +135,27 @@ If ThingVisor is properly connected you should see `vThings` information in the 
         "vThings": [
             {
                 "label": "Type:Sensor # Service:bicis # ServicePath:/#",
-                "id": "thingVisorID_Greedy/0",
+                "id": "thingvisorid-greedy/0",
                 "description": ""
             },
             {
                 "label": "Type:Sensor # Service:aparcamiento # ServicePath:/#",
-                "id": "thingVisorID_Greedy/1",
+                "id": "thingvisorid-greedy/1",
                 "description": ""
             },
             {
                 "label": "Type:Punto # Service:ora # ServicePath:/#",
-                "id": "thingVisorID_Greedy/2",
+                "id": "thingvisorid-greedy/2",
                 "description": ""
             },
             {
                 "label": "Type:Venta # Service:ora # ServicePath:/#",
-                "id": "thingVisorID_Greedy/3",
+                "id": "thingvisorid-greedy/3",
                 "description": ""
             },
             {
                 "label": "Type:Sector # Service:ora # ServicePath:/#",
-                "id": "thingVisorID_Greedy/4",
+                "id": "thingvisorid-greedy/4",
                 "description": ""
             }
         ],
@@ -218,14 +218,14 @@ python3 f4i.py list-vsilos
 ### Add the vThing greedy one to the vSilo
 
 ```bash
-python3 f4i.py add-vthing -v thingVisorID_Greedy/0 -t tenant1 -s Silo1
+python3 f4i.py add-vthing -v thingvisorid-greedy/0 -t tenant1 -s Silo1
 ```
 
 Now, you must find the message exchange on the MQTT broker monitor:
 
 ```bash
-vThing/thingVisorID_Greedy/0/c_in {"command":"getContextRequest","vSiloID":"tenant1_Silo1","vThingID":"thingVisorID_Greedy/0"}
-vSilo/tenant1_Silo1/c_in {"command":"getContextResponse","data":[ ... ],,"meta":{"vThingID":"thingVisorID_Greedy/0"}}
+vThing/thingvisorid-greedy/0/c_in {"command":"getContextRequest","vSiloID":"tenant1_Silo1","vThingID":"thingvisorid-greedy/0"}
+vSilo/tenant1_Silo1/c_in {"command":"getContextResponse","data":[ ... ],,"meta":{"vThingID":"thingvisorid-greedy/0"}}
 ```
 
 Finally, if you are using Orion vSilo, you can access to vSilo Broker (Orion Context Broker) to recover greedy information, using NGSIv2 API:

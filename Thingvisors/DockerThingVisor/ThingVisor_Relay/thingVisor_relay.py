@@ -1,31 +1,3 @@
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-# Fed4IoT ThingVisor copying data from a oneM2M (Mobius) container
-
 import sys
 import traceback
 import paho.mqtt.client as mqtt
@@ -46,9 +18,37 @@ sys.path.insert(0, 'PyLib/')
 app = Flask(__name__)
 flask_port = 8089
 
+from concurrent.futures import ThreadPoolExecutor
+
+def publish(message):
+    print("topic name: " + v_thing_topic + '/' + data_out_suffix + " ,message: " + json.dumps(message))
+    mqtt_data_client.publish(v_thing_topic + '/' + data_out_suffix,json.dumps(message))
+
+@app.route('/notify', methods=['POST'])
+def recv_notify():
+    try:
+        r = request.get_json()
+        if type(r) is dict:
+            jres = r
+        else:
+            jres = json.loads(r)
+        ngsiLdEntity1 = {"id": v_thing_ID_LD,"type": v_thing_type_attr,
+            "@context": [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]}
+        msg={}
+        msg['type'] = "Property"
+        msg['value'] = jres
+        ngsiLdEntity1['msg']=msg
+        context_vThing.update([ngsiLdEntity1])
+        message = {"data": [ngsiLdEntity1], "meta": {"vThingID": v_thing_ID}}
+        #print("topic name: " + v_thing_topic + '/' + data_out_suffix + " ,message: " + json.dumps(message))
+        #mqtt_data_client.publish(v_thing_topic + '/' + data_out_suffix,json.dumps(message))
+        future = executor.submit(publish, message)
+        return 'OK', 201
+    except Exception as err:
+        print("Bad notification format", err)
+        return 'Bad notification format', 401
 
 class httpRxThread(Thread):
-
     def __init__(self):
         Thread.__init__(self)
 
@@ -57,31 +57,6 @@ class httpRxThread(Thread):
         app.run(host='0.0.0.0', port=flask_port)
         print("Thread '" + self.name + " closed")
 
-    @app.route('/notify', methods=['POST'])
-    def recv_notify():
-        try:
-            r = request.get_json()
-            if type(r) is dict:
-                jres = r
-            else:
-                jres = json.loads(r)
-            ngsiLdEntity1 = {"id": "urn:ngsi-ld:" + v_thing_ID_LD,"type": v_thing_type_attr}
-            msg={}
-            msg['type'] = "Property"
-            msg['value'] = jres
-            ngsiLdEntity1['msg']=msg
-            context_vThing.update([ngsiLdEntity1])
-            message = {"data": [ngsiLdEntity1], "meta": {"vThingID": v_thing_ID}}
-            print("topic name: " + v_thing_topic + '/' + data_out_suffix + " ,message: " + json.dumps(message))
-            mqtt_data_client.publish(v_thing_topic + '/' + data_out_suffix,json.dumps(message))
-            return 'OK', 201
-
-        except Exception as err:
-            print("Bad notification format", err)
-            return 'Bad notification format', 401
-
-
-
 class mqttDataThread(Thread):
     # mqtt client used for sending data
     def __init__(self):
@@ -89,9 +64,10 @@ class mqttDataThread(Thread):
 
     def run(self):
         print("Thread mqtt data started")
-        ngsiLdEntity1 = {   "id": "urn:ngsi-ld:" + v_thing_ID_LD,
+        ngsiLdEntity1 = {   "id": v_thing_ID_LD,
                                 "type": v_thing_type_attr,
-                                "msg": {"type": "Property", "value": {}}}
+                                "msg": {"type": "Property", "value": {}},
+                                "@context": [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]}
         context_vThing.update([ngsiLdEntity1])
         mqtt_data_client.connect(MQTT_data_broker_IP, MQTT_data_broker_port, 30)
         mqtt_data_client.loop_forever()
@@ -298,6 +274,9 @@ if __name__ == '__main__':
     # set v_thing_topic the name of mqtt topic on witch publish vThing data
     # e.g vThing/helloWorld/hello
     v_thing_topic = v_thing_prefix + "/" + v_thing_ID
+
+    # threadPoolExecutor of size one to handle one command at a time in a fifo order
+    executor = ThreadPoolExecutor(1)
 
     mqtt_control_client = mqtt.Client()
     mqtt_data_client = mqtt.Client()

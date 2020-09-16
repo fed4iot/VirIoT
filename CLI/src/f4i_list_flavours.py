@@ -9,12 +9,13 @@ from pathlib import Path
 viriot_dir = str(Path.home())+"/.viriot"
 token_file = viriot_dir+"/token"
 
-
 def printj(msg):
     print("\n")
-    print(json.dumps(json.loads(msg), indent=4, sort_keys=True))
+    jres = json.loads(msg)
+    for elem in jres:
+        elem.pop("yamlFiles", None)
+    print(json.dumps(jres, indent=4, sort_keys=True))
     print("\n")
-
 
 def get_token():
     if not os.path.isfile(token_file):

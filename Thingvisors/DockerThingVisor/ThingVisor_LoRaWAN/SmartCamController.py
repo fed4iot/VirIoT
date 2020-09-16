@@ -3,13 +3,6 @@ import logging
 from helpers.chirpstack import AppController, DeviceController
 
 
-log_handler = logging.StreamHandler()
-log_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-log_handler.setFormatter(log_formatter)
-root_logger = logging.getLogger()
-root_logger.addHandler(log_handler)
-root_logger.setLevel(logging.DEBUG)
-
 log = logging.getLogger(__name__)
 
 

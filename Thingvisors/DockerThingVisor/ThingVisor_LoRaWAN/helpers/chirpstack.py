@@ -51,7 +51,7 @@ class DeviceController:
         on this topic.
         """
         self.topic_base = f"application/{self.app.appId}/device/{self.deveui}"
-        self.topic_uplink_decoded = f"{self.topic_base}/decoded"
+        self.topic_uplink_decoded = f"application/{self.app.appId}/device/decoded/{self.deveui}"
         self.topic_uplink_raw = f"{self.topic_base}/rx"
         self.topic_status = f"{self.topic_base}/status"
         self.topic_ack = f"{self.topic_base}/ack"
@@ -88,19 +88,19 @@ class DeviceController:
         """
         Status event. Overload in subclasses if needed.
         """
-        log.debug(f"{self.log_header}:MQTT STATUS:{msg}")
+        log.debug(f"{self.log_header}:MQTT STATUS:{msg.topic}:{msg.payload}")
 
     def on_ack(self, msg):
         """
         Ack event. Overload in subclasses if needed.
         """
-        log.debug(f"{self.log_header}:MQTT ACK:{msg}")
+        log.debug(f"{self.log_header}:MQTT ACK:{msg.topic}:{msg.payload}")
 
     def on_error(self, msg):
         """
         Error event. Overload in subclasses if needed.
         """
-        log.debug(f"{self.log_header}:MQTT ERROR:{msg}")
+        log.debug(f"{self.log_header}:MQTT ERROR:{msg.topic}:{msg.payload}")
 
     def do_downlink(self, message):
         """

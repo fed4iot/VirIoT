@@ -20,6 +20,11 @@ spec:
             - matchExpressions:
               - key: viriot-zone
                 operator: DoesNotExist
+            - matchExpressions:
+              - key: viriot-zone
+                operator: In
+                values: 
+                - "default"
       containers:
       - name: f4i-master-controller
         image: fed4iot/master-controller:latest

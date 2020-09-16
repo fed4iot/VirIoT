@@ -12,7 +12,7 @@ from datetime import datetime
 from logging import basicConfig, getLogger, DEBUG, INFO
 
 ### OneM2M Broker ###
-BROKER = "133.9.250.223"
+BROKER = ""
 PORT = "8000"
 SLEEP = "10"
 headers = {'Content-Type':'application/vnd.onem2m-res+json',}

@@ -58,7 +58,7 @@
                 "package": "openmtc_cse.plugins.transport_gevent_mqtt",
                 "disabled": true,
                 "config": {
-                    "interface": "133.9.250.211",
+                    "interface": "0.0.0.0",
                     "port": 1883
                 }
             },
@@ -87,10 +87,10 @@
                         {
                             "cse_id": "in-cse-1",
                             "poa": [
-                                "http://133.9.250.211:18000"
+                                "http://0.0.0.0:18000"
                             ],
                             "own_poa": [
-                                "http://133.9.250.211:8000"
+                                "http://0.0.0.0:8000"
                             ],
                             "cse_base": "onem2m",
                             "cse_type": "IN_CSE"

@@ -8,7 +8,7 @@ import os
 import shutil
 
 ### OneM2M Broker ###
-BROKER = "133.9.250.223"
+BROKER = ""
 PORT = "8000"
 baseURI = "http://" + BROKER + ":" + PORT +"/onem2m/"
 API = "latest"

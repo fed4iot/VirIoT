@@ -39,8 +39,8 @@ jobs:
         ./f4i.py list-thingvisors -c http://$MC_ADDR:$MC_PORT
         ./f4i.py inspect-thingvisor -c http://$MC_ADDR:$MC_PORT
         cd ..
-#    - name: Setup tmate session for debug
-#      uses: mxschmitt/action-tmate@v2
+    - name: Setup tmate session for debug
+      uses: mxschmitt/action-tmate@v2
     - name: thingvisor test
       run: |
         MQ_IP=`kubectl get svc -o wide  |grep vernemq-mqtt | awk '{print $3}' | cut -d':' -f2 | cut -d'/' -f1`

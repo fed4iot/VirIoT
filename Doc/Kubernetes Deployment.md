@@ -10,6 +10,8 @@ Images of VirIoT components are available in [DockerHub](https://hub.docker.com/
 ### Kubernetes cluster setup  
 
 To properly setup a Kubernetes cluster, see the Kubernetes documentation: <https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/>.  
+
+Kubernetes cluster should support `service topology` feature of Kubernetes for performance (traffic, delay) optimization
   
  
 ## Initial configurations
@@ -27,25 +29,64 @@ Unless differently specified, the following commands are run from the k8s master
 
 ### Node labelling from k8s master node  
 
-We consider a Kubernetes distributed cluster formed by a default zone and (optionally) multiple edge zones. 
-The default zone has no "viriot-zone" label. Nodes of an edge zone must be labelled with "viriot-zone" and "viriot-gw" labels, as follows: 
-the value of the "viriot-gw" key must contain a public IP address through which it is possible to access the edge cluster.   
+**VirIoT labels**
+
+We consider a Kubernetes distributed cluster formed by a default zone and (optionally) multiple "edge" zones. 
+Each zone has a gateway node with a public IP address through whitch it is possible to access the k8s nodes of the zone. The gateway node is any k8s node of the zone with a public IP address and hosts the MQTT broker and the HTTP proxy which are used by all VirIoT vSilos and ThingVisor of the zone.
+
+The involved labels are: `viriot-zone`, `viriot-gw`, and `viriot-zone-gw`.
+
+The default zone has no `viriot-zone` label or `default` label. Nodes of an edge zone must be labelled with `viriot-zone` and `viriot-gw` labels. The value of the `viriot-gw` key must contain a public IP address through which it is possible to access the edge cluster. A single node per viriot-zone must have  the label `viriot-zone-gw=true`
 
 
 ```bash  
-kubectl label nodes <NodeName> viriot-zone=<ZoneName>  
+kubectl label nodes <NodeName> viriot-zone=<ZoneName>
+kubectl label nodes <NodeName> viriot-zone-gw=true   
 kubectl label nodes <NodeName> viriot-gw=<gatewayIP>  
-  
-#e.g.: kubectl label nodes node2 viriot-zone=Japan  
-#e.g.: kubectl label nodes node2 viriot-gw=162.80.82.44  
-  
+ 
+# e.g.: kubectl label nodes node2 viriot-zone=Japan  
+# e.g.: kubectl label nodes node2 viriot-zone-gw=true  
+# e.g.: kubectl label nodes node2 viriot-zone=Japan 
 # to see labelling results....  
 kubectl get nodes -L viriot-gw -L viriot-zone  
 ```   
 
-### Setup MQTT cluster from k8s master node (one VerneMQ broker per node)
+**Kubernetes labels for service topology feature**
 
-VerneMQ deployed as a StatefulSet to each node.  
+Every kubernetes node mush have the label `topology.kubernetes.io/zone` equal to the `viriot-zone` label.     
+
+```bash 
+kubectl label nodes <NodeName> topology.kubernetes.io/zone=<ZoneName>
+# e.g.: kubectl label nodes node2 topology.kubernetes.io/zone=Japan
+# to see labelling results....  
+kubectl get nodes -L viriot-gw -L topology.kubernetes.io/zone  
+```   
+
+A possible output for a configuratin made of a default (vm2,vm3,vm4) an a japan (vmjp1,vmjp2) zones is the following one
+
+
+```bash
+kubectl get nodes -L viriot-zone,viriot-gw,viriot-zone-gw,topology.kubernetes.io/zone
+
+NAME                  STATUS   ROLES    AGE   VERSION   VIRIOT-ZONE   VIRIOT-GW       VIRIOT-ZONE-GW   ZONE
+
+vm1                   Ready    master   61d   v1.18.5                                                  
+
+vm2                   Ready    <none>   61d   v1.18.5   default       13.80.153.4     true             default
+
+vm3                   Ready    <none>   61d   v1.18.5   default       13.80.153.4                      default
+
+vm4                   Ready    <none>   61d   v1.18.5   default       13.80.153.4                      default
+
+vmjp1                 Ready    <none>   61d   v1.17.0   japan         13.78.102.196   true             japan
+
+vmjp2                 Ready    <none>   61d   v1.17.4   japan         13.78.102.196                    japan
+
+``` 
+
+### Setup MQTT cluster for control/telemetry data from k8s master node (one VerneMQ broker per node)
+
+VerneMQ deployed as a StatefulSet to each node that have `viriot-zone-gw=true`.  
  
 Edit the `spec.replicas` with the correct number of used cluster nodes.  
 

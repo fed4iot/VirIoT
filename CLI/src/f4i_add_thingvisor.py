@@ -45,7 +45,7 @@ def init_args(parser):
     parser.add_argument('-i', action='store', dest='imageName',
                         help='image name (default: "")', default='')
     parser.add_argument('-n', action='store', dest='name',
-                        help='ThingVisor ID (default: helloWorld)', default='helloWorld')
+                        help='ThingVisor ID (default: helloworld-tv)', default='helloworld-tv')
     parser.add_argument('-p', action='store', dest='params',
                         help='ThingVisor params, JSON object (default: "") ', default="")
     parser.add_argument('-d', action='store', dest='description',

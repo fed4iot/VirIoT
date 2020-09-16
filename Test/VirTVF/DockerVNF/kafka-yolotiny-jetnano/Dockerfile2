@@ -1,0 +1,3 @@
+FROM kanai1192/kafka-yolotiny-jetnano-base
+
+ENTRYPOINT ["python3","sfNode.py"]

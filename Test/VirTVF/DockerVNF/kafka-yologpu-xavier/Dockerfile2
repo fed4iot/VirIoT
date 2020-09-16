@@ -1,0 +1,3 @@
+FROM kanai1192/kafka-yologpu-xavier-base
+
+ENTRYPOINT ["python3","sfNode.py"]

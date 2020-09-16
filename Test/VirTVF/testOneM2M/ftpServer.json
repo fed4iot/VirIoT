@@ -1,0 +1,10 @@
+{"host": "10.0.0.30",
+ "port": "21",
+ "user": "fed4iot",
+ "passwd": "Fed4IoT-JP",
+ "homedir": ".",
+ "location": "waseda",
+ "devType": "netcam",
+ "geometry": {"type": "Point", "value": [36.7056, 129.708399]},
+ "logLevel": "info"
+}

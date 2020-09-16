@@ -1,0 +1,7 @@
+{"fib":[{"name":"ccn:/camera",
+	"update":[{"host":"192.168.1.7","src":"133.9.250.223","method":"del"},
+		{"host":"192.168.1.6","src":"133.9.250.223","method":"add"}]},
+	{"name":"ccn:/yolo",
+	"update":[{"host":"192.168.1.8","src":"192.168.1.7","method":"del"},
+		{"host":"192.168.1.8","src":"192.168.1.6","method":"add"}]}
+]}

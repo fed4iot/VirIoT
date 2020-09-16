@@ -2,6 +2,6 @@
  "port":33102,
  "segSize":4096,
  "logLevel": "debug",
- "faceKey": "79ab01bbf73847638f666fb11f77550a",
- "faceUrl": "eastus.api.cognitive.microsoft.com"
+ "faceKey": "",
+ "faceUrl": ""
 }

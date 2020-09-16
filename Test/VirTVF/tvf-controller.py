@@ -6,7 +6,7 @@ import yaml
 import shutil 
 #import kubernetes
 
-MongoIP = '59.106.217.215'
+MongoIP = ''
 MongoPORT = 27017
 
 CMD = ['register-sf', 'list-sf', 'delete-sf', 

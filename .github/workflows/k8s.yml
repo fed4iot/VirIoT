@@ -32,7 +32,6 @@ jobs:
         kubectl apply -f ./yaml/mongo-statefulset-noauth.yaml
         kubectl apply -f ./yaml/vernemq-affinity-nodeport.yaml
         sleep 15
-        kubectl expose statefulset/
         kubectl apply -f ./yaml/master-controller.yaml
         sleep 50
         MC_PORT=`kubectl get svc -o wide  |grep master-contro | awk '{print $5}' | cut -d':' -f2 | cut -d'/' -f1`

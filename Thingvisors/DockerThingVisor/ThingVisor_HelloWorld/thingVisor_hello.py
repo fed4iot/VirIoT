@@ -232,6 +232,8 @@ if __name__ == '__main__':
         parameters = tv_entry["params"]
         if parameters:
             params = json.loads(parameters)
+        else:
+            params = parameters
 
     except json.decoder.JSONDecodeError:
         print("error on params (JSON) decoding" + "\n")

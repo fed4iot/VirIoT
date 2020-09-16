@@ -47,9 +47,9 @@ jobs:
       uses: mxschmitt/action-tmate@v2
     - name: thingvisor test
       run: |
-        MQ_IP=`kubectl get svc -o wide  |grep vernemq-mqtt | awk '{print $3}' | cut -d':' -f2 | cut -d'/' -f1`
+        #MQ_IP=`kubectl get svc -o wide  |grep vernemq-mqtt | awk '{print $3}' | cut -d':' -f2 | cut -d'/' -f1`
         MQ_PORT=`kubectl get svc -o wide  |grep vernemq-mqtt | awk '{print $5}' | cut -d':' -f2 | cut -d'/' -f1`
-        mosquitto_sub -C 3 -v -h $MQ_IP -p $MQ_PORT -t 'vThing/helloworld-tv/hello/data_out'
+        mosquitto_sub -C 3 -v -h $MC_ADDR -p $MQ_PORT -t 'vThing/helloworld-tv/hello/data_out'
     - name: collect logs
       if: always()
       run: |

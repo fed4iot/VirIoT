@@ -58,7 +58,7 @@ jobs:
         docker exec -i kind-control-plane ip ad |& tee logs/kind-ip-addr.txt
         kubectl logs mongodb-mc-noauth-0 > logs/k8s-mongo.txt
         kubectl logs f4i-master-controller-ss-0
-        kubectl logs deployment/f4i-tv-helloworld${{ matrix.runtime }}-helloworld
+        kubectl logs deployment/f4i-tv-helloworld${{ matrix.runtime }}-helloworld-tv
         kubectl cluster-info |& tee logs/cluster-info.txt
         kubectl get pods -o wide -A |& tee logs/pods-info.txt
         kubectl get nodes -o wide |& tee logs/nodes-info.txt

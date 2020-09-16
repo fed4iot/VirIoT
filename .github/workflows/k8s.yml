@@ -49,7 +49,7 @@ jobs:
       run: |
         #MQ_IP=`kubectl get svc -o wide  |grep vernemq-mqtt | awk '{print $3}' | cut -d':' -f2 | cut -d'/' -f1`
         MQ_PORT=`kubectl get svc -o wide  |grep vernemq-mqtt | awk '{print $5}' | cut -d':' -f2 | cut -d'/' -f1`
-        mosquitto_sub -C 3 -v -h $MC_ADDR -p $MQ_PORT -t 'vThing/helloworld-tv/hello/data_out'
+        mosquitto_sub -C 3 -v -h 172.17.0.2 -p $MQ_PORT -t 'vThing/helloworld-tv/hello/data_out'
     - name: collect logs
       if: always()
       run: |

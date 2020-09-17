@@ -1,0 +1,13 @@
+{"host":"0.0.0.0",
+ "port":33110,
+ "segSize":4096,
+ "devID":0,
+ "codec":"jpg",
+ "quality":95,
+ "width":640,
+ "height":480,
+ "location":"waseda",
+ "devType":"usbCam",
+ "point": [35.7056, 129.708399],
+ "interest": "camera"
+}

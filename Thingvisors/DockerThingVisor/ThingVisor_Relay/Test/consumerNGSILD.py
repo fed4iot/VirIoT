@@ -50,7 +50,7 @@ def on_receive(jres):
     global total_timestamp, samples
     now_timestamp = int(round(time.time() * (UNIT)))
 
-    print("enter notify, POST body: " + json.dumps(jres))
+    #print("enter notify, POST body: " + json.dumps(jres))
     try:
         if 'data' in jres:
             samples = samples + 1
@@ -60,7 +60,7 @@ def on_receive(jres):
             
             delta_timestamp = now_timestamp - send_timestamp
             total_timestamp += delta_timestamp
-            print("msg: %d, ∆ timestamp %.4f (ms), average: %.4f" % (msg_num, delta_timestamp, total_timestamp/samples))
+            print("msg: %d, delta timestamp %.4f (ms), average: %.4f" % (msg_num, delta_timestamp, total_timestamp/samples))
             return 'OK', 201
         else:
             print("Bad notification format")
@@ -90,6 +90,8 @@ if __name__ == '__main__':
                             help='Client HTTP URL where to receive notification (default http://172.17.0.1:5000/notify)', default='http://172.17.0.1:5000/notify')
         parser.add_argument('-v', action='store', dest='vThingID', 
                             help='vThingID (default: relay/vThingRelay) ', default='relay/vThingRelay')
+        parser.add_argument('-t', action='store', dest='vThingType', 
+                            help='vThingType (default: message) ', default='message')                            
         argcomplete.autocomplete(parser)
         args = parser.parse_args()
 
@@ -101,7 +103,7 @@ if __name__ == '__main__':
     broker_url = "http://"+args.serverIP+":"+args.serverPort + "/" + ngsildbase + "/" + ngsildversion
     tmp = args.vThingID.replace("/",":")
     entity_id_to_subscribe = "urn:ngsi-ld:"+tmp
-    entity_type = "message"
+    entity_type = args.vThingType
     notification_URI = args.notificationURI
 
     NGSILD_HTTP_silo_thread = NGSILDHTTPSiloThread()

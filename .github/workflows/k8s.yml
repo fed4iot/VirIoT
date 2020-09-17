@@ -43,13 +43,13 @@ jobs:
         ./f4i.py list-thingvisors -c http://$MC_ADDR:$MC_PORT
         ./f4i.py inspect-thingvisor -c http://$MC_ADDR:$MC_PORT
         cd ..
-    - name: Setup tmate session for debug
-      uses: mxschmitt/action-tmate@v2
+#    - name: Setup tmate session for debug
+#      uses: mxschmitt/action-tmate@v2
     - name: thingvisor test
       run: |
-        MQ_IP=`kubectl get svc -o wide  |grep vernemq-mqtt | awk '{print $3}' | cut -d':' -f2 | cut -d'/' -f1`
+        #MQ_IP=`kubectl get svc -o wide  |grep vernemq-mqtt | awk '{print $3}' | cut -d':' -f2 | cut -d'/' -f1`
         MQ_PORT=`kubectl get svc -o wide  |grep vernemq-mqtt | awk '{print $5}' | cut -d':' -f2 | cut -d'/' -f1`
-        mosquitto_sub -C 3 -v -h $MQ_IP -p $MQ_PORT -t 'vThing/helloworld-tv/hello/data_out'
+        mosquitto_sub -C 3 -v -h 172.17.0.2 -p $MQ_PORT -t 'vThing/helloworld-tv/hello/data_out'
     - name: collect logs
       if: always()
       run: |
@@ -58,7 +58,7 @@ jobs:
         docker exec -i kind-control-plane ip ad |& tee logs/kind-ip-addr.txt
         kubectl logs mongodb-mc-noauth-0 > logs/k8s-mongo.txt
         kubectl logs f4i-master-controller-ss-0
-        kubectl logs deployment/f4i-tv-helloworld${{ matrix.runtime }}-helloworld
+        kubectl logs deployment/f4i-tv-helloworld${{ matrix.runtime }}-helloworld-tv
         kubectl cluster-info |& tee logs/cluster-info.txt
         kubectl get pods -o wide -A |& tee logs/pods-info.txt
         kubectl get nodes -o wide |& tee logs/nodes-info.txt

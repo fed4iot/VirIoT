@@ -1,0 +1,10 @@
+{"host": "",
+ "port": "",
+ "user": "",
+ "passwd": "",
+ "homedir": ".",
+ "location": "",
+ "devType": "",
+ "geometry": {"type": "Point", "value": ["", ""]},
+ "logLevel": "info"
+}

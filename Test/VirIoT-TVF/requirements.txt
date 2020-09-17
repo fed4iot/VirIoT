@@ -1,6 +1,0 @@
-netifaces
-kafka-python
-pyftpdlib
-opencv-python
-gphoto2
-kubernetes

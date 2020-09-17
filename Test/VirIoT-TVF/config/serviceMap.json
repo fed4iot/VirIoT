@@ -1,9 +1,0 @@
-{"yolotiny":{"port":33101,"input": "only content", "output": "marge"},
- "face":{"port":33102,"input": "only content", "output": "marge"},
- "mosaic":{"port": 33103,"input": "need arguments", "output": "replace"},
- "crop": {"port": 33104, "input": "need arguments", "output": "replace"},
- "nfov": {"port": 33105, "input": "need arguments", "output": "replace"},
- "counter": {"port": 33106, "input": "need arguments", "output": "marge"},
- "yologpu": {"port": 33110, "input": "only content", "output": "marge"},
- "yolo": {"port": 33111, "input": "only content", "output": "marge"}
-}

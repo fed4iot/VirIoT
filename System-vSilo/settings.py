@@ -84,7 +84,7 @@ entities_POST_DELETE_endpoint = {
     'item_lookup_field': 'id',
     'item_url': uri_regex,
     'allow_unknown': True,
-    'schema': schema_for_entities,
+    'schema': schema_for_entities_without_unicity_restraint,
     'datasource': entities_POST_DELETE_datasource_filter,
 }
 batchentitiesUpdate_POST_endpoint = {

@@ -84,9 +84,9 @@ vmjp2                 Ready    <none>   61d   v1.17.4   japan         13.78.102.
 
 ``` 
 
-### Setup MQTT cluster for control/telemetry data from k8s master node (one VerneMQ broker per node)
+### Setup MQTT services for control/telemetry data from k8s master node (one VerneMQ broker per viriot-zone)
 
-VerneMQ deployed as a StatefulSet to each node that have `viriot-zone-gw=true`.  
+VerneMQ deployed as a StatefulSet to nodes that have `viriot-zone-gw=true`.  
  
 Edit the `spec.replicas` with the correct number of used cluster nodes.  
 
@@ -100,7 +100,24 @@ kubectl apply -f yaml/vernemq-affinity.yaml
 # to get the currently deployed pods  
 kubectl get pods -o wide  
 ```  
-  
+
+### Setup HTTP services for large contents (images, streams, etc.) from k8s master node (one nginx server per viriot-zone)
+
+nginx deployed as a deployment to nodes that have `viriot-zone-gw=true`.  
+ 
+Edit the `spec.replicas` with the correct number of used cluster nodes.  
+
+
+```bash  
+# Edit number of available nodes in yaml/vernemq-affinity.yaml  
+vim yaml/viriot-http-proxy.yaml  
+# edit spec.replicas: <NumberOfReplicas>  
+#e.g. if you have a cluster composed of two nodes: spec.replicas:2  
+kubectl apply -f yaml/viriot-http-proxy.yaml  
+# to get the currently deployed pods  
+kubectl get pods -o wide  
+```    
+
 
 ### Setup MongoDB system database from k8s master node  
 

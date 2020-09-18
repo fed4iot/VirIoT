@@ -1,0 +1,159 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: vernemq
+  namespace: default
+spec:
+  serviceName: vernemq-mqtt
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vernemq
+  template:
+    metadata:
+      labels:
+        app: vernemq
+    spec:
+      nodeSelector:
+        viriot-zone-gw: "true"
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+                - key: "app"
+                  operator: In
+                  values:
+                  - vernemq
+            topologyKey: kubernetes.io/hostname
+      shareProcessNamespace: true
+      serviceAccountName: vernemq
+      containers:
+      - name: vernemq
+        image: erlio/docker-vernemq:1.9.1
+        ports:
+        - containerPort: 1883
+          name: mqttlb
+        - containerPort: 1883
+          name: mqtt
+        - containerPort: 4369
+          name: epmd
+        - containerPort: 44053
+          name: vmq
+        - containerPort: 8888
+          name: vernemq-ext
+        - containerPort: 9100
+        - containerPort: 9101
+        - containerPort: 9102
+        - containerPort: 9103
+        - containerPort: 9104
+        - containerPort: 9105
+        - containerPort: 9106
+        - containerPort: 9107
+        - containerPort: 9108
+        - containerPort: 9109
+        env:
+        - name: DOCKER_VERNEMQ_DISCOVERY_KUBERNETES
+          value: "1"
+        - name: DOCKER_VERNEMQ_KUBERNETES_APP_LABEL
+          value: "vernemq"
+        - name: DOCKER_VERNEMQ_KUBERNETES_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: MY_POD_NAME
+          valueFrom:
+           fieldRef:
+             fieldPath: metadata.name
+        - name: DOCKER_VERNEMQ_ERLANG__DISTRIBUTION__PORT_RANGE__MINIMUM
+          value: "9100"
+        - name: DOCKER_VERNEMQ_ERLANG__DISTRIBUTION__PORT_RANGE__MAXIMUM
+          value: "9109"
+        - name: DOCKER_VERNEMQ_KUBERNETES_INSECURE
+          value: "1"
+        ## Only allow anonymous access for development / testing purposes!
+        - name: DOCKER_VERNEMQ_ALLOW_ANONYMOUS
+          value: "on"
+        ## Added variables
+        ## Max number of concurrent connections
+        - name: DOCKER_VERNEMQ_LISTENER__MAX_CONNECTIONS
+          value: "infinity"
+        ## Max number of concurrent connections
+        - name: DOCKER_VERNEMQ_LISTENER__TCP__MAX_CONNECTIONS
+          value: "infinity"
+        ## Max number of QoS 1 or 2 messages that can be transmitted simultaneously
+        - name: DOCKER_VERNEMQ_MAX_INFLIGHT_MESSAGES
+          value: "0"
+        ## Max number of messages (of all QoS) to hold in the queue above those in flight
+        - name: DOCKER_VERNEMQ_MAX_ONLINE_MESSAGES
+          value: "-1"
+        ## Enable log in /var/log/vernemq/console.log
+        - name: DOCKER_VERNEMQ_LOG__CONSOLE
+          value: "both"
+        - name: DOCKER_VERNEMQ_LOG__CONSOLE__LEVEL
+          value: "debug"
+        - name: DOCKER_VERNEMQ_LISTENER__NR_OF_ACCEPTORS
+          value: "1000"
+        - name: DOCKER_VERNEMQ_METADATA_PLUGIN
+          value: "vmq_swc"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vernemq
+  labels:
+    app: vernemq
+spec:
+  clusterIP: None
+  selector:
+    app: vernemq
+  ports:
+  - port: 4369
+    name: epmd
+  - port: 44053
+    name: vmq
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vernemq-mqtt
+  labels:
+    app: vernemq
+spec:
+  type: NodePort
+  selector:
+    app: vernemq
+  ports:
+  - port: 1883
+    name: vernemq-mqtt
+  topologyKeys:
+    - kubernetes.io/hostname
+    - topology.kubernetes.io/zone
+    - "*"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vernemq
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: endpoint-reader
+rules:
+- apiGroups: ["", "extensions", "apps"]
+  resources: ["endpoints", "deployments", "replicasets", "pods"]
+  verbs: ["get", "list"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: endpoint-reader
+subjects:
+- kind: ServiceAccount
+  name: vernemq
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: endpoint-reader

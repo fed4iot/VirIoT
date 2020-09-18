@@ -112,7 +112,7 @@ def on_receive(jres):
             
             delta_timestamp = received_timestamp - send_timestamp
             total_timestamp += delta_timestamp
-            print("msg: %d, ∆ timestamp %.4f (ms), average: %.4f" % (msg_num, delta_timestamp, total_timestamp/samples))
+            print("msg: %d, delta timestamp %.4f (ms), average: %.4f" % (msg_num, delta_timestamp, total_timestamp/samples))
             return 'OK', 201
         else:
             print("Bad notification format")
@@ -156,7 +156,7 @@ if __name__ == '__main__':
     CSE_url = "http://"+args.serverIP+":"+args.serverPort
     MQTT_port = args.serverMQTTPort
     tmp = args.vThingID.replace("/",":")
-    cnt_arn = tmp + "/urn:ngsi-ld:"+tmp+"/msg"
+    cnt_arn = tmp + "/" + tmp + "/msg"
     origin = "S"
     notification_URI = args.notificationURI
     sub_rn = "vSiloTestSub" 

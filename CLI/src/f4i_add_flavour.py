@@ -84,7 +84,7 @@ def init_args(parser):
     parser.add_argument('-c', action='store', dest='controllerUrl',
                         help='Controller url (default: http://127.0.0.1:8090)', default='http://127.0.0.1:8090')
     parser.add_argument('-f', action='store', dest='flavourID',
-                        help='flavourID (default: Mobius-base-f)', default='Mobius-base-f')
+                        help='flavourID (default: mobius-base-f)', default='mobius-base-f')
     parser.add_argument('-s', action='store', dest='flavourParams',
                         help='flavourParams (default: Mobius)', default='Mobius')
     parser.add_argument('-i', action='store', dest='imageName',

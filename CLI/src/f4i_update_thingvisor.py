@@ -35,8 +35,8 @@ def init_args(parser):
                         help='ThingVisor params, JSON object (default: "") ', default='""')
     parser.add_argument('-d', action='store', dest='description',
                         help='ThingVisor description (default: \'hello thingVisor\')', default='hello thingVisor')
-    parser.add_argument('-u', action='store', dest='update_info',
-                        help='ThingVisor update_info: ephemeral information for the ThingVisor (default: "")', default='""')
+    parser.add_argument('-u', action='store', dest='updateInfo',
+                        help='ThingVisor updateInfo: ephemeral information for the ThingVisor (default: "")', default='""')
     parser.set_defaults(func=run)
 
 
@@ -48,7 +48,7 @@ def run(args):
         payload = {"thingVisorID": args.name,
                    "params": json.loads(args.params),
                    "description": args.description,
-                   "update_info": json.loads(args.update_info),
+                   "updateInfo": json.loads(args.updateInfo),
                    }
     except ValueError as err:
         print("Error in JSON argument:", err)

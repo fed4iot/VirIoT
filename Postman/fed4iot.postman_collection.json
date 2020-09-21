@@ -237,7 +237,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"thingVisorID\": \"helloWorld\",\n\t\"params\": \"\",\n    \"description\": \"hello thingVisor\",\n    \"update_info\": \"\"\n}"
+					"raw": "{\n\t\"thingVisorID\": \"helloWorld\",\n\t\"params\": \"\",\n    \"description\": \"hello thingVisor\",\n    \"updateInfo\": \"\"\n}"
 				},
 				"url": {
 					"raw": "127.0.0.1:8090/updateThingVisor",

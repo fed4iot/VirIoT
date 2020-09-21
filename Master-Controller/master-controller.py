@@ -1200,7 +1200,7 @@ class httpThread(Thread):
             tv_description = request.json.get("description", None)
             tv_params = request.json.get("params", None)
             tv_id = request.json.get("thingVisorID", None)
-            update_info = request.json.get("update_info", None)
+            updateInfo = request.json.get("updateInfo", None)
 
             if db[thing_visor_collection].count({"thingVisorID": tv_id}) == 0:
                 return json.dumps({"message": "Update fails - thingVisor " + tv_id + " does not exist"}), 409
@@ -1222,7 +1222,7 @@ class httpThread(Thread):
                 update_cmd = {"command": "updateTV", "thingVisorID": tv_id,
                               "tvDescription": tv_description,
                               "params": tv_params,
-                              "update_info": update_info}
+                              "updateInfo": updateInfo}
 
                 mqttc.publish(thing_visor_prefix + "/" + tv_id + "/" + in_control_suffix,
                               json.dumps(update_cmd))

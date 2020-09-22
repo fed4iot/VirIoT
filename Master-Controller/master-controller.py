@@ -1391,7 +1391,7 @@ class httpThread(Thread):
                 {"thingVisorID": tv_id}, {"status": 1, "_id": 0}))["status"] != STATUS_RUNNING:
                 return json.dumps({"message": 'Set endpoint fails - ThingVisor ' + tv_id + 'is not ready'}), 409
                 
-            mqtt_msg = {"command": "setVThingEndpoint", "vThingID": v_thing_id,"endpoint": endpoint}
+            mqtt_msg = {"command": "setVThingEndpoint", "vThingID": v_thing_id, "endpoint": endpoint}
 
         except Exception:
             print(traceback.format_exc())

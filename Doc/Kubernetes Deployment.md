@@ -11,8 +11,11 @@ Images of VirIoT components are available in [DockerHub](https://hub.docker.com/
 
 To properly setup a Kubernetes cluster, see the Kubernetes documentation: <https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/>.  
 
-Kubernetes cluster should support `service topology` feature of Kubernetes for performance (traffic, delay) optimization
-  
+Kubernetes cluster should support [service topology](https://kubernetes.io/docs/concepts/services-networking/service-topology/) feature of Kubernetes for performance (traffic, delay) optimization. To this end, kubeadm needs an additional config file [k8s_config.yaml](../yaml/k8s_config.yaml). We assumed to use [Flannel](https://github.com/coreos/flannel#flannel) network plug-in (podSubnet: "10.244.0.0/16").
+
+```bash  
+kubeadm init --config k8s_config.yaml 
+```  
  
 ## Initial configurations
 ### Clone Git Repository

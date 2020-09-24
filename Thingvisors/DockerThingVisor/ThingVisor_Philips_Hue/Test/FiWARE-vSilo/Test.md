@@ -264,7 +264,12 @@ If you are using Orion vSilo, you can access to vSilo Broker (Orion Context Brok
 
 ### Run the test
 
-Open a new terminal, change directory to `VirIoT/Thingvisors/DockerThingVisor/ThingVisor_Philips_Hue/Test/FiWARE-vSilo`. By default configuration, the docker-compose file is configured to deploy a unique tenant which starts and stops alternatively a device (device001). 
+Open a new terminal, change directory to `VirIoT/Thingvisors/DockerThingVisor/ThingVisor_Philips_Hue/Test/FiWARE-vSilo`. By default configuration, the docker-compose file is configured to deploy a unique tenant which:
+
+- starts and stops alternatively pHueActuator/light1 each 2 seconds.
+- update the color of pHueActuator/light2 each second (start color value: 23536, increasing color value: 2500).
+- starts and stops alternatively pHueActuator/light3 each 6 seconds.
+
 
 Configure the next docker-compose environment variables:
 - `vSiloProtocol`, `vSiloHost`: the protocol and public IP of the vSilo Context Broker
@@ -277,4 +282,4 @@ and run:
 docker-compose up
 ```
 
-You should see how tenant sends commands and how these actions cause that `isOpen` attribute of device001 (vSilo broker) is changing (true/false).
+You should see how tenant sends commands and how these actions cause that the lights change.

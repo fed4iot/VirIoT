@@ -124,7 +124,7 @@ class MqttControlThread(Thread):
 
     def on_message_update_thing_visor(self, jres):
         # mqtt_control_client.publish(v_thing_prefix + "/" + v_thing_ID + "/" + out_control_suffix, json['update-info'])
-        print("Print update_info:", jres['update_info'])
+        print("Print updateInfo:", jres['updateInfo'])
         sleep_time = jres['params']['rate']
         # kill thread
         self.data_thread.restart_thread()

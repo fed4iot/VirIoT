@@ -298,11 +298,11 @@ Inspect broker content using chrome to see the added oneM2M AEs as reported in d
   
 
 ### Update ThingVisor
-To send an update message to the ThingVisor. The `-u update_info` argument is the only not saved into the db, it is
+To send an update message to the ThingVisor. The `-u updateInfo` argument is the only not saved into the db, it is
 passed to the ThingVisor and the usage depends on the ThingVisor implementation.
 
 ````bash
-# to update the publication rate of the helloWorld ThingVisor and to send the update_info message used by the ThingVisor
+# to update the publication rate of the helloWorld ThingVisor and to send the updateInfo message used by the ThingVisor
 python3 f4i.py update-thingvisor -c http://[master_controller_ip]:[master_controller_port] -n helloWorld -p '{"rate":1}' -d "Weather ThingVisor" -u "ephemeral information"
 ````
 

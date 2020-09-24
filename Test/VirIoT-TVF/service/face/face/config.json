@@ -1,0 +1,7 @@
+{"host":"0.0.0.0",
+ "port":33102,
+ "segSize":4096,
+ "logLevel": "debug",
+ "faceKey": "",
+ "faceUrl": ""
+}

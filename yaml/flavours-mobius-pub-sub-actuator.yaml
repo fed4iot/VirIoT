@@ -16,6 +16,7 @@ spec:
       - name: f4i-mobius-pub-sub-actuator-f
         image: fed4iot/mobius-pub-sub-actuator-flavour:latest
         ports:
+        - containerPort: 1883
         - containerPort: 7579
 ---
 apiVersion: v1
@@ -31,3 +32,7 @@ spec:
   ports:
   - port: 7579
     nodePort:
+    name: mobius-http
+  - port: 1883
+    nodePort:
+    name: mobius-mqtt

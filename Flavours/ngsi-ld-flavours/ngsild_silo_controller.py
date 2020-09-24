@@ -78,10 +78,35 @@ def delete_entity_under_vThing_on_Broker(v_thing_id, entity_id):
 
 
 # Here we receive a data item, which is composed of "data" and "meta" fields
-def add_entity_under_vThing_on_Broker(v_thing_id, entity):
+def add_or_modify_entity_under_vThing_on_Broker(v_thing_id, entity):
     # lets add the vThingID as a property into each entity
     entity['generatedByVThing'] = {'type':'Relationship','object':entity['id']}
     #entity['generatedByVThing'] = {'type':'Relationship','object':'http://'+v_thing_id.replace("/", ":")}
+
+    # if the "commands" property exists,
+    # foreach command in the array, create 3 additional properties in entity:
+    # command, command-status, command-result 
+    # then vsilo controller subscribes itself for this entity to the broker,
+    # using the F4Ingsild.py subscribe function
+    # and using the self nuri = "http://localhost:5555/receive_notification_from_broker"
+    if 'commands' in entity:
+        for command in entity['commands']['value']:
+            #print(command)
+            entity[command]={"type": "Property", "value": {}}
+            entity[command+"-status"]={"type": "Property", "value": {}}
+            entity[command+"-result"]={"type": "Property", "value": {}}
+
+            # subscribe to broker to receive notifications
+            print("Subscribing to broker to receive notifications...")
+            entity_id_to_subscribe = entity['id']
+            entity_type = entity['type']
+            notification_URI = "http://172.17.0.1:5555/receive_notification_from_broker/"+command
+            try:
+                status = F4Ingsild.subscribe_to_entity(brokerurl, entity_id_to_subscribe, entity_type, notification_URI, [command])
+            except Exception:
+                traceback.print_exc()
+                print("Exception while subscribing to broker " + entity['id'])
+
 
     ### HOPE THE FOLLOWING WILL NOT NEEDED ANYMORE, NGSI-LD HAS BEEN FIXED? ###
     # in order to adapt to a NGSI-LD mis-behaving, we have
@@ -107,7 +132,7 @@ def add_entity_under_vThing_on_Broker(v_thing_id, entity):
 
     # lets now push the entity to the Broker
     try:
-        response = F4Ingsild.append_or_create_entity(brokerurl, entity)
+        response = F4Ingsild.overwrite_or_append_or_create_entity(brokerurl, entity)
         return True
     except Exception:
         traceback.print_exc()

@@ -43,6 +43,90 @@ import shutil
 
 # -*- coding: utf-8 -*-
 
+# Import flask
+
+from flask import Flask
+from flask import json
+from flask import request
+
+# Flask: define app
+
+app = Flask(__name__)
+
+# add flask nuri endpoint, so that we can receive notifications from broker
+@app.route('/receive_notification_from_broker/<attr>', methods=['POST'])
+def recv_notify(attr):
+    # unpack notifications and send it to the thingvisor
+    # first thing to do is print the received notification to observe its structure
+    # and find the cmd_request object inside the notification
+    # as a "value" of a property named as one of the possible commands of this entity
+    print("Received notification from broker on \""+attr+"\" attr")
+    try:
+        r = request.get_json()
+        if type(r) is dict:
+            jres = r
+        else:
+            jres = json.loads(r)
+    except Exception as err:
+        print("Bad notification format", err)
+        return 'Bad notification format', 401
+    
+    entity=jres['data'][0]
+    if 'cmd-id' in entity[attr]['value']:
+        # BEWARE HERE that 'object' is ok if generatedByVThing is a Relationship
+        # but if it is a Property, then it has to be 'value'. This may be the case
+        # because some NGSI-LD Brokers (maybe Stellio) do not allow dangling Relationships
+        ar=entity['generatedByVThing']['object'].split(':')
+        vThingID = ar[-2]+"/"+ar[-1]
+
+        cmd_value = entity[attr]['value']
+        cmd_name = attr
+        cmd_LD_ID = entity['id']
+        cmd_LD_Type = entity['type']
+
+        print("Clearing command \""+cmd_name+"\"")
+        # let's set to emty the only property we received, i.e. the one referring to the command
+        entity[cmd_name]['value']={}
+        # the notification did not contain @context
+        entity['@context']=["http://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"]
+        # let's POST the entity, which contains just the one (command) property to be modified
+        brokerspecific.add_or_modify_entity_under_vThing_on_Broker(vThingID, entity)
+
+        print("Sending command out...")
+        send_command_out(cmd_LD_ID, cmd_LD_Type,
+                        cmd_name, cmd_value, vThingID)
+
+    #print(jres)
+    # return ""
+    return 'OK'
+
+# Thread for running Flask
+class FlaskThread(Thread):
+    def __init__(self):
+        Thread.__init__(self)
+        
+    def run(self):
+        print("Starting Flask...")
+        app.run(host="0.0.0.0", port="5555")
+
+
+def send_command_out(cmd_LD_ID, cmd_LD_Type, cmd_name, cmd_value, vThingID):
+    ngsiLdEntity = {"id": cmd_LD_ID, "type": cmd_LD_Type,
+                    cmd_name: {"type": "Property", "value": cmd_value}}
+    data = [ngsiLdEntity]
+    topic = "vThing/"+vThingID+"/data_in"
+    # publish changed status
+    message = {"data": data, "meta": {
+        "vSiloID": v_silo_id}}  # neutral-format
+    future = executor.submit(publish_on_virIoT, message, topic)
+    #publish_on_virIoT(message, topic)
+    return
+
+def publish_on_virIoT(message, out_topic):
+    msg = json.dumps(message)
+    print("Message sent on "+out_topic + "\n" + msg+"\n")
+    # publish data to out_topic
+    mqtt_data_client.publish(out_topic, msg)
 
 # The callbacks for when the client receives a CONNACK response from the server.
 def mqtt_data_on_connect(client, userdata, flags, rc):
@@ -451,7 +535,7 @@ def data_insert_entities_under_vThing(jres):
         # data is the array of NGSI-LD entities, that has now become a python list which we loop
         for entity in data:
             # first of all try to add the NGSI-LD entity in the broker
-            if brokerspecific.add_entity_under_vThing_on_Broker(v_thing_id, entity):
+            if brokerspecific.add_or_modify_entity_under_vThing_on_Broker(v_thing_id, entity):
                 # then track what NGSI-LD entities are under the same vThing:
                 # We now better do it with the hashmap, by creating a key composed of
                 # a prefix and a suffix. Prefix is the vthingid, suffix is the entity id
@@ -489,6 +573,8 @@ def clean_close():
 
 
 def start_silo_controller(broker_specific_module_name):
+    signal.signal(signal.SIGINT, handler)
+    
     global v_silo_prefix
     global v_thing_prefix
     global in_control_suffix
@@ -517,8 +603,6 @@ def start_silo_controller(broker_specific_module_name):
     # lets import the silo-controller-specific functions and bind them into us
     print("importing module: " + broker_specific_module_name)
     brokerspecific = import_module(broker_specific_module_name)
-
-    signal.signal(signal.SIGINT, handler)
 
     # threadPoolExecutor of size one to handle one command at a time in a fifo order
     executor = ThreadPoolExecutor(1)
@@ -591,12 +675,19 @@ def start_silo_controller(broker_specific_module_name):
             else:
                 print("Fetching params JSON object from DB")
                 flavour_params = silo_entry["flavourParams"]
+                if not flavour_params:
+                    flavour_params = '{}'
         except Exception as e:
             print("Error: Vital information not found in silo_entry", e)
             sys.exit(1)
 
         db_client.close()   # Close DB connection
         print("starting silo controller")
+
+    # start the flask thread
+    print("Starting Flask thread...")
+    flask_thread = FlaskThread()
+    flask_thread.start()
 
     print("This silo's tenant ID is: " + tenant_id)
     # in this flavour, param is the silo type (Raw, Mobius, FiWare, ..., or SystemvSilo)

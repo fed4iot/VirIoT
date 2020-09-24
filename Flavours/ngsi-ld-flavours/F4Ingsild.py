@@ -3,7 +3,7 @@ import json
 
 # Append (and overwrite existing) attributes of and entity.
 # Create the NGSI-LD Entity, if it does not exist
-def append_or_create_entity(url, entity):
+def overwrite_or_append_or_create_entity(url, entity):
     entities_end_point = "/entities/"
     entities_url = url + entities_end_point
 
@@ -28,11 +28,10 @@ def append_or_create_entity(url, entity):
       print("EPOSTING data "+payload)
       print("EPOSTING response "+str(response.status_code))
     if(response.status_code > 299 and response.status_code != 409): #409 is AlreadyExists 
-      print("anaomaly response of APPEND_OR_CREATE_ENTITY is "+str(response.status_code))
+      print("anaomaly response of OVERWRITE_OR_APPEND_OR_CREATE_ENTITY is "+str(response.status_code))
       print("ATTR POSTING to "+change_attributes_url)
       print("DATA "+payload)
     return (response.status_code)
-
 
 # Delete entity.
 def delete_entity(url, entityid):
@@ -54,12 +53,16 @@ def delete_entity(url, entityid):
 
 
 # Subscribe to an entity changes given the entity id
-def subscribe_to_entity(broker_url, entity_id_to_subscribe, entity_type, nuri):
+def subscribe_to_entity(broker_url, entity_id_to_subscribe, entity_type, nuri, watchedAttributes=[]):
   subscriptions_end_point = "/subscriptions/"
   subscriptions_url = broker_url + subscriptions_end_point
   subscription_id = entity_id_to_subscribe + ":subscription"
 
-  payload = json.dumps({
+  if len(watchedAttributes)>0:
+    for attr in watchedAttributes:
+      subscription_id+="_"+attr
+
+  dic={
     "id":subscription_id,
     "type":"Subscription",
     "entities": [
@@ -67,7 +70,9 @@ def subscribe_to_entity(broker_url, entity_id_to_subscribe, entity_type, nuri):
         "type": entity_type
       }
     ],
+    #"watchedAttributes": watchedAttributes,
     "notification": {
+      #"attributes": watchedAttributes,
       "endpoint": {
         "uri": nuri,
         "accept": "application/json"
@@ -76,7 +81,17 @@ def subscribe_to_entity(broker_url, entity_id_to_subscribe, entity_type, nuri):
     "@context": [
           "http://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
     ]
-  })
+  }
+
+  # if we have attributes to watch, then define them into the subscription
+  # and also inform the broker that we want all other attributes
+  # be removed from the notification we will receive, except the generatedByVThing
+  if len(watchedAttributes)>0:
+    dic['watchedAttributes']=watchedAttributes
+    dic['notification']['attributes']=watchedAttributes
+    dic['notification']['attributes'].append("generatedByVThing")
+  payload = json.dumps(dic)
+
   headers = {
     'Content-Type': "application/ld+json",
     'Accept': "application/json"
@@ -85,6 +100,7 @@ def subscribe_to_entity(broker_url, entity_id_to_subscribe, entity_type, nuri):
   response = requests.request("POST", post_subscription_url, data=payload, headers=headers)
 
   print("SUBSCRIBING to "+entity_id_to_subscribe+ " at "+post_subscription_url)
+  print("PAYLOAD: "+payload)
 
   if(response.status_code > 299 and response.status_code != 409): #409 is AlreadyExists 
     print("anaomaly response of SUBSCRIBE_TO_ENTITY is "+str(response.status_code))

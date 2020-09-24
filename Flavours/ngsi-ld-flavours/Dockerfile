@@ -3,7 +3,7 @@ FROM python:3
 
 ### environment for python silo controller able to talk to mongo and mosquitto and leveldb hashmap
 ### pymongo could go away if silocontroller only talks to mastercontroller
-RUN pip3 install paho-mqtt requests pymongo plyvel
+RUN pip3 install paho-mqtt requests pymongo plyvel flask
 
 COPY common_vsilo_functionality.py /
 COPY ngsild_silo_controller.py /

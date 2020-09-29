@@ -52,3 +52,21 @@ python3 f4i.py add-flavour -f Mobius-base-actuator-f -s Mobius -d "silo with a o
 python3 f4i.py create-vsilo -f Mobius-base-actuator-f -t tenant1 -s Silo3
 python3 f4i.py add-vthing -t tenant1 -s Silo3 -v relayTV/timestamp
 ```
+
+## NGSI Consumer
+
+`consumerNGSI.py` is a consumer which connects to an Orion vSilo identified by its server IP (e.g. 172.17.0.2) and port (e.g. 1026). It receives data item produced by `producer.py` through the vThing (e.g. timestamp) of a Relay ThingVisor (e.g. RelayTV). These data items are inserted in an Orion Context Broker inside orion vSilo container and from this container they are pushed to `consumerNGSI.py`
+
+The consumer should be reachable through a public URL (notification URI, nuri), where it is contacted by the Orion Context broker when a data item arrives in the Orion container. The nuri is `http://consumerIP:consumerPort/notify`, where `consumerPort` can be selected by the user.
+
+```bash
+python3 consumerNGSI.py -s 172.17.0.2 -p 1026 -nuri http://172.17.0.1:5001/notify -v relayTV/timestamp -t timestamp
+```
+
+Note: preliminary steps are: to add the Orion flavour, create the vSilo, and add the vThing the vSilo. For instance:
+
+```bash
+python3 f4i.py add-flavour -f orion-f -s "" -d "silo with a FIWARE Orion Context Broker" -y "../yaml/flavours-orion.yaml"
+python3 f4i.py create-vsilo -f orion-f -t tenant1 -s Silo1
+python3 f4i.py add-vthing -t tenant1 -s Silo1 -v relayTV/timestamp
+```

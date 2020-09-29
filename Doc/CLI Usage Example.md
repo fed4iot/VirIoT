@@ -1,7 +1,11 @@
 # Command Line Interface  
 
-After the initial configuration, it is possible to interact with the VirIoT platform using the Command Line Interface (CLI) or Postman.
+After the initial configuration, it is possible to interact with the VirIoT platform using the Command Line Interface (CLI) or Postman, provided the correct IP and port of the Master Controller are used.
 
+## Postman
+To interact with VirIoT platform using Postman, import the collection from the [Postman directory](../Postman)
+
+## Use the CLI
 To activate python3 and bash autocomplete:  
 
 ```bash  
@@ -15,29 +19,27 @@ Also, it is required to install the `PyYAML` module, as follows:
 ```bash
 pip3 install PyYAML
 ```
-  
-## Postman
-To interact with VirIoT platform using Postman, import the collection from the [Postman directory](../Postman)
-
-## Use the CLI
-
-The `f4i.py` CLI commands are the same for both the implementation [Kubernetes-based](Kubernetes%20Deployment.md) 
-and [Docker-based](Docker%20Depolyment.md), except for the `-c <ControllerURL>` argument.
-Notably, different options can be used for the `ControllerURL`:
-1. The ip address of the ClusterIP of the Master-Controller service along with the `8090` port.
-2. The ip address of any node of the cluster, along with the `NodePort` of the Master-Controller service.
-3. If set, the external ip address of any node of the cluster, followed by the `NodePort` of the Master-Controller service.
-  
-```bash  
-# to know the ClusterIP and NodePort related to the Master-Controller service:  
-kubectl get svc f4i-master-controller-svc 
-```  
 
 Move to the CLI directory to use the Command Line Interface.   
   
 ```bash  
 cd VirIoT/CLI  
 ```  
+
+The `f4i.py` CLI commands are the same for both the [Kubernetes-based](Kubernetes%20Deployment.md) 
+and the [Docker-based](Docker%20Depolyment.md) deployments, provided of course you adjust `-c <ControllerURL>` argument, so that it points to the correct Master Conteroller's exposed IP and port.
+
+For instance, when running on Kubernetes, you can issue the following command, the most common possibilities for the `ControllerURL` are:
+1. The ip address of the ClusterIP of the Master-Controller service along with the `8090` port.
+2. The ip address of any node of the cluster, along with the `NodePort` of the Master-Controller service.
+3. If set, the external ip address of any node of the cluster, followed by the `NodePort` of the Master-Controller service.
+
+On Kubernetes, the following command is useful:
+```bash  
+# to know the ClusterIP and NodePort related to the Master-Controller service:  
+kubectl get svc f4i-master-controller-svc 
+```
+
 
 ### Login  
 Login as `admin`. Access control uses JWT (JSON Web Token).  
@@ -85,7 +87,7 @@ python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -f orion-f -d "sil
 
 #### SCORPIO (for developers that want to use the ETSI NGSI-LD standard for IoT and context data)
 Add a vSilo flavour for [Scorpio](https://github.com/ScorpioBroker/ScorpioBroker).
-Scorpio is an [NGSI-LD](https://www.etsi.org/deliver/etsi_gs/CIM/001_099/009/01.02.02_60/gs_CIM009v010202p.pdf)
+Scorpio is an [NGSI-LD](https://www.etsi.org/deliver/etsi_gs/CIM/001_099/009/01.03.01_60/gs_CIM009v010301p.pdf)
 compliant context broker developed by NEC Laboratories Europe and NEC Technologies India.
 NGSI-LD is an open API and Datamodel specification for context management published by ETSI.
 Scorpio is developed in Java using the SpringCloud microservices framework.
@@ -93,8 +95,37 @@ Scorpio is developed in Java using the SpringCloud microservices framework.
 ```bash  
 python3 f4i.py add-flavour -c http://[master_controller_ip]:[master_controller_port] -f ngsild-scorpio-f -i fed4iot/ngsild-scorpio-f:2.2 -d "silo with a Scorpio NGSI-LD broker" -s ""  
 # Kubernetes: add the flavour yaml argument using -y   
-python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -f ngsild-scorpio-f -d "silo with a Scorpio NGSI-LD broker" -s "" -y "../yaml/flavours-ngsild-scorpio.yaml"  
+python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -f ngsild-scorpio-f -d "silo with a Scorpio NGSI-LD broker" -s '{"brokerport":9090}' -y "../yaml/flavours-ngsild-scorpio.yaml"  
+```
+
+
+#### STELLIO (for developers that want to use the ETSI NGSI-LD standard for IoT and context data)
+Add a vSilo flavour for [Stellio](https://github.com/stellio-hub/stellio-context-broker).
+Stellio is an [NGSI-LD](https://www.etsi.org/deliver/etsi_gs/CIM/001_099/009/01.03.01_60/gs_CIM009v010301p.pdf)
+compliant context broker developed by EGM.
+NGSI-LD is an open API and Datamodel specification for context management published by ETSI.
+This project is part of FIWARE. For more information check the FIWARE Catalogue entry for Core Context.
+
+```bash  
+python3 f4i.py add-flavour -c http://[master_controller_ip]:[master_controller_port] -f ngsild-stellio-f -i fed4iot/ngsild-stellio-f:2.2 -d "silo with a Stellio NGSI-LD broker" -s ""  
+# Kubernetes: add the flavour yaml argument using -y   
+python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -f ngsild-scorpio-f -d "silo with a Scorpio NGSI-LD broker" -s '{"brokerport":8090}' -y "../yaml/flavours-ngsild-stellio.yaml"  
 ```  
+
+#### ORIONLD (for developers that want to use the ETSI NGSI-LD standard for IoT and context data)
+Add a vSilo flavour for [OrionLD](https://github.com/FIWARE/context.Orion-LD).
+OrionLD is an [NGSI-LD](https://www.etsi.org/deliver/etsi_gs/CIM/001_099/009/01.03.01_60/gs_CIM009v010301p.pdf)
+compliant context broker developed by FIWARE.
+NGSI-LD is an open API and Datamodel specification for context management published by ETSI.
+This Generic Enabler implements the NGSI-LD API Orion-LD extends the Orion Context Broker
+This project is part of FIWARE. For more information check the FIWARE Catalogue entry for Core Context.
+
+```bash  
+python3 f4i.py add-flavour -c http://[master_controller_ip]:[master_controller_port] -f ngsild-stellio-f -i fed4iot/ngsild-stellio-f:2.2 -d "silo with a OrionLD NGSI-LD broker" -s ""  
+# Kubernetes: add the flavour yaml argument using -y   
+python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -f ngsild-scorpio-f -d "silo with a Scorpio NGSI-LD broker" -s '{"brokerport":1026}' -y "../yaml/flavours-ngsild-orionld-multicontainer.yaml"  
+```  
+
 
 
 #### RAW MQTT

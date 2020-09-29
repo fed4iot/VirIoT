@@ -6,7 +6,7 @@ This ThingVisor creates a vThing whose data are JSON objects received from an ex
 
 ### Local Docker deployment
 
-Use the VirIoT CLI and run the following command to run the ThingVisor. The name of the ThingVisor (relayTV), the vThingName (timestamp) and the vThingType (timestamp) can be customized.
+Use the VirIoT CLI and run the following command to run the ThingVisor. The name of the ThingVisor (relay-tv), the vThingName (timestamp) and the vThingType (timestamp) can be customized.
 
 ```bash
 python3 f4i.py add-thingvisor -i fed4iot/relay-tv -n relay-tv -d "relay thingvisor in japan" -p "{'vThingName':'timestamp','vThingType':'timestamp'}"
@@ -14,7 +14,7 @@ python3 f4i.py add-thingvisor -i fed4iot/relay-tv -n relay-tv -d "relay thingvis
 
 ### Kubernetes deployment
 
-Use the VirIoT CLI and run the following command to run the ThingVisor example.  The name of the ThingVisor (relayTV), the vThingName (timestamp) and the vThingType (timestamp) can be customized.
+Use the VirIoT CLI and run the following command to run the ThingVisor example.  The name of the ThingVisor (relay-tv), the vThingName (timestamp) and the vThingType (timestamp) can be customized.
 
 ```bash
 python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -y ../yaml/thingVisor-relay-stream.yaml -n relay-tv -d "relay thingvisor with stream" -p "{'vThingName':'timestamp','vThingType':'timestamp'}"

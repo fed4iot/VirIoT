@@ -1,22 +1,22 @@
 # Kubernetes Deployment  
 
-Images of VirIoT components are available in [DockerHub](https://hub.docker.com/u/fed4iot). 
-Optionally, they can be built locally as [follows](Optional%20docker%20build.md). 
+(Please notice that images of VirIoT components are available in the [project's DockerHub](https://hub.docker.com/u/fed4iot). 
+Optionally, they can be built locally. See [here](Optional%20docker%20build.md) for instructions).
 
-### Optional building of docker images:  
-
-Images of VirIoT components are available in [DockerHub](https://hub.docker.com/u/fed4iot). Optionally they can be built locally as follows.  
 
 ### Kubernetes cluster setup  
 
-To properly setup a Kubernetes cluster, see the Kubernetes documentation: <https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/>.  
+To properly setup a multi-node Kubernetes cluster, see the Kubernetes documentation: <https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/>.  
 
 Kubernetes cluster should support [service topology](https://kubernetes.io/docs/concepts/services-networking/service-topology/) feature of Kubernetes for performance (traffic, delay) optimization. To this end, kubeadm needs an additional config file [k8s_config.yaml](../yaml/k8s_config.yaml). We assumed to use [Flannel](https://github.com/coreos/flannel#flannel) network plug-in (podSubnet: "10.244.0.0/16").
 
 ```bash  
 kubeadm init --config k8s_config.yaml 
 ```  
- 
+
+Alternatively, you can [install Kubernetes with Minikube](https://kubernetes.io/docs/setup/learning-environment/minikube/). Minikube is a tool that makes it easy to run Kubernetes locally. Minikube runs a single-node Kubernetes cluster inside a Virtual Machine (VM) on your laptop for users looking to try out Kubernetes. In this case, having just one node, support for service topology (see above) is not needed.
+
+
 ## Initial configurations
 ### Clone Git Repository
 
@@ -35,11 +35,13 @@ Unless differently specified, the following commands are run from the k8s master
 **VirIoT labels**
 
 We consider a Kubernetes distributed cluster formed by a default zone and (optionally) multiple "edge" zones. 
-Each zone has a gateway node with a public IP address through whitch it is possible to access the k8s nodes of the zone. The gateway node is any k8s node of the zone with a public IP address and hosts the MQTT broker and the HTTP proxy which are used by all VirIoT vSilos and ThingVisor of the zone.
+Each zone has a gateway node with a public IP address through which it is possible to access the k8s nodes of the zone. The gateway node is any k8s node of the zone with a public IP address, and it hosts the MQTT broker and the HTTP proxy that are used by all VirIoT vSilos and ThingVisor of the zone.
 
 The involved labels are: `viriot-zone`, `viriot-gw`, and `viriot-zone-gw`.
 
-The default zone has no `viriot-zone` label or `default` label. Nodes of an edge zone must be labelled with `viriot-zone` and `viriot-gw` labels. The value of the `viriot-gw` key must contain a public IP address through which it is possible to access the edge cluster. A single node per viriot-zone must have  the label `viriot-zone-gw=true`
+The default zone has no `viriot-zone` label (`default`). Nodes of an edge zone must be labelled with `viriot-zone` and `viriot-gw` labels. The value of the `viriot-gw` key must contain a public IP address through which it is possible to access the edge cluster.
+
+A single node per viriot-zone **must** have the label `viriot-zone-gw=true`.
 
 
 ```bash  
@@ -52,11 +54,17 @@ kubectl label nodes <NodeName> viriot-gw=<gatewayIP>
 # e.g.: kubectl label nodes node2 viriot-zone=Japan 
 # to see labelling results....  
 kubectl get nodes -L viriot-gw -L viriot-zone  
-```   
+```
+ 
+Thus if you are running on Minikube for test purposes, you have to issue at least the following command to get your single-node cluster up and running (since the node's name usually is *minikube*):
+```bash  
+kubectl label nodes minikube viriot-zone-gw=true 
+```
+ 
 
 **Kubernetes labels for service topology feature**
 
-Every kubernetes node mush have the label `topology.kubernetes.io/zone` equal to the `viriot-zone` label.     
+Every kubernetes node must have the label `topology.kubernetes.io/zone` equal to the `viriot-zone` label (this is default behaviour in the 'default' zone). 
 
 ```bash 
 kubectl label nodes <NodeName> topology.kubernetes.io/zone=<ZoneName>
@@ -65,7 +73,7 @@ kubectl label nodes <NodeName> topology.kubernetes.io/zone=<ZoneName>
 kubectl get nodes -L viriot-gw -L topology.kubernetes.io/zone  
 ```   
 
-A possible output for a configuratin made of a default (vm2,vm3,vm4) an a japan (vmjp1,vmjp2) zones is the following one
+A possible output for a configuratin made of a default (vm2,vm3,vm4) an a japan (vmjp1,vmjp2) zones is the following:
 
 
 ```bash
@@ -89,7 +97,7 @@ vmjp2                 Ready    <none>   61d   v1.17.4   japan         13.78.102.
 
 ### Setup MQTT services for control/telemetry data from k8s master node (one VerneMQ broker per viriot-zone)
 
-VerneMQ deployed as a StatefulSet to nodes that have `viriot-zone-gw=true`.  
+Deploy VerneMQ as a StatefulSet to nodes that have `viriot-zone-gw=true`.  
  
 Edit the `spec.replicas` with the correct number of used cluster nodes.  
 
@@ -106,7 +114,7 @@ kubectl get pods -o wide
 
 ### Setup HTTP services for large contents (images, streams, etc.) from k8s master node (one nginx server per viriot-zone)
 
-nginx deployed as a deployment to nodes that have `viriot-zone-gw=true`.  
+Deploy nginx as a deployment to nodes that have `viriot-zone-gw=true`.  
  
 Edit the `spec.replicas` with the correct number of used cluster nodes.  
 
@@ -140,10 +148,10 @@ The Master-Controller can be executed using two approaches:
 
 #### [Option 1] VirIoT Master-Controller execution as Pod from k8s master node
 
-The Master-Controller is deployed as a StatefulSet inside the cluster default zone. 
+The Master-Controller is deployed as a StatefulSet inside the cluster's default zone. 
 Edit the Master-Controller configuration in `yaml/viriot-configmap-setup.yaml` modifying the IP addresses 
 and ports according to your infrastructure (usually you would only need to change the 
-default_gateway_IP = "" variable to the public IP of the node hosting the Master-Controller. 
+default_gateway_IP = "" variable to the public IP of the node hosting the Master-Controller). 
 Then create the ConfigMap resource, as well as the Master-Controller.
 
 ```bash    

@@ -272,8 +272,8 @@ def create_virtual_silo_on_kubernetes(v_silo_id, v_silo_name, tenant_id, flavour
             ip_address = "127.0.0.1"
             exposed_ports = {"none": "none"}
 
-        mqtt_data_broker = {"ip": MQTT_data_broker_IP, "port": MQTT_data_broker_port}
-        mqtt_control_broker = {"ip": MQTT_control_broker_IP, "port": MQTT_control_broker_port}
+        # mqtt_data_broker = {"ip": MQTT_data_broker_IP, "port": MQTT_data_broker_port}
+        # mqtt_control_broker = {"ip": MQTT_control_broker_IP, "port": MQTT_control_broker_port}
 
         # registering silo in system database
         # silo_entry = {"creationTime": datetime.datetime.now().isoformat(), "tenantID": tenant_id,
@@ -624,7 +624,8 @@ def add_flavour_on_docker(image_name, flavour_id, flavour_params, flavour_descri
 
 def add_flavour_on_kubernetes(image_name, flavour_id, flavour_params, flavour_description, yaml_files):
     try:
-
+        valid_images_name_list = list()
+        wrong_images_name_list = list()
         for yaml in yaml_files:
             if yaml["kind"] == "Deployment":
                 for container in yaml["spec"]["template"]["spec"]["containers"]:
@@ -632,12 +633,16 @@ def add_flavour_on_kubernetes(image_name, flavour_id, flavour_params, flavour_de
                     url = "https://hub.docker.com/v2/repositories/%s" % image_name.split(":")[0]
                     response = requests.head(url, allow_redirects=True)
                     if not response.status_code == 200:
-                        raise docker.errors.ImageNotFound("ImageNotFound")
-                        
+                        # raise docker.errors.ImageNotFound("ImageNotFound")
+                        wrong_images_name_list.append(image_name)
+                    else:
+                        valid_images_name_list.append(image_name)
+                if len(wrong_images_name_list) > 0:
+                    raise docker.errors.ImageNotFound("ImageNotFound")
         print("Creation of Flavour on k8s")
         db[flavour_collection].update_one({"flavourID": flavour_id},
                                           {"$set": {"flavourParams": flavour_params,
-                                                    "imageName": image_name,
+                                                    "imageName": valid_images_name_list,
                                                     "flavourDescription": flavour_description,
                                                     "creationTime": datetime.datetime.now().isoformat(),
                                                     "status": STATUS_READY,
@@ -650,7 +655,7 @@ def add_flavour_on_kubernetes(image_name, flavour_id, flavour_params, flavour_de
         # db[flavour_collection].delete_one({"flavourID": flavour_id})
         db[flavour_collection].update_one({"flavourID": flavour_id},
                                           {"$set": {"flavourParams": flavour_params,
-                                                    "imageName": image_name,
+                                                    "imageName": wrong_images_name_list,
                                                     "flavourDescription": flavour_description,
                                                     "creationTime": datetime.datetime.now().isoformat(),
                                                     "status": STATUS_ERROR,
@@ -663,7 +668,7 @@ def add_flavour_on_kubernetes(image_name, flavour_id, flavour_params, flavour_de
         # db[flavour_collection].delete_one({"flavourID": flavour_id})
         db[flavour_collection].update_one({"flavourID": flavour_id},
                                           {"$set": {"flavourParams": flavour_params,
-                                                    "imageName": image_name,
+                                                    "imageName": valid_images_name_list+wrong_images_name_list,
                                                     "flavourDescription": flavour_description,
                                                     "creationTime": datetime.datetime.now().isoformat(),
                                                     "status": STATUS_ERROR,
@@ -676,7 +681,7 @@ def add_flavour_on_kubernetes(image_name, flavour_id, flavour_params, flavour_de
         # db[flavour_collection].delete_one({"flavourID": flavour_id})
         db[flavour_collection].update_one({"flavourID": flavour_id},
                                           {"$set": {"flavourParams": flavour_params,
-                                                    "imageName": image_name,
+                                                    "imageName": valid_images_name_list+wrong_images_name_list,
                                                     "flavourDescription": flavour_description,
                                                     "creationTime": datetime.datetime.now().isoformat(),
                                                     "status": STATUS_ERROR,

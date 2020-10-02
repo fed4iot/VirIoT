@@ -14,8 +14,8 @@ spec:
     spec:
       containers:
       - name: ngsild-silocontroller
-        image: ngsild-silocontroller:latest
-        imagePullPolicy: Never
+        image: fed4iot/ngsild-silocontroller:latest
+        #imagePullPolicy: Never
       - name: f4i-ngsild-orionld-f
         image: fiware/orion-ld:latest
         ports:

@@ -328,7 +328,7 @@ def process_in_vsilo_control_msg(jres):
         control_destroy_vSilo()
         return "destroying vSilo"
     elif commandType == "getContextResponse":
-        print("COMMAD received STARTING RECONSTRUCTING A CONTEXT FOR A VTHING")
+        print("COMMAND received STARTING RECONSTRUCTING A CONTEXT FOR A VTHING")
         del jres["command"] # this is unnecessary because the command field is not inspected in insert_vThing_data_on_Broker
         data_insert_entities_under_vThing(jres)
         print("COMMAND received JUST FINISHED RECONSTRUCTING A CONTEXT FOR A VTHING")
@@ -559,7 +559,11 @@ def data_insert_entities_under_vThing(jres):
 
 
 def handler(signal, frame):
+    global mqtt_data_client
+    global mqtt_control_client
     print("HANDLING")
+    mqtt_data_client.loop_stop()
+    mqtt_control_client.loop_stop()
     clean_close()
 
 
@@ -768,16 +772,13 @@ def start_silo_controller(broker_specific_module_name):
     restore_virtual_things()
     print("Restored and init finished")
 
-    # enter the main network loop
+    # starting the two threads, each for each mqtt client we have
     print("Entering main network loop")
-    rcd = 0
-    rcc = 0
-    while rcd == 0 and rcc == 0:
-        rcd = mqtt_data_client.loop()
-        rcc = mqtt_control_client.loop()
-        if connected_clients < 2:
-            print("WARNING CC " + str(connected_clients))
+    mqtt_data_client.loop_start()
+    mqtt_control_client.loop_start()
 
-    clean_close()
+    # doing nothing in the main thread
+    while True:
+        time.sleep(10)
 
 

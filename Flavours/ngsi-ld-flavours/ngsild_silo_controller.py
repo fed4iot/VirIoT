@@ -100,7 +100,7 @@ def add_or_modify_entity_under_vThing_on_Broker(v_thing_id, entity):
             print("Subscribing to broker to receive notifications...")
             entity_id_to_subscribe = entity['id']
             entity_type = entity['type']
-            notification_URI = "http://172.17.0.1:5555/receive_notification_from_broker/"+command
+            notification_URI = "http://localhost:5555/receive_notification_from_broker/"+command
             try:
                 status = F4Ingsild.subscribe_to_entity(brokerurl, entity_id_to_subscribe, entity_type, notification_URI, [command])
             except Exception:

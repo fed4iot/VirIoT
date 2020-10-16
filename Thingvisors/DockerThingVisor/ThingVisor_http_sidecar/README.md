@@ -37,7 +37,7 @@ python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -y ../yaml/thin
 
 Add an endpoint to the `timestamp` vThing through the CLI
 ```bash
-python3 f4i.py -c http://[k8s_node_ip]:[NodePort] set-vthing-endpoint -v relay-tv/timestamp -e http://ipv4.download.thinkbroadband.com
+python3 f4i.py set-vthing-endpoint -c http://[k8s_node_ip]:[NodePort] -v relay-tv/timestamp -e http://ipv4.download.thinkbroadband.com
 ```
 
 Test with curl, where 'tv-service-ip' is the IP address (cluster IP, or NodePort) of the ThingVisor

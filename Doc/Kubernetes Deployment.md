@@ -39,7 +39,7 @@ Each zone has a gateway node with a public IP address through which it is possib
 
 The involved labels are: `viriot-zone`, `viriot-gw`, and `viriot-zone-gw`.
 
-The default zone has no `viriot-zone` label (`default`). Nodes of an edge zone must be labelled with `viriot-zone` and `viriot-gw` labels. The value of the `viriot-gw` key must contain a public IP address through which it is possible to access the edge cluster.
+The default zone has `viriot-zone` label (`default`). Nodes of an edge zone must be labelled with `viriot-zone` and `viriot-gw` labels. The value of the `viriot-gw` key must contain a public IP address through which it is possible to access the edge cluster.
 
 A single node per viriot-zone **must** have the label `viriot-zone-gw=true`.
 

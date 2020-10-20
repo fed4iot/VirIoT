@@ -695,7 +695,7 @@ def get_deploy_zone_on_docker(tv_zone):
 def get_deploy_zone_on_kubernetes(tv_zone):
     available_zones = k8s.list_available_node_zone()
     print("get_deploy_zone_on_kubernetes -> available_zones", available_zones)
-    if tv_zone is not "" and tv_zone in available_zones:
+    if tv_zone != "" and tv_zone in available_zones:
         return {"zone": tv_zone, "gw": available_zones[tv_zone]}, available_zones.keys()
     else:
         return {}, available_zones.keys()
@@ -1221,7 +1221,7 @@ class httpThread(Thread):
                     return json.dumps({"message": 'Update fails - thingVisor ID not valid'}), 401
 
                 thing_visor_entry = {}
-                if tv_description is not "hello thingVisor":
+                if tv_description != "hello thingVisor":
                     thing_visor_entry["tvDescription"] = tv_description
                 if tv_params is not None:
                     thing_visor_entry["params"] = tv_params

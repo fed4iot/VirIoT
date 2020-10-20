@@ -77,7 +77,11 @@ class proxy_thread(Thread):
             path_uri=path.split('/',1)[1] # first token is the ThingVisorID
             uri = "http://"+found_svc+'/'+path_uri
             print(uri)
-            req = requests.get(uri, stream=True, proxies=proxies)
+            new_headers = dict()
+            for elem in request.headers:
+                new_headers[elem[0]] = elem[1]
+            new_headers.pop("Host", False)
+            req = requests.get(uri, headers=new_headers, stream=True, proxies=proxies)
             return Response(stream_with_context(req.iter_content(chunk_size=1024000)), status = req.status_code, content_type = req.headers['content-type'])
         abort(404)
         

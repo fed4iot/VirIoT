@@ -43,9 +43,11 @@ def proxy(path):
     if v_stream_endpoint is not None and v_stream_endpoint != 'dummy':
         uri = v_stream_endpoint+path.replace(v_thing_name, '')
         print(uri)
-        req = requests.get(uri, stream=True)
+        for elem in request.headers:
+            new_headers[elem[0]] = elem[1]
+        new_headers.pop("Host", False)
+        req = requests.get(uri, headers=new_headers, stream=True)
         return Response(stream_with_context(req.iter_content(chunk_size=1024000)), status = req.status_code, content_type=req.headers['content-type'])
-        
     elif v_stream_endpoint == 'dummy':
         path = "/app/dummy.txt"
         return send_file(path, as_attachment=True)

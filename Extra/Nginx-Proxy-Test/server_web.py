@@ -2,18 +2,29 @@
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import logging
+import time
+
 SERVER_IP = "0.0.0.0"
 SERVER_PORT = 8080
-
+ROOT_PATH = "/path/to/files"
 
 class S(BaseHTTPRequestHandler):
 
     def do_GET(self):
-        self.send_response(200)
-        self.send_header('Content-type', 'text/html')
-        self.end_headers()
+
         print("GET %s \n%s" %(str(self.path), str(self.headers)))
-        # self.wfile.write("GET request for {}".format(self.path).encode('utf-8'))
+
+        try:
+            with open(ROOT_PATH + self.path, 'rb') as file:
+                self.send_response(200)
+                self.send_header('Content-type', 'text/html')
+                self.end_headers()
+                print("file size = ", self.wfile.write(file.read()))  # Read the file and send the contents
+        except Exception as err:
+            print("File not Found", err)
+            self.send_response(404)
+            self.end_headers()
+
 
 
 def run(server_class=HTTPServer, handler_class=S, ip="0.0.0.0", port=8080):

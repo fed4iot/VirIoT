@@ -81,8 +81,10 @@ class proxy_thread(Thread):
             for elem in request.headers:
                 new_headers[elem[0]] = elem[1]
             new_headers.pop("Host", False)
+            new_headers.pop("Cache-Control", False)
             req = requests.get(uri, headers=new_headers, stream=True, proxies=proxies)
-            return Response(stream_with_context(req.iter_content(chunk_size=1024000)), status = req.status_code, content_type = req.headers['content-type'])
+            response_headers = dict(req.headers)
+            return Response(stream_with_context(req.iter_content(chunk_size=1024000)), headers=response_headers, status = req.status_code)
         abort(404)
         
 # topic messages

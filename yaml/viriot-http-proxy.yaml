@@ -37,6 +37,7 @@ data:
                     proxy_buffering on;
                     add_header X-Proxy-Cache $upstream_cache_status;
                     proxy_cache_bypass $http_cache_control;
+                    proxy_cache_lock on;
                     #proxy_set_header Header Value;
                     proxy_pass http://$http_host$uri$is_args$args;
                 }

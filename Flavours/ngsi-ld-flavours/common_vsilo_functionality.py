@@ -73,11 +73,14 @@ def recv_notify(attr):
     
     entity=jres['data'][0]
     if 'cmd-id' in entity[attr]['value']:
+        # in any case lets overwrite the nuri, to avoid injecting a malicious nuri
+        # so, not only if 'cmd-nuri' not in entity[attr]['value']:
+        entity[attr]['value']['cmd-nuri'] = 'viriot://vSilo/'+v_silo_id+'/data_in'
         # BEWARE HERE that 'object' is ok if generatedByVThing is a Relationship
         # but if it is a Property, then it has to be 'value'. This may be the case
-        # because some NGSI-LD Brokers (maybe Stellio) do not allow dangling Relationships
-        ar=entity['generatedByVThing']['object'].split(':')
-        vThingID = ar[-2]+"/"+ar[-1]
+        # because some NGSI-LD Brokers (maybe Stellio) do not allow dangling Relationships.
+        # This is why we decided to use Property instead of Relationship.
+        vThingID=entity['generatedByVThing']['value']
 
         cmd_value = entity[attr]['value']
         cmd_name = attr
@@ -93,8 +96,7 @@ def recv_notify(attr):
         brokerspecific.add_or_modify_entity_under_vThing_on_Broker(vThingID, entity)
 
         print("Sending command out...")
-        send_command_out(cmd_LD_ID, cmd_LD_Type,
-                        cmd_name, cmd_value, vThingID)
+        send_command_out(cmd_LD_ID, cmd_LD_Type,cmd_name, cmd_value, vThingID)
 
     #print(jres)
     # return ""
@@ -131,6 +133,8 @@ def publish_on_virIoT(message, out_topic):
 # The callbacks for when the client receives a CONNACK response from the server.
 def mqtt_data_on_connect(client, userdata, flags, rc):
     print("MQTT data channel connected with result code "+str(rc))
+    client.message_callback_add(in_vsilo_data_topic, mqtt_on_in_vsilo_datatopic_message)
+    client.subscribe(in_vsilo_data_topic)
     global connected_clients
     connected_clients += 1
 
@@ -144,11 +148,14 @@ def mqtt_data_on_disconnect(client, userdata, rc):
     #connected_clients -= 1
     client.reconnect()
 
-# We immediately (on startup) subscribe to the control messages
-# coming into this vSilo (i.e. published by others on the in_vsilo_control_topic
-# of this vSilo) and to (createVThing) control messages being spit out to the
+# We immediately (on startup) subscribe to:
+# - the control messages coming into this vSilo (i.e. published by others on the in_vsilo_control_topic
+# of this vSilo).
+# - the data messages unicast sent to this specific vSilo via its in_vsilo_data_topic
+# (data_in) topic. This is the unicast topic used in the actuation workflow.
+# If we are a System vSilo we also subscribe to (createVThing) control messages being spit out to the
 # thing_visor_prefix + '/' + tv_id + '/' + out_control_suffix
-# (for instance: TV/tv123/c_out) by each TV, BUT we don't know all TVs identifiers.
+# (for instance: TV/tv123/c_out) by EACH TV, BUT we don't know all TVs identifiers.
 # Can we subscribe to TV/# ? No, because we would also
 # get all DATA being spit out by TVs.... so we use generic single-level wildcard: TV/+/c_out
 def mqtt_control_on_connect(client, userdata, flags, rc):
@@ -191,8 +198,8 @@ def message_to_jres(message):
 # The control_client is subscribed to:
 # -- messages of the in_vsilo_control_topic of this vSilo (remind that client has subscribed at silo startup)
 # -- messages of the out_vthing_control topic (suffix control_out) of the vThings this silo has dynamically added to itself
-# -- control messages being spit out to the thing_visor_prefix /tv_id/out_control_suffix
-# (for instance: TV/tv123/c_out) by each TV, so that in case of System vSilo we can capture
+# -- in case of System vSilo, control messages being spit out to the thing_visor_prefix /tv_id/out_control_suffix
+# (for instance: TV/tv123/c_out) by each TV, so that we can capture
 # createVThing messages and produce a corresponding addVThing in order to inject all data/entities
 # into the System vSilo. BUT we don't know all TVs identifiers. Can we subscribe to TV/# ?
 # No, because we would also get all DATA being spit out by TVs.... so we use single-level wildcard: TV/+/c_out
@@ -216,6 +223,10 @@ def message_to_jres(message):
 def mqtt_on_in_vsilo_controltopic_message(client, userdata, message):
     jres = message_to_jres(message)
     executor.submit(process_in_vsilo_control_msg, jres)
+
+def mqtt_on_in_vsilo_datatopic_message(client, userdata, message):
+    jres = message_to_jres(message)
+    executor.submit(data_insert_entities_under_vThing, jres)
 
 # our vthings control
 def mqtt_on_out_vthing_controltopic_message(client, userdata, message):
@@ -583,10 +594,12 @@ def start_silo_controller(broker_specific_module_name):
     global v_thing_prefix
     global in_control_suffix
     global out_control_suffix
+    global in_data_suffix
     global out_data_suffix
     global in_vsilo_control_topic
     global out_vsilo_control_topic
     global out_generic_thingvisor_control_topic
+    global in_vsilo_data_topic
     global mqtt_control_client
     global mqtt_data_client
     global connected_clients
@@ -743,6 +756,7 @@ def start_silo_controller(broker_specific_module_name):
     thing_visor_prefix = "TV"  # prefix name for ThingVisor communication topic
     in_control_suffix = "c_in"
     out_control_suffix = "c_out"
+    in_data_suffix = "data_in"
     out_data_suffix = "data_out"
     # useful strings setup:
     # the following topic is used by us to subscribe to control commands directed to us
@@ -751,6 +765,8 @@ def start_silo_controller(broker_specific_module_name):
     out_vsilo_control_topic = v_silo_prefix + "/" + v_silo_id + "/" + out_control_suffix
     # generic TV, single-level wildcard: TV/+/c_out
     out_generic_thingvisor_control_topic = thing_visor_prefix + "/+/" + out_control_suffix
+    # the following topic is used by us to subscribe to data in of this TV and get the data after actuation commands
+    in_vsilo_data_topic = v_silo_prefix + "/" + v_silo_id + "/" + in_data_suffix
     # create and start two clients for MQTT
     mqtt_control_client = mqtt.Client()
     mqtt_data_client = mqtt.Client()

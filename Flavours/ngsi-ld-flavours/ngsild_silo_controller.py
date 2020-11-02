@@ -80,8 +80,7 @@ def delete_entity_under_vThing_on_Broker(v_thing_id, entity_id):
 # Here we receive a data item, which is composed of "data" and "meta" fields
 def add_or_modify_entity_under_vThing_on_Broker(v_thing_id, entity):
     # lets add the vThingID as a property into each entity
-    entity['generatedByVThing'] = {'type':'Relationship','object':entity['id']}
-    #entity['generatedByVThing'] = {'type':'Relationship','object':'http://'+v_thing_id.replace("/", ":")}
+    entity['generatedByVThing'] = {'type':'Property','value':v_thing_id}
 
     # if the "commands" property exists,
     # foreach command in the array, create 3 additional properties in entity:

@@ -44,7 +44,8 @@ class DataThread(Thread):
         pvalue['cmd-result'] = result_code
         ngsiLdEntityResult = {"id": id_LD,
                                 "type": v_thing_type_attr,
-                                pname: {"type": "Property", "value": pvalue}
+                                pname: {"type": "Property", "value": pvalue},
+                                "@context": [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]
                                 }
         data = [ngsiLdEntityResult]
         # LampActuatorContext.update(data)
@@ -66,7 +67,8 @@ class DataThread(Thread):
         pvalue['cmd-status'] = status_code
         ngsiLdEntityStatus = {"id": id_LD,
                                 "type": v_thing_type_attr,
-                                pname: {"type": "Property", "value": pvalue}
+                                pname: {"type": "Property", "value": pvalue},
+                                "@context": [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]
                                 }
         data = [ngsiLdEntityStatus]
                 
@@ -111,7 +113,8 @@ class DataThread(Thread):
         # update the Context, publish new actuator status on data_out, send result
         ngsiLdEntity = {"id": id_LD,
                         "type": v_thing_type_attr,
-                        "color": {"type": "Property", "value": cmd_info['cmd-value']}
+                        "color": {"type": "Property", "value": cmd_info['cmd-value']},
+                        "@context": [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]
                         }
         data = [ngsiLdEntity]
         LampActuatorContext.update(data)
@@ -132,7 +135,8 @@ class DataThread(Thread):
         # update the Context, publish new actuator status on data_out, send result
         ngsiLdEntity = {"id": id_LD,   
                         "type": v_thing_type_attr,
-                        "status": {"type": "Property", "value": cmd_info['cmd-value']}
+                        "status": {"type": "Property", "value": cmd_info['cmd-value']},
+                        "@context": [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]
                         }
         data = [ngsiLdEntity]
         LampActuatorContext.update(data)
@@ -195,7 +199,8 @@ class DataThread(Thread):
                         "status": {"type": "Property", "value": "off"},
                         "color": {"type": "Property", "value": "white"},
                         "luminosity": {"type": "Property", "value": "255"},
-                        "commands": {"type": "Property", "value": ["set-color","set-luminosity","set-status"]}
+                        "commands": {"type": "Property", "value": ["set-color","set-luminosity","set-status"]},
+                        "@context": [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]
         }
 
         data = [ngsiLdEntity]

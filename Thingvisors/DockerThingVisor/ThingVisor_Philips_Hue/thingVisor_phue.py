@@ -46,7 +46,8 @@ class DataThread(Thread):
         pvalue['cmd-result'] = result_code
         ngsiLdEntityResult = {"id": id_LD,
                               "type": v_things[id_LD]['ld_type'],
-                              pname: {"type": "Property", "value": pvalue}
+                              pname: {"type": "Property", "value": pvalue},
+                              "@context": [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]
                               }
         data = [ngsiLdEntityResult]
         
@@ -68,7 +69,8 @@ class DataThread(Thread):
         pvalue['cmd-status'] = status_code
         ngsiLdEntityResult = {"id": id_LD,
                               "type": v_things[id_LD]['ld_type'],
-                              pname: {"type": "Property", "value": pvalue}
+                              pname: {"type": "Property", "value": pvalue},
+                              "@context": [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]
                               }
         data = [ngsiLdEntityResult]
         
@@ -125,7 +127,8 @@ class DataThread(Thread):
                 "saturation": {"type": "Property", "value": light.saturation},
                 "hue": {"type": "Property", "value": light.hue},
                 "on": {"type": "Property", "value": light.on},
-                "commands": {"type": "Property", "value": commands}
+                "commands": {"type": "Property", "value": commands},
+                "@context": [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]
                 }
 
             data = [ngsiLdEntity]
@@ -168,7 +171,8 @@ class DataThread(Thread):
             ngsiLdEntity = {"id": id_LD,
                             "type": v_things[id_LD]['ld_type'],
                             #param: {"type": "Property", "value": cmd_info['cmd-value']}
-                            param: {"type": "Property", "value": eval("light."+param)}
+                            param: {"type": "Property", "value": eval("light."+param)},
+                            "@context": [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]
                             }
             
             data = [ngsiLdEntity]
@@ -242,7 +246,8 @@ class DataThread(Thread):
                             "saturation": {"type": "Property", "value": light.saturation},
                             "hue": {"type": "Property", "value": light.hue},
                             "on": {"type": "Property", "value": light.on},
-                            "commands": {"type": "Property", "value": commands}
+                            "commands": {"type": "Property", "value": commands},
+                            "@context": [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]
                             }
 
             data = [ngsiLdEntity]

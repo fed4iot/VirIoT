@@ -47,7 +47,7 @@ class NGSILDHTTPSiloThread(Thread):
         return on_receive(jres)
 
 def on_receive(jres):
-    global total_timestamp, samples
+    global total_timestamp, samples, csvFile
     now_timestamp = int(round(time.time() * (UNIT)))
 
     #print("enter notify, POST body: " + json.dumps(jres))
@@ -61,6 +61,9 @@ def on_receive(jres):
             delta_timestamp = now_timestamp - send_timestamp
             total_timestamp += delta_timestamp
             print("msg: %d, delta timestamp %.4f (ms), average: %.4f" % (msg_num, delta_timestamp, total_timestamp/samples))
+            if csvFile is not None:
+                csvFile.write("%d \t %.4f \t %.4f \n" % (msg_num, delta_timestamp, self.total_timestamp/self.samples))
+                csvFile.flush()
             return 'OK', 201
         else:
             print("Bad notification format")
@@ -91,7 +94,9 @@ if __name__ == '__main__':
         parser.add_argument('-v', action='store', dest='vThingID', 
                             help='vThingID (default: relay/vThingRelay) ', default='relay/vThingRelay')
         parser.add_argument('-t', action='store', dest='vThingType', 
-                            help='vThingType (default: message) ', default='message')                            
+                            help='vThingType (default: message) ', default='message')
+        parser.add_argument('-f', action='store', dest='csvFileName', 
+                            help='csvFile (default: None) ', default=None)                                    
         argcomplete.autocomplete(parser)
         args = parser.parse_args()
 
@@ -106,6 +111,11 @@ if __name__ == '__main__':
     entity_type = args.vThingType
     notification_URI = args.notificationURI
 
+    csvFileName = args.csvFileName
+    csvFile = None
+    if csvFileName is not None:
+        csvFile =  open(csvFileName, "w")
+
     NGSILD_HTTP_silo_thread = NGSILDHTTPSiloThread()
     NGSILD_HTTP_silo_thread.start()
 
@@ -116,6 +126,8 @@ if __name__ == '__main__':
             time.sleep(1)
         except Exception as err:
             print("Exception", err)
+            if csvFile is not None:
+                csvFile.close()
             time.sleep(1)
             os._exit(1)
 

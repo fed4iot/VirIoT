@@ -99,7 +99,7 @@ class oneM2MHTTPSiloThread(Thread):
         return on_receive(jres)
 
 def on_receive(jres):
-    global total_timestamp, samples
+    global total_timestamp, samples, csvFile
     received_timestamp = int(round(time.time() * (UNIT)))
 
     #print("enter notify, POST body: " + json.dumps(jres))
@@ -113,6 +113,9 @@ def on_receive(jres):
             delta_timestamp = received_timestamp - send_timestamp
             total_timestamp += delta_timestamp
             print("msg: %d, delta timestamp %.4f (ms), average: %.4f" % (msg_num, delta_timestamp, total_timestamp/samples))
+            if csvFile is not None:
+                csvFile.write("%d \t %.4f \t %.4f \n" % (msg_num, delta_timestamp, self.total_timestamp/self.samples))
+                csvFile.flush()
             return 'OK', 201
         else:
             print("Bad notification format")
@@ -147,6 +150,8 @@ if __name__ == '__main__':
                             help='Test mode [HTTP, MQTT]: HTTP notification or MQTT notification (default HTTP)', default='HTTP')
         parser.add_argument('-v', action='store', dest='vThingID', 
                             help='vThingID (default: relay-tv/timestamp) ', default='relay-tv/timestamp')
+        parser.add_argument('-f', action='store', dest='csvFileName', 
+                            help='csvFile (default: None) ', default=None) 
         argcomplete.autocomplete(parser)
         args = parser.parse_args()
 
@@ -160,6 +165,12 @@ if __name__ == '__main__':
     origin = "S"
     notification_URI = args.notificationURI
     sub_rn = "vSiloTestSub" 
+    
+    csvFileName = args.csvFileName
+    csvFile=None
+    if csvFileName is not None:
+        csvFile =  open(csvFileName, "w")
+
     if (args.testMode == "MQTT"):
         print("MQTT test mode")
         oneM2M_MQTT_silo_thread = oneM2MMQTTSiloThread()
@@ -175,6 +186,8 @@ if __name__ == '__main__':
             time.sleep(1)
         except Exception as err:
             print("Exception", err)
+            if csvFile is not None:
+                csvFile.close()
             time.sleep(1)
             os._exit(1)
 

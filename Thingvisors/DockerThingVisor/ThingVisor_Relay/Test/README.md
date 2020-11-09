@@ -94,3 +94,13 @@ python3 f4i.py add-flavour -f ngsild-f -s '{"brokerport":1026}' -d "silo with a 
 python3 f4i.py create-vsilo -f ngsild-f -t tenant1 -s Silo1
 python3 f4i.py add-vthing -t tenant1 -s Silo1 -v relay-tv/timestamp
 ```
+
+## Big Buck Bunny fake MPEG DASH player
+`bbbPlayer.py` is a consumer for the Big Buck Bunny MPEG dash video strems that is provided by a Relay-TV with http-sidecard and with the internal webserver in Extra folder. 
+To deploy this kind of ThingVisor the following command can be used in case of `japan` zone
+
+```bash
+f4i.py add-thingvisor -y ../yaml/thingVisor-relay-http-webserver.yaml -n relay-tv-jp -d "relay thingvisor with http" -p "{'vThingName':'timestamp','vThingType':'timestamp'}" -z japan 
+f4i.py set-vthing-endpoint -v relay-tv-jp/timestamp -e http://127.0.0.1:8081 
+```
+

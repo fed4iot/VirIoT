@@ -96,11 +96,28 @@ python3 f4i.py add-vthing -t tenant1 -s Silo1 -v relay-tv/timestamp
 ```
 
 ## Big Buck Bunny fake MPEG DASH player
-`bbbPlayer.py` is a consumer for the Big Buck Bunny MPEG dash video strems that is provided by a Relay-TV with http-sidecard and with the internal webserver in Extra folder. 
-To deploy this kind of ThingVisor the following command can be used in case of `japan` zone
+`bbbPlayer.py` is a fake player for the Big Buck Bunny MPEG dash video stream that is provided by a Relay-TV with [http-sidecard](../../../../Thingvisors/DockerThingVisor/ThingVisor_http_sidecar/README.md and with the internal webserver in [Extra](../../../../Extra/webserver/README.md) folder.  
+To deploy this kind of ThingVisor the following command can be used
 
 ```bash
-f4i.py add-thingvisor -y ../yaml/thingVisor-relay-http-webserver.yaml -n relay-tv-jp -d "relay thingvisor with http" -p "{'vThingName':'timestamp','vThingType':'timestamp'}" -z japan 
-f4i.py set-vthing-endpoint -v relay-tv-jp/timestamp -e http://127.0.0.1:8081 
+f4i.py add-thingvisor -y ../yaml/thingVisor-relay-http-webserver.yaml -n relay-tv -d "relay thingvisor with http" -p "{'vThingName':'timestamp','vThingType':'timestamp'}" 
+f4i.py set-vthing-endpoint -v relay-tv/timestamp -e http://127.0.0.1:8081 
+```
+
+The player issues HTTP GETS to a vSilo which should have the  [http-sidecar](../../../../Flavours/http-sidecar-flavour/README.md) too. To deploy this kind of vSilo (e.g. MQTT based) the following command can be used
+
+
+```bash
+python3 f4i.py add-flavour -y ../yaml/flavours-raw-mqtt-actuator-http.yaml -f Raw-base-actuator-f-h -s Raw -d "silo with a MQTT broker and HTTP services"
+python3 f4i.py create-vsilo -f Raw-base-actuator-f-h -t tenant1 -s Silo1
+python3 f4i.py add-vthing -t tenant1 -s Silo1 -v relay-tv/timestamp
+```
+
+The  `bbbPlayer.py` script emulates live streaming in the sense that it requests MPEG DASH segments according to the segment duration (4s) and taking into consideration the start time of the video that should be passed as parameters (`-u`).
+
+The following command runs a player that issues HTTP GETs to a vSilo (with http-sidecar runing on port 80) whose IP address is 172.17.0.2. The player gets MPEG DAS bbb segments offered by a vThing whose id is `relay-tv/timestamp` and the video start time is  1604917348 (Unix Epoch Time)
+
+```bash
+python3 bbbPlayer.py -s 172.17.0.2 -p 80 -v relay-tv/timestamp -u 1604917348
 ```
 

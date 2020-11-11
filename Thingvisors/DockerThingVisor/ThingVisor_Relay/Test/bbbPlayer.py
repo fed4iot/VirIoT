@@ -2,6 +2,7 @@ import argparse, argcomplete
 import sys, os
 import requests
 import time
+import math
 
 if __name__ == '__main__':
 
@@ -43,7 +44,11 @@ if __name__ == '__main__':
     while True:
         try:
             now = time.time()
-            currSegment = (int((now-startTime)/segmentDuration)%maxSegmentNum)+1
+            currSegmentVirtual = (math.ceil((now-startTime)/segmentDuration))
+            currSegmentProductionTime = startTime + currSegmentVirtual*segmentDuration
+            time.sleep(currSegmentProductionTime - now)
+            
+            currSegment = (currSegmentVirtual%maxSegmentNum)+1
             uri =  urlPrefix + str(currSegment)+".m4s"
             print("%.4f Downloading segment %d " % (now, currSegment))
             r = requests.get(uri)
@@ -54,7 +59,7 @@ if __name__ == '__main__':
             if csvFile is not None:
                 csvFile.write("%.4f \t %d \t %.4f \t %.4f \n" % (now, currSegment, l/1000, rate))
                 csvFile.flush()
-            time.sleep(segmentDuration - elapsed)
+            #time.sleep(segmentDuration - elapsed)
         except Exception as err:
             print("KeyboardInterrupt", err)
             if csvFile is not None:

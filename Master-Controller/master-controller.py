@@ -228,7 +228,11 @@ def create_virtual_silo_on_kubernetes(v_silo_id, v_silo_name, tenant_id, flavour
                     yaml["spec"]["selector"]["matchLabels"]["siloID"] = label_app
                     yaml["spec"]["template"]["metadata"]["labels"]["siloID"] = label_app
                     for container in yaml["spec"]["template"]["spec"]["containers"]:
-                        container["env"] = k8s.convert_env(env)
+                        if 'env' in container:
+                            container["env"] = k8s.convert_env(env, container['env'])
+                        else:
+                            container["env"] = k8s.convert_env(env)
+                        print(container["env"])
                     #yaml["spec"]["template"]["spec"]["containers"][0]["env"] = k8s.convert_env(env)
                     if deploy_zone is not None and deploy_zone:
                         yaml["spec"]["template"]["spec"]["nodeSelector"] = {"viriot-zone": deploy_zone["zone"]}

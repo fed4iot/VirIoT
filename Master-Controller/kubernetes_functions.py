@@ -105,9 +105,10 @@ def dictSearch(key, dictionary):
                 for result in dictSearch(key, d):
                     yield result
 
-
-def convert_env(env):
-    new_env = []
+# prec_env contains the list of env variables
+# found in the yaml file for a container
+def convert_env(env, prec_env = []):
+    new_env = prec_env
     for key in env:
         new_env.append({"name": key, "value": str(env[key])})
 

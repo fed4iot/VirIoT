@@ -1,12 +1,14 @@
 ### specify the node base image with your desired version node:<version>
-FROM python:3
+FROM python:3.8-slim
 
 ### environment for python silo controller able to talk to mongo and mosquitto and leveldb hashmap
 ### pymongo could go away if silocontroller only talks to mastercontroller
-RUN pip3 install paho-mqtt requests pymongo plyvel flask
 
-COPY common_vsilo_functionality.py /
-COPY ngsild_silo_controller.py /
-COPY F4Ingsild.py /
+### RUN apt update && apt -y upgrade
+### RUN apt install -y screen
+RUN pip3 install paho-mqtt requests pymongo plyvel flask uuid
 
-CMD [ "python", "./ngsild_silo_controller.py" ]
+COPY . /app
+WORKDIR /app
+
+CMD [ "python3", "./ngsild_silo_controller.py" ]

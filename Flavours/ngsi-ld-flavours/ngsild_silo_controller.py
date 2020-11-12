@@ -76,6 +76,28 @@ def delete_entity_under_vThing_on_Broker(v_thing_id, entity_id):
         print("Exception while REST DELETE of Entity " + entity_id + " on vThing " + v_thing_id)
     return False
 
+def batch_entity_delete_under_vThing_on_Broker(v_thing_id, entities_ids):
+    # lets now delete the entity from the Broker
+    try:
+        return F4Ingsild.batch_entity_delete(brokerurl, entities_ids)
+    except Exception:
+        traceback.print_exc()
+        print("Exception while REST BATCH_DELETE of entities on vThing " + v_thing_id)
+    return []
+
+# This method allows us to retrieve all the entities under
+# a specific vThing by querying them for v_thing_id
+def get_all_entities_under_vThing_on_Broker(v_thing_id):
+    try:
+        data = F4Ingsild.get_entities_by_vThing(brokerurl, v_thing_id)
+        print("ENTITIES ", data)
+        return data
+    except Exception:
+        traceback.print_exc()
+        print("Exception while REST GET of Entities on vThing " + v_thing_id)
+    return []
+
+
 
 # Here we receive a data item, which is composed of "data" and "meta" fields
 def add_or_modify_entity_under_vThing_on_Broker(v_thing_id, entity):
@@ -138,6 +160,68 @@ def add_or_modify_entity_under_vThing_on_Broker(v_thing_id, entity):
         print("Exception while REST POST of Entity " + entity['id'])
 
     return False
+
+
+# Here we receive a group of data items, which are composed of "data" and "meta" fields
+def batch_add_or_modify_entity_under_vThing_on_Broker(v_thing_id, entities):
+    for entity in entities:
+        # lets add the vThingID as a property into each entity
+        entity['generatedByVThing'] = {'type':'Property','value':v_thing_id}
+
+        # if the "commands" property exists,
+        # foreach command in the array, create 3 additional properties in entity:
+        # command, command-status, command-result 
+        # then vsilo controller subscribes itself for this entity to the broker,
+        # using the F4Ingsild.py subscribe function
+        # and using the self nuri = "http://localhost:5555/receive_notification_from_broker"
+        if 'commands' in entity:
+            for command in entity['commands']['value']:
+                #print(command)
+                entity[command]={"type": "Property", "value": {}}
+                entity[command+"-status"]={"type": "Property", "value": {}}
+                entity[command+"-result"]={"type": "Property", "value": {}}
+
+                # subscribe to broker to receive notifications
+                print("Subscribing to broker to receive notifications...")
+                try:
+                    entity_id_to_subscribe = entity['id']
+                    entity_type = entity['type']
+                    notification_URI = "http://localhost:5555/receive_notification_from_broker/"+command
+                    status = F4Ingsild.subscribe_to_entity(brokerurl, entity_id_to_subscribe, entity_type, notification_URI, [command])
+                except Exception:
+                    traceback.print_exc()
+                    print("Exception while subscribing to broker " + entity['id'])
+
+    ### HOPE THE FOLLOWING WILL NOT NEEDED ANYMORE, NGSI-LD HAS BEEN FIXED? ###
+    # in order to adapt to a NGSI-LD mis-behaving, we have
+    # to change the value of the entity's GeoProperties into a string,
+    # hence we need to escape the quote and make it a string
+    # for attribute_name, attribute_value in entity.items():
+    #   # let's find wether this attribute of the object is a GeoProperty
+    #   # by examining its "type", if it has one
+    #   if isinstance(attribute_value, dict):
+    #     try:
+    #       type_of_the_attribute = attribute_value['type']
+    #       if type_of_the_attribute == "GeoProperty":
+    #         try:
+    #           value_of_the_geo_property = attribute_value['value']
+    #           value_of_the_geo_property_as_string = json.dumps(value_of_the_geo_property)
+    #           value_of_the_geo_property_as_escaped_string = value_of_the_geo_property_as_string.replace('"', '\"').replace('\n', '\\n')
+    #           # turn it into a string
+    #           attribute_value['value'] = value_of_the_geo_property_as_escaped_string
+    #         except Exception:
+    #           print("GeoProperty malformed? no value field??: " + entity['id'])
+    #     except Exception:
+    #       print("entity malformed? no type field??: " + entity['id'])
+
+    # lets now push the entity to the Broker
+    try:
+        return F4Ingsild.batch_entity_upsert(brokerurl, entities)
+    except Exception:
+        traceback.print_exc()
+        print("Exception while REST POST of Entity " + entity['id'])
+
+    return []
 
 ############# END Broker Functions ############
 

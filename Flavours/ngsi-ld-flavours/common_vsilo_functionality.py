@@ -226,7 +226,8 @@ def mqtt_on_in_vsilo_controltopic_message(client, userdata, message):
 
 def mqtt_on_in_vsilo_datatopic_message(client, userdata, message):
     jres = message_to_jres(message)
-    executor.submit(data_insert_entities_under_vThing, jres)
+    # executor.submit(data_insert_entities_under_vThing, jres)
+    executor.submit(batch_data_insert_entities_under_vThing, jres)
 
 # our vthings control
 def mqtt_on_out_vthing_controltopic_message(client, userdata, message):
@@ -237,7 +238,8 @@ def mqtt_on_out_vthing_controltopic_message(client, userdata, message):
 def mqtt_on_out_vthing_datatopic_message(client, userdata, message):
     jres = message_to_jres(message)
     # messages to vthing's data_out topic contain entities to be inserted in our broker
-    executor.submit(data_insert_entities_under_vThing, jres)
+    # executor.submit(data_insert_entities_under_vThing, jres)
+    executor.submit(batch_data_insert_entities_under_vThing, jres)
 
 # any thingvisor control
 def mqtt_on_out_generic_thingvisor_controltopic_message(client, userdata, message):
@@ -339,9 +341,11 @@ def process_in_vsilo_control_msg(jres):
         control_destroy_vSilo()
         return "destroying vSilo"
     elif commandType == "getContextResponse":
+        print("COMMAND received getContextResponse " + json.dumps(jres))
         print("COMMAND received STARTING RECONSTRUCTING A CONTEXT FOR A VTHING")
         del jres["command"] # this is unnecessary because the command field is not inspected in insert_vThing_data_on_Broker
-        data_insert_entities_under_vThing(jres)
+        #data_insert_entities_under_vThing(jres)
+        batch_data_insert_entities_under_vThing(jres)
         print("COMMAND received JUST FINISHED RECONSTRUCTING A CONTEXT FOR A VTHING")
         return "received context response"
     else:
@@ -412,7 +416,8 @@ def control_delete_vThing(v_thing_id):
         # TODO fail the subsequent remove_entities_from_vThing but subscriptions are
         # TODO removed all the same. Is this ok?
         # Now remove entities from the vThing
-        result1 = remove_entities_under_vThing(v_thing_id)
+        # result1 = remove_entities_under_vThing(v_thing_id)
+        result1 = batch_remove_entities_under_vThing(v_thing_id)
         print("... trying to delete vthing " + v_thing_id + " from broker")
         result2 = brokerspecific.remove_vThing_from_Broker(v_thing_id)
         if result1 and result2:
@@ -512,28 +517,6 @@ def deactivate_vThing_in_hashmap(v_thing_id):
 
 
 # ========== HASHMAP + BROKER
-# Here we receive a vthing id
-def remove_entities_under_vThing(v_thing_id):
-    print("STARTING TO REMOVE ENTITIES UNDER VTHING " + v_thing_id)
-    # Here we should remove all NGSI-LD entities that are under the same vThing.
-    # At this point the sentinel entry, which signals in the hashmap that we have the vthing as active,
-    # has already been deactivetad/removed. But we still have all the mappings, so that we can use
-    # them to physically remove entities from the Broker.
-    # We get the entities to delete by asking the hashmap for all values
-    # that are prefixed by the same vthingID
-    prfx = v_thing_id.encode()
-    # then we prepare to batch remove the set of keys from the hashmap
-    with leveldb.write_batch() as b:
-        for key, value in leveldb.iterator(prefix=prfx):
-            # lets now delete the entity from the Broker
-            if brokerspecific.delete_entity_under_vThing_on_Broker(v_thing_id, value.decode()):
-                b.delete(key)
-            else:
-                print("Exception while REST DELETE of Entity " + value.decode())
-        # here we exit the "with" context and the batch.write() is automatically executed
-    print("    finished physically removing on Broker vthing " + v_thing_id)
-    return True
-
 
 # Here we receive a data item, which is composed of "data" and "meta" fields
 def data_insert_entities_under_vThing(jres):
@@ -566,6 +549,108 @@ def data_insert_entities_under_vThing(jres):
 
     # return ok in any case
     return 'OK'
+
+
+    # Here we receive a data item, which is composed of "data" and "meta" fields
+def batch_data_insert_entities_under_vThing(jres):
+    v_thing_id = jres['meta']['vThingID']
+    print("STARTING TO INSERT ENTITIES UNDER VTHING " + v_thing_id)
+    data = jres['data']
+    # data is the array of NGSI-LD entities, that has now become a python list which we loop
+    try:
+        batch_op_success = brokerspecific.batch_add_or_modify_entity_under_vThing_on_Broker(v_thing_id, data)
+    except Exception as ex:
+        traceback.print_exc()
+
+    print('BATCH_ENTITY IDs SUCCESSFULLY CREATED: ', batch_op_success)
+    # after_batch_data is the result list you receive when you do a batch operation containing the id of all the entities created/updated
+    for entity in data:
+        # checking if the id of the entity is in the list of successes, than adding it to the hashmap
+        if entity['id'] not in batch_op_success:
+            print("Exception while REST ADD of Entity " + entity['id'] + " under vThing " + v_thing_id)
+        else:
+            key = (v_thing_id + "@@" + entity['id']).encode()
+            value = entity['id'].encode()
+            leveldb.put(key, value)
+
+    # return ok in any case
+    return 'OK'
+
+
+
+# Here we receive a vthing id
+def remove_entities_under_vThing(v_thing_id):
+    print("STARTING TO REMOVE ENTITIES UNDER VTHING " + v_thing_id)
+    # Here we should remove all NGSI-LD entities that are under the same vThing.
+    # At this point the sentinel entry, which signals in the hashmap that we have the vthing as active,
+    # has already been deactivetad/removed. But we still have all the mappings, so that we can use
+    # them to physically remove entities from the Broker.
+    # We get the entities to delete by asking the hashmap for all values
+    # that are prefixed by the same vthingID
+    entities_ids = []
+    prfx = v_thing_id.encode()
+    # then we prepare to batch remove the set of keys from the hashmap
+    try:
+        with leveldb.write_batch() as b:
+            for key, value in leveldb.iterator(prefix=prfx):
+                entities_ids.append(value.decode())  
+                # lets now delete the entity from the Broker
+                if brokerspecific.delete_entity_under_vThing_on_Broker(v_thing_id, value.decode()):
+                    b.delete(key)
+                else:
+                    print("Exception while REST DELETE of Entity " + value.decode())
+            # here we exit the "with" context and the batch.write() is automatically executed
+        print("    finished physically removing on Broker vthing " + v_thing_id)
+        print("IDs deleted:", entities_ids)
+    except Exception as ex:
+        traceback.print_exc()
+    return True
+
+
+
+
+def batch_remove_entities_under_vThing(v_thing_id):
+    print("STARTING TO REMOVE ENTITIES UNDER VTHING " + v_thing_id)
+    # Here we should remove all NGSI-LD entities that are under the same vThing.
+    # We achieve this by querying all the entities using the v_thing_id
+    # and then deleting all of them using the ids we gather
+    # NOTE: This is not working for all the NGSI-LD Flavours (only Orion-LD supports it)
+    #       so for now we use a workaround with the Hash-Map
+    #entities = brokerspecific.get_all_entities_under_vThing_on_Broker(v_thing_id)
+    #entities_ids = [entity['id'] for entity in entities]
+    #batch_delete_success = brokerspecific.batch_entity_delete_under_vThing_on_Broker(v_thing_id,entities_ids)
+
+    entities_ids = []
+    prfx = v_thing_id.encode()
+    # We get all the IDs to delete under a vThing from the Hash Map
+    try:
+        with leveldb.write_batch() as b:
+            for key, value in leveldb.iterator(prefix=prfx):
+                entities_ids.append(value.decode())  
+                # lets now delete the entity from the Broker
+                b.delete(key)
+        print("IDs candidated to delete:", entities_ids)
+        batch_delete_success = brokerspecific.batch_entity_delete_under_vThing_on_Broker(v_thing_id,entities_ids)
+        print("IDs actually deleted:", batch_delete_success)
+    except Exception as ex:
+        traceback.print_exc()
+
+
+    print("DELETE finished physically removing on Broker vthing " + v_thing_id)
+    return True
+
+def check_if_vThing_is_in_Broker(v_thing_id):
+    # We get all the entities giving a v_thing_id
+    # if the len of the data array we get is greater than 0
+    # Then the vThing is active
+    entities = brokerspecific.get_all_entities_under_vThing_on_Broker(v_thing_id)
+    if len(entities) > 0:
+        return True
+    else:
+        return False
+
+
+
 # ========== END HASHMAP + BROKER
 
 
@@ -796,5 +881,4 @@ def start_silo_controller(broker_specific_module_name):
     # doing nothing in the main thread
     while True:
         time.sleep(10)
-
 

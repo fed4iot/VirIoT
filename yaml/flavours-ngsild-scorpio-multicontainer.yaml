@@ -1,59 +1,91 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: f4i-ngsild-k8scorpio-f
+  labels:
+    app: scorpio-aaio
+  name: scorpio-aaio
 spec:
-  replicas: 1
   selector:
     matchLabels:
-      app: f4i-ngsild-k8scorpio
+      app: scorpio-aaio
+  replicas: 1
+  strategy: {}
   template:
     metadata:
       labels:
-        app: f4i-ngsild-k8scorpio
+        app: scorpio-aaio
     spec:
       containers:
       - name: ngsildsilocontroller
-        image: fed4iot/ngsild-silocontroller:3.0
-      - name: kafkabroker
-        image: wurstmeister/kafka
-        env:
-        - name: KAFKA_ADVERTISED_HOST_NAME
-          value: 127.0.0.1
-        - name: KAFKA_ZOOKEEPER_CONNECT
-          value: 127.0.0.1:2181
-        ports:
-        - containerPort: 9092
+        image: fed4iot/ngsild-silocontroller:latest
       - name: zookeeper
-        image: zookeeper
+        env:
+        - name: ZOOKEEPER_CLIENT_PORT
+          value: "2181"
+        - name: ZOOKEEPER_SERVER_ID
+          value: "1"
+        - name: ZOOKEEPER_TICK_TIME
+          value: "2000"
+        image: confluentinc/cp-zookeeper:5.4.1
         ports:
         - containerPort: 2181
-      - name: scorpio
-        image: scorpiobroker/scorpio:scorpio-aaio_0.9.8
-        ports:
-        - containerPort: 9090
+          name: zookeeper
+        resources: {}
       - name: postgres
         image: mdillon/postgis
         env:
-        - name: POSTGRES_DB
+        - name: POSTGRES_USER
           value: ngb
         - name: POSTGRES_PASSWORD
           value: ngb
-        - name: POSTGRES_USER
+        - name: POSTGRES_DB
           value: ngb
         ports:
         - containerPort: 5432
+          name: postgres
+        resources:
+      - name: kafka
+        env:
+        - name: KAFKA_ADVERTISED_HOST_NAME
+          value: localhost
+        - name: KAFKA_ADVERTISED_PORT
+          value: "9092"
+        - name: KAFKA_ZOOKEEPER_CONNECT
+          value: localhost:2181
+        image: wurstmeister/kafka
+        ports:
+        - containerPort: 9092
+          name: kafka
+        resources: {}
+      - name: scorpio
+        image: scorpiobroker/scorpio:scorpio-aaio_latest
+        lifecycle:
+          postStart:
+            exec:
+              command: [
+                        "/bin/sh", 
+                        "-c", 
+                        "echo '127.0.0.1 kafka' >> /etc/hosts &&
+                        echo '127.0.0.1 postgres' >> /etc/hosts"
+                        ]
+        ports:
+        - containerPort: 9090
+          name: scorpio
+        resources:
+      restartPolicy: Always
+status: {}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: f4i-ngsild-k8scorpio-svc
+  name: scorpio-aaio-service
   labels:
-    app: f4i-ngsild-k8scorpio
+    app: scorpio-aaio
 spec:
   type: NodePort
-  selector:
-    app: f4i-ngsild-k8scorpio
   ports:
-  - port: 9090
-    nodePort:
+    - port: 9090
+      targetPort:
+      nodePort: 
+  selector:
+    app: scorpio-aaio

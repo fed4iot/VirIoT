@@ -47,17 +47,18 @@ if __name__ == '__main__':
             currSegmentVirtual = (math.ceil((now-startTime)/segmentDuration))
             currSegmentProductionTime = startTime + currSegmentVirtual*segmentDuration
             time.sleep(currSegmentProductionTime - now)
-            
+            starttime = time.time()
             currSegment = (currSegmentVirtual%maxSegmentNum)+1
             uri =  urlPrefix + str(currSegment)+".m4s"
-            print("%.4f Downloading segment %d " % (now, currSegment))
+            print("%.4f Downloading segment %d " % (starttime, currSegment))
             r = requests.get(uri)
             l = len(r.content)
-            elapsed = time.time() - now
+            stoptime = time.time()
+            elapsed = stoptime - starttime
             rate = l*8.0/elapsed/1e6
             print("Downloaded %d kbytes at %f Mbit/s" % (l/1000,rate))
             if csvFile is not None:
-                csvFile.write("%.4f \t %d \t %.4f \t %.4f \n" % (now, currSegment, l/1000, rate))
+                csvFile.write("%.4f \t %.4f \t %d \t %.4f \t %.4f \n" % (starttime, stoptime, currSegment, l/1000, rate))
                 csvFile.flush()
             #time.sleep(segmentDuration - elapsed)
         except Exception as err:

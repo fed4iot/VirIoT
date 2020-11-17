@@ -7,6 +7,8 @@ import socket
 import json
 from threading import Thread
 import requests
+import random
+import string
 
 #TOPIC_vTHING = "tenant1/ribbon-tv/vThingRibbon"
 
@@ -40,6 +42,9 @@ def send_message_in_ribbon_test(seq, payload):
     mqtt_ribbon_client.publish("ribbonTopic", payload=json.dumps(payload))
 
 '''
+def random_char(y):
+       return ''.join(random.choice(string.ascii_letters) for x in range(y))
+
 if __name__ == '__main__':
 
     #MQTT_data_broker_IP = "127.0.0.1"
@@ -71,6 +76,10 @@ if __name__ == '__main__':
                             help='ThingVisorUrl (default: http://172.17.0.3:8089/notify)', default='http://172.17.0.3:8089/notify')
         parser.add_argument('-r', action='store', dest='rate', 
                             help='Message rate msg/s (default: 1 msg/s)', default='1')
+        parser.add_argument('-s', action='store', dest='payloadsize', 
+                            help='Payloadsize in characters (default: 10 chars)', default='10')
+        parser.add_argument('-v', action='store_true', dest='verbose', 
+                            help='Print verbose output')
         argcomplete.autocomplete(parser)
         args = parser.parse_args()
     except Exception:
@@ -90,10 +99,12 @@ if __name__ == '__main__':
             # Test with POST
             message['timestamp'] = int(round(time.time()*(UNIT)))
             message['sqn'] = cnt
+            message['payloadstring'] = random_char(int(args.payloadsize))
             data = json.dumps(message)
             r = requests.post(args.thingVisorUrl, json=data)
             cnt += 1
-            print("Message sent: "+data)
+            if args.verbose:
+                print("Message sent: "+data)
         except Exception as err:
             print("KeyboardInterrupt", err)
             time.sleep(1)

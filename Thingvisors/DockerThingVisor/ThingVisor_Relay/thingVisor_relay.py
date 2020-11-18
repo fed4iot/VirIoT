@@ -11,10 +11,12 @@ from context import Context
 from flask import Flask
 #from flask import json
 from flask import request
+from werkzeug.serving import WSGIRequestHandler
+
 # sys.path.insert(0, '/app/PyLib/')
 sys.path.insert(0, 'PyLib/')
 
-
+WSGIRequestHandler.protocol_version = "HTTP/1.1"    # to support keep-alive
 app = Flask(__name__)
 flask_port = 8089
 

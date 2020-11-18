@@ -1,0 +1,99 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: scorpio-aaio
+  name: scorpio-aaio
+spec:
+  selector:
+    matchLabels:
+      app: scorpio-aaio
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: scorpio-aaio
+    spec:
+      containers:
+      - name: ngsildsilocontroller
+        image: fed4iot/ngsild-silocontroller:latest
+      - name: http-sidecar-f
+        image: fed4iot/http-sidecar-flavour:latest
+        ports:
+        - containerPort: 5001
+      - name: zookeeper
+        env:
+        - name: ZOOKEEPER_CLIENT_PORT
+          value: "2181"
+        - name: ZOOKEEPER_SERVER_ID
+          value: "1"
+        - name: ZOOKEEPER_TICK_TIME
+          value: "2000"
+        image: confluentinc/cp-zookeeper:5.4.1
+        ports:
+        - containerPort: 2181
+          name: zookeeper
+        resources: {}
+      - name: postgres
+        image: mdillon/postgis
+        env:
+        - name: POSTGRES_USER
+          value: ngb
+        - name: POSTGRES_PASSWORD
+          value: ngb
+        - name: POSTGRES_DB
+          value: ngb
+        ports:
+        - containerPort: 5432
+          name: postgres
+        resources:
+      - name: kafka
+        env:
+        - name: KAFKA_ADVERTISED_HOST_NAME
+          value: localhost
+        - name: KAFKA_ADVERTISED_PORT
+          value: "9092"
+        - name: KAFKA_ZOOKEEPER_CONNECT
+          value: localhost:2181
+        image: wurstmeister/kafka
+        ports:
+        - containerPort: 9092
+          name: kafka
+        resources: {}
+      - name: scorpio
+        image: scorpiobroker/scorpio:scorpio-aaio_latest
+        lifecycle:
+          postStart:
+            exec:
+              command: [
+                        "/bin/sh", 
+                        "-c", 
+                        "echo '127.0.0.1 kafka' >> /etc/hosts &&
+                        echo '127.0.0.1 postgres' >> /etc/hosts"
+                        ]
+        ports:
+        - containerPort: 9090
+          name: scorpio
+        resources:
+      restartPolicy: Always
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: scorpio-aaio-service
+  labels:
+    app: scorpio-aaio
+spec:
+  type: NodePort
+  ports:
+    - port: 9090
+      targetPort:
+      nodePort:
+    - port: 80
+      targetPort: 5001
+      nodePort:
+      name: http
+  selector:
+    app: scorpio-aaio

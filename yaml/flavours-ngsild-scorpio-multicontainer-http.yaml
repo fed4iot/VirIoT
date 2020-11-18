@@ -91,6 +91,7 @@ spec:
     - port: 9090
       targetPort:
       nodePort:
+      name: scorpioport
     - port: 80
       targetPort: 5001
       nodePort:

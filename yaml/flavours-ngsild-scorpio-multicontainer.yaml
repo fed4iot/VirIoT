@@ -86,6 +86,7 @@ spec:
   ports:
     - port: 9090
       targetPort:
-      nodePort: 
+      nodePort:
+      name: scorpioport
   selector:
     app: scorpio-aaio

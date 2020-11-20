@@ -7,30 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 */
 
 module.exports = {
-/*
-    port: process.env.PORT || 1030,
-    db: process.env.MONGODB || 'mongodb://mongo:27019/fed4Iot',
-//    enable_expires: process.env.ENABLE_EXPIRES || 0, actually not supported.
-    enable_throttling: process.env.ENABLE_THROTTLING || 0,
-    throttling: process.env.THROTTLING || 5,
-
-    notificacion_protocol: process.env.HYPERVISOR_PROTOCOL,
-    notificacion_ip: process.env.HYPERVISOR_IP,
-    notificacion_port: process.env.HYPERVISOR_PORT,
-    pathNotification: '/notification',
-    pathNotificationMQTT: '/notificationMQTT',
-    pathCreateVirtualEntity: '/createVirtualEntity',
-    pathDeleteVirtualEntity: '/deleteVirtualEntity/:identifierID',
-    pathDeleteVirtualEntityAll: '/deleteVirtualEntity/all',
-    pathList: '/list',
-*/  
-
     notificacion_port_container: '1030',
 
     pathNotification: '/notification',
-
-//    MQTTbrokerIP: process.env.MQTTbrokerIP,
-//    MQTTbrokerPort: process.env.MQTTbrokerPort,
 
     MQTTDataBrokerIP: process.env.MQTTDataBrokerIP,
     MQTTDataBrokerPort: process.env.MQTTDataBrokerPort,
@@ -57,9 +36,6 @@ module.exports = {
     commandGetContextRequest: 'getContextRequest',
     commandGetContextResponse: 'getContextResponse',
 
-    // DEPRECATED
-    //commandMappedPort: 'mapped_port', //Code not used, I will remove it when I confirm it's not necessary.
-
     MQTTbrokerApiKeyvThing: 'vThing',
     MQTTbrokerApiKeySilo: 'vSilo',
     MQTTbrokerApiKeyThingVisor: 'TV',
@@ -71,12 +47,6 @@ module.exports = {
     MQTTbrokerTopic_c_in_Control: 'c_in',
     MQTTbrokerTopic_c_out_Control: 'c_out',
     
-    // DEPRECATED
-    //ocb_type: 'parkingsite',
-    //ocb_attrList: ['numSpacePC','totSpacePCCapacity'],
-    //dest_ocb_type: 'parkingsite',
-    //dest_ocb_attrList: ['freeParkingSpaces','totalParkingSpaces','@context','dateCreated','dateModified','timestamp','location'],
-
     //Greedy Flexible configuration... define data provider service
     //[] and regular expresions is NO SUPPORTED.
     //noGreedyListService: ['aparcamiento','bicis'],
@@ -107,7 +77,7 @@ module.exports = {
     noGreedyListTypesAttributes: [[
                                     ['nombre','parkingProbability','sector','geoposicion'],  //Punto attributes to map
                                     ['appliesDuring','currency','exclPHolidays','gracePeriod','maxDuration'],  //policy attributes to map
-                                    ['name','policy','policyPHolidays','area'] //sector attributes to map
+                                    ['name','libres','capacidad','policy','policyPHolidays','area'] //sector attributes to map
                                 ]],
     //noGreedyListTypesAttributes: [[['nombre','libres','totales','geoposicion']],[[]]],
 
@@ -125,7 +95,7 @@ module.exports = {
     noGreedyListDestAttributesTypes: [[
                                         ['name','parkingProbability','sector','location'], //parkingmeter attributes mapped
                                         ['appliesDuring','currency','exclPHolidays','gracePeriod','maxDuration'], //policy attributes mapped
-                                        ['name','policy','policyPHolidays','location'] //sector attributes to mapped
+                                        ['name','numSpace','numSpaceCapacity','policy','policyPHolidays','location'] //sector attributes to mapped
                                     ]],
     //noGreedyListDestAttributesTypes: [[['name','numSpacePC','totSpacePCCapacity','location']],[[]]],
 
@@ -178,16 +148,5 @@ module.exports = {
 
     smartParkingStandardDM_Service: [''],
 
-/* DEPRECATED
-    "parkingsite_id": [],
-    "parkingsite_disSpacePCCapacity": [],
-    "parkingsite_maxHeight": [],
-    "parkingsite_carWash": [],
-    "parkingsite_valet": [],
-    "parkingsite_phoneNumber": [],
-    "parkingsite_webSite": [],
-    "parkingsite_mail": [],
-    "parkingsite_address": [],
-*/
     frecuency_mseg: 10000
 }

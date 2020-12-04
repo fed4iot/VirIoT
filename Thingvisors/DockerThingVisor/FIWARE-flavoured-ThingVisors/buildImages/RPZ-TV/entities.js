@@ -74,6 +74,8 @@ module.exports = {
                 "type": "sector",
                 "name": { "type": "Text", "value":"" },
                 "timestamp": { "type": "DateTime",  "value": "" },
+                "numSpace": { "type": "Number", "value": 0 },
+                "numSpaceCapacity": { "type": "Number", "value": 0 },
                 "policy": { "type": "Relationship", "value": "" },
                 "policyPHolidays": { "type": "Relationship", "value":"" },
                 "location": {

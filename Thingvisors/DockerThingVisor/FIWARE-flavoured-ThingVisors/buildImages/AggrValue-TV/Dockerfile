@@ -11,8 +11,7 @@ ENV NODE_ENV=production
 # Establish workdir
 WORKDIR /home/node/app
 
-# Copy package*.json (workdir)
-#COPY src/package*.json ./
+# Copy package.json (workdir)
 COPY src/package.json ./
 
 # Create node_modules  WORKDIR

@@ -56,6 +56,24 @@ python3 f4i.py create-vsilo -f Mobius-base-actuator-f -t tenant1 -s Silo3
 python3 f4i.py add-vthing -t tenant1 -s Silo3 -v relay-tv/timestamp
 ```
 
+ ## Mobius2 Consumer
+ 
+ `consumerMobius2.py` is a consumer which connects to a oneM2M Mobius2 vSilo identified by its server IP (e.g. 172.17.0.2), HTTP port (e.g. 7579) and MQTT port (e.g. 1883). It receives data items produced by `producer.py` through the vThing (e.g. timestamp) of a Relay ThingVisor (e.g. relay-tv). These data items are inserted in a oneM2M container and from the oneM2M container they are pushed to `consumerMobius2.py`
+
+The consumer can connect the Mobius2 broker either through HTTP or MQTT. In the case of HTTP, the consumer should be reachable through a public URL (notification URI, nuri), where it is contacted by the Mobius broker when a data item arrives in the oneM2M container. The nuri is `http://consumerIP:consumerPort/notify`, where `consumerPort` can be selected by the user. In the case of MQTT, no notification URI is required. Possible examples are.
+
+The -v option is used to tell the consumer what is the ThingVisor/vThing (-v relay-tv/timestamp) of the data itemes produced by the producer.py + Relay ThingVisor.
+
+```bash
+python3 consumerMobius2.py -s 172.17.0.2 -p 7579 -pm 1883 -m HTTP -nuri http://172.17.0.1:5000/notify -v relay-tv/timestamp
+```
+
+Note: preliminary steps are: to add the oneM2M flavour with Mobius2 IoT Broker, create the vSilo, and add the vThing the vSilo. For instance:
+
+```bash
+python3 f4i.py add-flavour -f Mobius2-base-actuator-f -s Mobius -d "silo with a oneM2M Mobius2 broker" -y "../yaml/flavours-mobius2-pub-sub-actuator.yaml"
+python3 f4i.py create-vsilo -f Mobius2-base-actuator-f -t tenant1 -s Silo1
+python3 f4i.py add-vthing -t tenant1 -s Silo1 -v relay-tv/timestamp
 
 ## NGSI Consumer
 `consumerNGSI.py` is a consumer which connects to an Orion vSilo identified by its server IP (e.g. 172.17.0.2) and port (e.g. 1026). It receives data items produced by `producer.py` through the vThing (e.g. timestamp) of a Relay ThingVisor (e.g. relay-tv). These data items are inserted in an Orion Context Broker inside orion vSilo container and from this container they are pushed to `consumerNGSI.py`

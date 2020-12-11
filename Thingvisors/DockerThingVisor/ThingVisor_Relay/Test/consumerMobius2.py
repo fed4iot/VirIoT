@@ -116,7 +116,7 @@ def on_receive(jres):
             total_timestamp += delta_timestamp
             print("msg: %d, delta timestamp %.4f (ms), average: %.4f" % (msg_num, delta_timestamp, total_timestamp/samples))
             if csvFile is not None:
-                csvFile.write("%d \t %.4f \t %.4f \n" % (msg_num, delta_timestamp, self.total_timestamp/self.samples))
+                csvFile.write("%d \t %.4f \t %.4f \n" % (msg_num, delta_timestamp, total_timestamp/samples))
                 csvFile.flush()
             return 'OK', 201
         else:

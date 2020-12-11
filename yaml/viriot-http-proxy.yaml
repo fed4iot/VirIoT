@@ -11,6 +11,7 @@ data:
       worker_connections  10240;
     }
     http {
+        sendfile on;
         log_format  main
                 'remote_addr:$remote_addr\t'
                 'time_local:$time_local\t'
@@ -24,9 +25,14 @@ data:
                 'forwardedfor:$http_x_forwarded_for\t'
                 'request_time:$request_time';
 
-        # access_log	/var/log/nginx/access.log main;
-        access_log off;
-        proxy_cache_path /tmp/cache levels=1:2 keys_zone=my_cache:10m max_size=10g inactive=10m;
+        log_format rt_cache '$remote_addr - $upstream_cache_status [$time_local]  '
+                            '"$request" $status $body_bytes_sent '
+                                                '"$http_referer" "$http_user_agent"';
+
+        access_log	/var/log/nginx/access.log main;
+        access_log      /var/log/nginx/cache.log rt_cache;
+        # access_log off;
+        proxy_cache_path /tmp/cache levels=1:2 keys_zone=my_cache:10m max_size=10g inactive=10m use_temp_path=off;
         server {
                 listen       80;
                 server_name  _;
@@ -61,6 +67,17 @@ spec:
     spec:
       nodeSelector:
         viriot-zone-gw: "true"
+      affinity:
+       podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+                - key: "app"
+                  operator: In
+                  values:
+                  - viriot-nginx
+            topologyKey: kubernetes.io/hostname
+
       containers:
       - name: viriot-nginx
         image: nginx

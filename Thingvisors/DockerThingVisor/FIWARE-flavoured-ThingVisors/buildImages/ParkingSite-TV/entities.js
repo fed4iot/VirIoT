@@ -53,13 +53,7 @@ module.exports = {
                     "carWash": { "type": "boolean", "value": true},
                     "valet": { "type": "boolean", "value": true},
                     "EVCharger": { "type": "StructuredValue", "value": { "mediumEVCharger": 0, "quickEVCharger": 0, "standardEVCharger": 0 } },
-/*
-                    "forzado": {
-                        "type": "Property",
-                        "value": "0"
-                    },
-*/
-                    //"phoneNumber": { "type": "StructuredValue", "value": { } },
+
                     "phoneNumber": { "type": "StructuredValue", 
                                     "value": [ 
                                                {
@@ -73,7 +67,7 @@ module.exports = {
                     "webSite": { "type": "Text", "value": "" },
                    
                     "mail": { "type": "Text", "value": "" },
-                    //"address": { "type": "StructuredValue", "value": { } },
+
                     "address": { "type": "StructuredValue", 
                                 "value": {  
                                             "country": "",

@@ -40,6 +40,7 @@ spec:
   ports:
   - port: 1026
     nodePort:
+    name: orionldport
   - port: 80
     targetPort: 5001
     nodePort:

@@ -7,9 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 */
 
 module.exports = {
-//    MQTTbrokerIP: process.env.MQTTbrokerIP,
-//    MQTTbrokerPort: process.env.MQTTbrokerPort,
-
     MQTTDataBrokerIP: process.env.MQTTDataBrokerIP,
     MQTTDataBrokerPort: process.env.MQTTDataBrokerPort,
     MQTTControlBrokerIP: process.env.MQTTControlBrokerIP,

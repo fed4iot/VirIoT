@@ -35,4 +35,5 @@ spec:
     app: f4i-ngsild-orionld
   ports:
   - port: 1026
-    nodePort: 
+    nodePort:
+    name: orionldport

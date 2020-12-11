@@ -7,30 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 */
 
 module.exports = {
-/*
-    port: process.env.PORT || 1030,
-    db: process.env.MONGODB || 'mongodb://mongo:27019/fed4Iot',
-//    enable_expires: process.env.ENABLE_EXPIRES || 0, actually not supported.
-    enable_throttling: process.env.ENABLE_THROTTLING || 0,
-    throttling: process.env.THROTTLING || 5,
-
-    notificacion_protocol: process.env.HYPERVISOR_PROTOCOL,
-    notificacion_ip: process.env.HYPERVISOR_IP,
-    notificacion_port: process.env.HYPERVISOR_PORT,
-    pathNotification: '/notification',
-    pathNotificationMQTT: '/notificationMQTT',
-    pathCreateVirtualEntity: '/createVirtualEntity',
-    pathDeleteVirtualEntity: '/deleteVirtualEntity/:identifierID',
-    pathDeleteVirtualEntityAll: '/deleteVirtualEntity/all',
-    pathList: '/list',
-*/  
-
     notificacion_port_container: '1030',
 
     pathNotification: '/notification',
-
-//    MQTTbrokerIP: process.env.MQTTbrokerIP,
-//    MQTTbrokerPort: process.env.MQTTbrokerPort,
 
     MQTTDataBrokerIP: process.env.MQTTDataBrokerIP,
     MQTTDataBrokerPort: process.env.MQTTDataBrokerPort,
@@ -57,9 +36,6 @@ module.exports = {
     commandGetContextRequest: 'getContextRequest',
     commandGetContextResponse: 'getContextResponse',
 
-    // DEPRECATED
-    //commandMappedPort: 'mapped_port', //Code not used, I will remove it when I confirm it's not necessary.
-
     MQTTbrokerApiKeyvThing: 'vThing',
     MQTTbrokerApiKeySilo: 'vSilo',
     MQTTbrokerApiKeyThingVisor: 'TV',
@@ -71,12 +47,6 @@ module.exports = {
     MQTTbrokerTopic_c_in_Control: 'c_in',
     MQTTbrokerTopic_c_out_Control: 'c_out',
     
-    // DEPRECATED
-    //ocb_type: 'parkingsite',
-    //ocb_attrList: ['numSpacePC','totSpacePCCapacity'],
-    //dest_ocb_type: 'parkingsite',
-    //dest_ocb_attrList: ['freeParkingSpaces','totalParkingSpaces','@context','dateCreated','dateModified','timestamp','location'],
-
     //Greedy Flexible configuration... define data provider service
     //[] and regular expresions is NO SUPPORTED.
     //noGreedyListService: ['aparcamiento','bicis'],
@@ -181,110 +151,8 @@ module.exports = {
         'test'          'SensorTest'        'libres'    |    'SensorTest'       only 'freeParkingSpaces'  |
 
     */
-
     
     smartParkingStandardDM_Service: [''],
-/* DEPRECATED
-    "parkingsite_id": ["Aparcamiento:101","Aparcamiento:102","Aparcamiento:103","Aparcamiento:104","Aparcamiento:105"],
-    "parkingsite_disSpacePCCapacity": [14,20,7,0,0],
-    "parkingsite_maxHeight": [2.3,2.3,1.9,1.9,2.0],
-    "parkingsite_carWash": [true,true,false,false,false],
-    "parkingsite_valet": [false,false,false,false,false],
-    "parkingsite_phoneNumber": [
-                                   [ 
-                                       {
-                                           "phoneType": "Work Phone",
-                                           "countryCode": "34",
-                                           "areaCode": "968",
-                                           "contactNumber": "281344"
-                                       }
-                                   ],
-                                   [ 
-                                       {
-                                           "phoneType": "Work Phone",
-                                           "countryCode": "34",
-                                           "areaCode": "968",
-                                           "contactNumber": "200522"
-                                       }
-                                   ],
-                                   [ 
-                                       {
-                                           "phoneType": "Work Phone",
-                                           "countryCode": "34",
-                                           "areaCode": "968",
-                                           "contactNumber": "234733"
-                                       }
-                                   ],
-                                   [ 
-                                       {
-                                           "phoneType": "Work Phone",
-                                           "countryCode": "34",
-                                           "areaCode": "968",
-                                           "contactNumber": "235265"
-                                       }
-                                   ],
-                                   [ 
-                                       {
-                                           "phoneType": "Work Phone",
-                                           "countryCode": "34",
-                                           "areaCode": "968",
-                                           "contactNumber": "204387"
-                                       }
-                                   ]
-                               ],
-    "parkingsite_webSite": ["https://aparcamientosnewcapital.es/pf/avenida-libertad-murcia/#info",
-                           "https://aparcamientosnewcapital.es/pf/la-vega-murcia/",
-                           "https://www.interparking.es/es-ES/find-parking/AlfonsoX/",
-                           "https://aparcamientosnewcapital.es/pf/centrofama-murcia/",
-                           "https://aparcamientosnewcapital.es/pf/hospital-morales-meseguer-murcia/"],
-    "parkingsite_mail": ["info@newcapital2000.es","info@newcapital2000.es","5759@interparking.com","info@newcapital2000.es","info@newcapital2000.es"],
-    "parkingsite_address": [
-                           {   "country": "Spain",
-                               "state": "Murcia",
-                               "city": "Murcia",
-                               "citySection": "San Miguel", //
-                               "streetType": "Avenida",
-                               "streetDirection": "Libertad",
-                               "streetNumber": "S/N",
-                               "postalCode": "30008"
-                           },
-                           {   "country": "Spain",
-                               "state": "Murcia",
-                               "city": "Murcia",
-                               "citySection": "Santa Maria de Gracia",
-                               "streetType": "Avenida",
-                               "streetDirection": "Cronista Carlos Valcarcel",
-                               "streetNumber": "S/N",
-                               "postalCode": "30008"
-                           },
-                           {   "country": "Spain",
-                               "state": "Murcia",
-                               "city": "Murcia",
-                               "citySection": "La Fama",
-                               "streetType": "Avenida",
-                               "streetDirection": "Gran Vía Alfonso X",
-                               "streetNumber": "S/N",
-                               "postalCode": "30008"
-                           },
-                           {   "country": "Spain",
-                               "state": "Murcia",
-                               "city": "Murcia",
-                               "citySection": "La Fama",
-                               "streetType": "Avenida",
-                               "streetDirection": "Guitierrez Mellado",
-                               "streetNumber": "S/N",
-                               "postalCode": "30008"
-                           },
-                           {   "country": "Spain",
-                               "state": "Murcia",
-                               "city": "Murcia",
-                               "citySection": "Vista Alegre",
-                               "streetType": "Avenida",
-                               "streetDirection": "Marques de los Vélez",
-                               "streetNumber": "S/N",
-                               "postalCode": "30008"
-                           }
-                           ],
-*/
+
     frecuency_mseg: 10000
 }

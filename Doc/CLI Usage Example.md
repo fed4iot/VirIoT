@@ -95,7 +95,7 @@ Scorpio is developed in Java using the SpringCloud microservices framework.
 ```bash  
 python3 f4i.py add-flavour -c http://[master_controller_ip]:[master_controller_port] -f ngsild-scorpio-f -i fed4iot/ngsild-scorpio-f:2.2 -d "silo with a Scorpio NGSI-LD broker" -s ""  
 # Kubernetes: add the flavour yaml argument using -y   
-python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -f ngsild-scorpio-f -d "silo with a Scorpio NGSI-LD broker" -s '{"brokerport":9090}' -y "../yaml/flavours-ngsild-scorpio.yaml"  
+python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -f ngsild-scorpio-f -d "silo with a Scorpio NGSI-LD broker" -s '{"brokerport":9090}' -y "../yaml/flavours-ngsild-scorpio-multicontainer.yaml"  
 ```
 
 

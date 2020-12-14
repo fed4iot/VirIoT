@@ -54,8 +54,8 @@ if __name__ == '__main__':
             message['sqn'] = cnt
             message['payloadstring'] = random_char(int(args.payloadsize))
 
-            entity_type = args.entityIdentifier
-            entity_id = args.entityType
+            entity_type = args.entityType
+            entity_id = args.entityIdentifier
             attribute = {
                 "type": "StructuredValue",
                 "value": message

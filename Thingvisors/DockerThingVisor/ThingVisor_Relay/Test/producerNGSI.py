@@ -50,13 +50,14 @@ if __name__ == '__main__':
             message['sqn'] = cnt
             message['payloadstring'] = random_char(int(args.payloadsize))
 
-            value = {
+            attribute = {
+                "type": "StructuredValue",
                 "value": message
             }
             ngsiv2container = {
                 "id": "alwaysthesame",
                 "type": "testmessage",
-                "payload": value
+                "msg": attribute
             }
 
             data = json.dumps(ngsiv2container)

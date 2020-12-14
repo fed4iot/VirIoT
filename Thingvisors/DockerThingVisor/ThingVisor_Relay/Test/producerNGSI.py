@@ -69,8 +69,10 @@ if __name__ == '__main__':
                 'Content-Type': "application/json",
                 'Accept': "application/json"
             }
+            # overwrite existing entity with same id
+            params = {'options': 'upsert'}
             data = json.dumps(ngsiv2container)
-            r = requests.post(args.brokerUrl, json=data, headers=headers)
+            r = requests.post(args.brokerUrl, data=data, headers=headers, params=params)
             cnt += 1
             if args.verbose:
                 print("Message sent: "+data)

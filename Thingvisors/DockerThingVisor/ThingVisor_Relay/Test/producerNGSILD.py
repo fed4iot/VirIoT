@@ -72,7 +72,7 @@ if __name__ == '__main__':
             }
 
             data = json.dumps(ngsildcontainer)
-            r = requests.post(args.brokerUrl + entity_id + "/attrs", data=data, headers=headers)
+            r = requests.post(args.brokerUrl + "/" + entity_id + "/attrs", data=data, headers=headers)
             cnt += 1
             if args.verbose:
                 print("Message sent: "+data)

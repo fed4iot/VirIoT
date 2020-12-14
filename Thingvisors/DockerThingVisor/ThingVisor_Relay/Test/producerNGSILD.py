@@ -55,13 +55,13 @@ if __name__ == '__main__':
             message['payloadstring'] = random_char(int(args.payloadsize))
 
             entity_type = args.entityType
-            entity_id = args.entityIdentifier
+            entity_id = "urn:ngsi-ld:"+args.entityIdentifier
             attribute = {
                 "type": "Property",
                 "value": message
             }
             ngsildcontainer = {
-                "id": "urn:ngsi-ld:"+entity_id,
+                "id": entity_id,
                 "type": entity_type,
                 "@context": [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ],
                 "msg": attribute

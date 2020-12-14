@@ -60,9 +60,10 @@ if __name__ == '__main__':
                 "type": "Property",
                 "value": message
             }
+            # just updating, entity MUST be there
             ngsildcontainer = {
-                "id": entity_id,
-                "type": entity_type,
+                #"id": entity_id,
+                #"type": entity_type,
                 "@context": [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ],
                 "msg": attribute
             }

@@ -28,6 +28,10 @@ if __name__ == '__main__':
         parser = argparse.ArgumentParser()
         parser.add_argument('-b', action='store', dest='brokerUrl',
                             help='brokerUrl (default: http://172.17.0.3:1026/v2/entities)', default='http://172.17.0.3:1026/v2/entities')
+        parser.add_argument('-i', action='store', dest='entityIdentifier', 
+                            help='entityIdentifier (default: testIdentifier) ', default='testIdentifier')
+        parser.add_argument('-t', action='store', dest='entityType', 
+                            help='entityType (default: testMessage) ', default='testMessage')
         parser.add_argument('-r', action='store', dest='rate', 
                             help='Message rate msg/s (default: 1 msg/s)', default='1')
         parser.add_argument('-s', action='store', dest='payloadsize', 
@@ -50,13 +54,15 @@ if __name__ == '__main__':
             message['sqn'] = cnt
             message['payloadstring'] = random_char(int(args.payloadsize))
 
+            entity_type = args.entityIdentifier
+            entity_id = args.entityType
             attribute = {
                 "type": "StructuredValue",
                 "value": message
             }
             ngsiv2container = {
-                "id": "alwaysthesame",
-                "type": "testmessage",
+                "id": "urn:ngsi-ld:"+entity_id,
+                "type": entity_type,
                 "msg": attribute
             }
 

@@ -65,9 +65,12 @@ if __name__ == '__main__':
                 "type": entity_type,
                 "msg": attribute
             }
-
+            headers = {
+                'Content-Type': "application/json",
+                'Accept': "application/json"
+            }
             data = json.dumps(ngsiv2container)
-            r = requests.post(args.brokerUrl, json=data)
+            r = requests.post(args.brokerUrl, json=data, headers=headers)
             cnt += 1
             if args.verbose:
                 print("Message sent: "+data)

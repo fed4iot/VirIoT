@@ -14,9 +14,6 @@ sed -e 's/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g' -i mobius/mobiusdb.sql
 
 sed -i '250s/./\/\/&/' mobius/sgn.js
 
-rm mobius/sql_action.js
-cp /app/sql_action.js mobius/
-
 service mysql start
 mysql -u root -pfed4iot < /app/fixroot.sql
 service mysql stop

@@ -16,6 +16,8 @@ RUN apt-get autoremove -y
 COPY . /app
 WORKDIR /app/
 RUN git clone https://github.com/IoTKETI/Mobius.git
+RUN apt-get install patch
+RUN patch -R -p0 < mobius2.patch
 WORKDIR /app/Mobius
 RUN git checkout tags/2.5.6
 

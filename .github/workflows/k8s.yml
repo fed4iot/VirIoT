@@ -13,7 +13,7 @@ jobs:
       run: |
         sudo apt-get install -y python3-setuptools mosquitto-clients
         sudo pip3 install PyYAML argcomplete
-    - uses: engineerd/setup-kind@v0.3.0
+    - uses: engineerd/setup-kind@v0.5.0
       with:
           config: "utils/kind-cluster.yaml"
           image: "thehajime/node-runu:v1.17.0"

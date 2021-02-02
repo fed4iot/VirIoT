@@ -14,6 +14,8 @@ app = Flask(__name__)
 flask_port = 5001
 vStreams = {}
 
+HTTP_METHODS = ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'CONNECT', 'OPTIONS', 'TRACE', 'PATCH']
+
 @app.route('/set-vthing-endpoint', methods=['POST'])
 def set_vthing_endpoint(): 
     v_thing_name = request.json.get('vThingName', None)
@@ -28,7 +30,7 @@ def del_vthing():
         del vStreams[v_thing_name] 
     return json.dumps({"message": "vthing unregistered successfully"}), 201
 
-@app.route("/<path:path>", methods=["GET"])
+@app.route("/<path:path>", methods=HTTP_METHODS)
 def proxy(path):
     # path[0] is the vThingName (not the ID) and identify the vThing within the ThingVisor. It is not forwarded to the upstream endpoint
     # return what GET from endpoint/path[1...] 
@@ -47,7 +49,18 @@ def proxy(path):
         for elem in request.headers:
             new_headers[elem[0]] = elem[1]
         new_headers.pop("Host", False)
-        req = requests.get(uri, headers=new_headers, stream=True)
+        new_headers.pop("Content-Type", False)
+        new_headers.pop("Content-Length", False)
+        req = requests.request(
+            request.method,
+            uri,
+            headers=new_headers,
+            stream=True,
+            params=request.args,
+            data=request.form if bool(request.form) else request.data,
+            files=request.files,
+            json=request.json,
+        )
         response_headers = dict(req.headers)
         return Response(stream_with_context(req.iter_content(chunk_size=1024000)), headers=response_headers, status = req.status_code)
     elif v_stream_endpoint == 'dummy':

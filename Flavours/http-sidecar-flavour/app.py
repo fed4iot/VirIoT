@@ -25,6 +25,7 @@ out_control_suffix = "c_out"
 mqtt_virIoT_control_client = mqtt.Client()
 mqtt_virIoT_data_client = mqtt.Client()
 
+HTTP_METHODS = ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'CONNECT', 'OPTIONS', 'TRACE', 'PATCH']
 
 proxies = {
         "http": "http://viriot-nginx.default.svc.cluster.local",
@@ -60,9 +61,9 @@ class proxy_thread(Thread):
     
     def run(self):
         self.app.run(host = "0.0.0.0", debug = False,port=5001) 
-    
-    
-    @app.route("/vstream/<path:path>",methods=["GET"])
+
+
+    @app.route("/vstream/<path:path>",methods=HTTP_METHODS)
     def proxy(path):
         found_v_thing_id=None
         found_svc=None
@@ -73,19 +74,29 @@ class proxy_thread(Thread):
                 break
         if found_v_thing_id is None:
             abort(404) 
-        if request.method=="GET":
-            path_uri=path.split('/',1)[1] # first token is the ThingVisorID
-            uri = "http://"+found_svc+'/'+path_uri
-            print(uri)
-            new_headers = dict()
-            for elem in request.headers:
-                new_headers[elem[0]] = elem[1]
-            new_headers.pop("Host", False)
-            new_headers.pop("Cache-Control", False)
-            req = requests.get(uri, headers=new_headers, stream=True, proxies=proxies)
-            response_headers = dict(req.headers)
-            return Response(stream_with_context(req.iter_content(chunk_size=1024000)), headers=response_headers, status = req.status_code)
-        abort(404)
+        path_uri=path.split('/',1)[1] # first token is the ThingVisorID
+        uri = "http://"+found_svc+'/'+path_uri
+        print(uri)
+        new_headers = dict()
+        for elem in request.headers:
+            new_headers[elem[0]] = elem[1]
+        new_headers.pop("Host", False)
+        new_headers.pop("Cache-Control", False)
+        new_headers.pop("Content-Type", False)
+        new_headers.pop("Content-Length", False)
+        req = requests.request(
+            method=request.method,
+            url=uri,
+            headers=new_headers,
+            stream=True,
+            proxies=proxies,
+            params=request.args,
+            data=request.form if bool(request.form) else request.data,
+            files=request.files,
+            json=request.json,
+        )
+        response_headers = dict(req.headers)
+        return Response(stream_with_context(req.iter_content(chunk_size=1024000)), headers=response_headers, status = req.status_code)
         
 # topic messages
 def on_in_control_msg(mosq, obj, msg):

@@ -232,7 +232,7 @@ def create_virtual_silo_on_kubernetes(v_silo_id, v_silo_name, tenant_id, flavour
                         if 'env' in container:
                             container["env"] = k8s.convert_env(env, container['env'])
                         else:
-                            container["env"] = k8s.convert_env(env)
+                            container["env"] = k8s.convert_env(env, [])
                     #yaml["spec"]["template"]["spec"]["containers"][0]["env"] = k8s.convert_env(env)
                     if deploy_zone is not None and deploy_zone:
                         yaml["spec"]["template"]["spec"]["nodeSelector"] = {"viriot-zone": deploy_zone["zone"]}
@@ -468,7 +468,7 @@ def create_thing_visor_on_kubernetes(tv_img_name, debug_mode, tv_id, tv_params, 
                         if 'env' in container:
                             container["env"] = k8s.convert_env(env, container['env'])
                         else:
-                            container["env"] = k8s.convert_env(env)
+                            container["env"] = k8s.convert_env(env, [])
                         tv_img_name = container["image"]
                         url = "https://hub.docker.com/v2/repositories/%s" % tv_img_name.split(":")[0]
                         response = requests.head(url, allow_redirects=True)

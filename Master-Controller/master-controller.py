@@ -219,6 +219,10 @@ def create_virtual_silo_on_kubernetes(v_silo_id, v_silo_name, tenant_id, flavour
 
         service_name = "error"
         deployment_name = "error"
+        deployments_names_list = []
+        services_names_list = [] # It contains the services' names. Used when deleting a multi-pod silo
+        services_hosts_aliases = [] # It contains list of dicts. Each dicts contain the precedent service name and their cluster_ip
+                                    # It is used to allow multi-pod silo's deployments to interact with each other.
         label_app = str("%s-%s") % (tenant_id.lower(), v_silo_name.lower())
         api_response_service = None
         if not debug_mode:
@@ -227,8 +231,12 @@ def create_virtual_silo_on_kubernetes(v_silo_id, v_silo_name, tenant_id, flavour
                     print("Deployment Creation")
                     yaml["spec"]["selector"]["matchLabels"]["siloID"] = label_app
                     yaml["spec"]["template"]["metadata"]["labels"]["siloID"] = label_app
+                    if "volumes" in yaml["spec"]["template"]["spec"]:
+                        del yaml["spec"]["template"]["spec"]["volumes"]
                     for container in yaml["spec"]["template"]["spec"]["containers"]:
-                        # print(container)
+                        # dropping any volumeMounts property since they are not supported
+                        if "volumeMounts" in container:
+                            del container["volumeMounts"]
                         if 'env' in container:
                             container["env"] = k8s.convert_env(env, container['env'])
                         else:
@@ -244,20 +252,43 @@ def create_virtual_silo_on_kubernetes(v_silo_id, v_silo_name, tenant_id, flavour
                         gateway_IP = default_gateway_IP
                     deployment_name = yaml["metadata"]["name"] + str("-%s-%s") % (tenant_id.lower(), v_silo_name.lower())
                     yaml["metadata"]["name"] = deployment_name
+                    deployments_names_list.append(deployment_name)
                     # print(yaml)
-                    api_response_deployment = k8s.create_deployment_from_yaml(namespace="default", body=yaml)
-                    # print(api_response_deployment)
 
                 elif yaml["kind"] == "Service":
                     print("Service Creation")
                     service_name = yaml["metadata"]["name"] + str("-%s-%s") % (tenant_id.lower(), v_silo_name.lower())
+                    service_instance = {"prec": yaml["metadata"]["name"]}
                     yaml["metadata"]["name"] = service_name
                     yaml["spec"]["selector"]["siloID"] = label_app
                     api_response_service = k8s.create_service_from_yaml(namespace="default", body=yaml)
                     # print(api_response_service)
 
+                    # We keep the cluster ip of every service we have deployed so far.
+                    # We will use this list of ips later on, to allow multi-pod deployments
+                    # communication work inside VirIoT.
+                    service_instance["cluster_ip"] = api_response_service.spec.cluster_ip
+                    services_hosts_aliases.append(service_instance)
+                    services_names_list.append(service_name)
+
                 else:
                     print("Error: yaml kind not supported (vSilo)")
+
+            for yaml in yaml_files:
+                if yaml["kind"] == "Deployment":
+                    print("Injecting hostAliases for Deployment {}".format(yaml["metadata"]["name"]))
+                    # To allow multi-pod deployments to be able to interact with each other
+                    # we provide to each deployment the list of the services' cluster ips.
+                    # This list of ips will be appended in the /etc/hosts file of each one of them.
+                    if "hostAliases" in yaml["spec"]["template"]["spec"]:
+                        # since the yaml file has the "hostAliases" attribute, we avoid to
+                        # overwrite passing the list to the method
+                        yaml["spec"]["template"]["spec"]["hostAliases"] = k8s.convert_hostAliases(services_hosts_aliases, yaml["spec"]["template"]["spec"]["hostAliases"])
+                    else:
+                        # no "hostAliases" specified, then we proceed adding the property to the yaml file
+                        yaml["spec"]["template"]["spec"]["hostAliases"] = k8s.convert_hostAliases(services_hosts_aliases, [])
+                    api_response_deployment = k8s.create_deployment_from_yaml(namespace="default", body=yaml)
+                    # print(api_response_deployment)
 
                 # TODO handle error in create_service/create_deployment
 
@@ -292,7 +323,11 @@ def create_virtual_silo_on_kubernetes(v_silo_id, v_silo_name, tenant_id, flavour
                       "containerID": container_id,
                       "deploymentName": deployment_name, "serviceName": service_name,
                       "ipAddress": gateway_IP, "port": exposed_ports,
-                      "status": STATUS_RUNNING
+                      "status": STATUS_RUNNING,
+                      # These next two new properties contain the additional service/deployment files' name
+                      # existing for multi-pod deployment. We filter out the value of deployment_name and service_name.
+                      "additionalDeploymentsNames": list(filter(lambda name: name != deployment_name,deployments_names_list)),
+                      "additionalServicesNames": list(filter(lambda name: name != service_name,services_names_list))
                       }
 
         db[v_silo_collection].update_one({"vSiloID": v_silo_id}, {"$set": silo_entry})
@@ -328,6 +363,10 @@ def destroy_virtual_silo_on_kubernetes(silo_entry):
             print('ERROR:\tDelete fails')
             return json.dumps(
                 {"message": 'Error on silo destroy, problem with delete service: ' + service_name}), 401
+
+    # Deleting any additional deployment/service created for this Silo
+    delete_additional_deployments(silo_entry["additionalDeploymentsNames"])
+    delete_additional_services(silo_entry["additionalServicesNames"])
 
 
 def create_thing_visor_on_docker(tv_img_name, debug_mode, tv_id, tv_params, tv_description, yaml_files=None, deploy_zone=None):
@@ -454,6 +493,10 @@ def create_thing_visor_on_kubernetes(tv_img_name, debug_mode, tv_id, tv_params, 
         exposed_ports = {}
         deployment_name = "error"
         service_name = ""
+        deployments_names_list = []
+        services_names_list = [] # It contains the services' names. Used when deleting a multi-pod TV
+        services_hosts_aliases = [] # It contains list of dicts. Each dicts contain the precedent service name and their cluster_ip
+                                    # It is used to allow multi-pod silo's deployments to interact with each other.
         label_app = tv_id.lower().replace("_", "-")
         if not debug_mode:
             api_response_service = None
@@ -464,7 +507,12 @@ def create_thing_visor_on_kubernetes(tv_img_name, debug_mode, tv_id, tv_params, 
                     yaml["metadata"]["name"] += "-" + tv_id.lower().replace("_", "-")
                     #yaml["spec"]["template"]["spec"]["containers"][0]["env"] = k8s.convert_env(env)
                     #tv_img_name = yaml["spec"]["template"]["spec"]["containers"][0]["image"]
+                    if "volumes" in yaml["spec"]["template"]["spec"]:
+                        del yaml["spec"]["template"]["spec"]["volumes"]
                     for container in  yaml["spec"]["template"]["spec"]["containers"]:
+                        # dropping any volumeMounts property since they are not supported
+                        if "volumeMounts" in container:
+                            del container["volumeMounts"]
                         if 'env' in container:
                             container["env"] = k8s.convert_env(env, container['env'])
                         else:
@@ -487,19 +535,42 @@ def create_thing_visor_on_kubernetes(tv_img_name, debug_mode, tv_id, tv_params, 
                         yaml["spec"]["template"]["spec"]["affinity"] = k8s.zone_affinity
                         gateway_IP = default_gateway_IP
                     deployment_name = yaml["metadata"]["name"]
-                    api_response_deployment = k8s.create_deployment_from_yaml(namespace="default", body=yaml)
+                    deployments_names_list.append(deployment_name)
                     # print(api_response_deployment)
 
                 elif yaml["kind"] == "Service":
                     print("Service Creation")
                     service_name = yaml["metadata"]["name"] + "-"+tv_id.lower().replace("_", "-")
+                    service_instance = {"prec": yaml["metadata"]["name"]}
                     yaml["metadata"]["name"] = service_name
                     yaml["spec"]["selector"]["thingVisorID"] = label_app
                     api_response_service = k8s.create_service_from_yaml(namespace="default", body=yaml)
                     # print(api_response_service)
+
+                    # We keep the cluster ip of every service we have deployed so far.
+                    # We will use this list of ips later on, to allow multi-pod deployments
+                    # communication work inside VirIoT.
+                    service_instance["cluster_ip"] = api_response_service.spec.cluster_ip
+                    services_hosts_aliases.append(service_instance)
+                    services_names_list.append(service_name)
                 else:
                     print("Error: yaml kind not supported (thingVisor)")
                     return json.dumps({"message": 'Error: yaml kind not supported (thingVisor): ' + tv_id}), 401
+
+            for yaml in yaml_files:
+                if yaml["kind"] == "Deployment":
+                    print("Injecting hostAliases for Deployment")
+                    # To allow multi-pod deployments to be able to interact with each other
+                    # we provide to each deployment the list of the services' cluster ips.
+                    # This list of ips will be appended in the /etc/hosts file of each one of them.
+                    if "hostAliases" in yaml["spec"]["template"]["spec"]:
+                        # since the yaml file has the "hostAliases" attribute, we avoid to
+                        # overwrite passing the list to the method
+                        yaml["spec"]["template"]["spec"]["hostAliases"] = k8s.convert_hostAliases(services_hosts_aliases, yaml["spec"]["template"]["spec"]["hostAliases"])
+                    else:
+                        # no "hostAliases" specified, then we proceed adding the property to the yaml file
+                        yaml["spec"]["template"]["spec"]["hostAliases"] = k8s.convert_hostAliases(services_hosts_aliases, [])
+                    api_response_deployment = k8s.create_deployment_from_yaml(namespace="default", body=yaml)
 
             time.sleep(1)  # need new get because network is assigned a bit later
 
@@ -536,7 +607,11 @@ def create_thing_visor_on_kubernetes(tv_img_name, debug_mode, tv_id, tv_params, 
                              "deploymentName": deployment_name, "serviceName": service_name,
                              "port": exposed_ports,
                              "IP": gateway_IP,
-                             "status": STATUS_RUNNING
+                             "status": STATUS_RUNNING,
+                             # These next two new properties contain the additional service/deployment files' name
+                             # existing for multi-pod deployment. We filter out the value of deployment_name and service_name.
+                             "additionalDeploymentsNames": list(filter(lambda name: name != deployment_name,deployments_names_list)),
+                             "additionalServicesNames": list(filter(lambda name: name != service_name,services_names_list))
                              }
         db[thing_visor_collection].update_one({"thingVisorID": tv_id}, {"$set": thing_visor_entry})
 
@@ -575,6 +650,10 @@ def delete_thing_visor_on_kubernetes(tv_entry):
             print('ERROR:\tDelete fails')
             return json.dumps(
                 {"message": 'Error on ThingVisor destroy, problem with delete service: ' + service_name}), 401
+
+    # Deleting any additional deployment/service created for this ThingVisor
+    delete_additional_deployments(tv_entry["additionalDeploymentsNames"])
+    delete_additional_services(tv_entry["additionalServicesNames"])
 
 
 # yaml_files only for compatibility with Kubernetes implementation (not used)
@@ -706,6 +785,20 @@ def get_deploy_zone_on_kubernetes(tv_zone):
         return {"zone": tv_zone, "gw": available_zones[tv_zone]}, available_zones.keys()
     else:
         return {}, available_zones.keys()
+
+def delete_additional_deployments(deployment_names):
+    for deployment_name in deployment_names:
+        print("Stopping deployment: %s" % (deployment_name))
+        if not k8s.delete_deployment(namespace=working_namespace, name=deployment_name)[0]:
+            print('ERROR:\tDelete fails')
+            return json.dumps({"message": 'Error, problem with delete deployment: ' + deployment_name}), 401
+
+def delete_additional_services(service_names):
+    for service_name in service_names:
+        print("Stopping service: %s" % (service_name))
+        if not k8s.delete_service(namespace=working_namespace, name=service_name)[0]:
+            print('ERROR:\tDelete fails')
+            return json.dumps({"message": 'Error, problem with delete service: ' + service_name}), 401
 
 class httpThread(Thread):
     app = Flask(__name__)
@@ -1512,6 +1605,10 @@ def on_message_destroy_TV_ack_on_kubernetes(jres):
                     print('ERROR:\tDelete fails service')
                     return json.dumps({"message": 'Error on ThingVisor destroy, problem with delete service: ' + service_name}), 401
 
+            # Deleting any additional deployment/service created for this ThingVisor
+            delete_additional_deployments(tv_entry["additionalDeploymentsNames"])
+            delete_additional_services(tv_entry["additionalServicesNames"])
+
         # Remove mqtt subscription to TV control topics
         mqttc.message_callback_remove(thing_visor_prefix + '/' + tv_id + '/' + out_control_suffix)
         mqttc.unsubscribe(thing_visor_prefix + '/' + tv_id + '/' + out_control_suffix)
@@ -1582,6 +1679,10 @@ def on_message_destroy_v_silo_ack_on_kubernetes(jres):
                 print('ERROR:\tDelete fails')
                 return json.dumps(
                     {"message": 'Error on silo destroy, problem with delete service: ' + service_name}), 401
+            
+            # Deleting any additional deployment/service created for this Silo
+            delete_additional_deployments(silo_entry["additionalDeploymentsNames"])
+            delete_additional_services(silo_entry["additionalServicesNames"])
 
         thing_res = db[v_thing_collection].delete_many({"vSiloID": v_silo_id})
         silo_res = db[v_silo_collection].delete_many({"vSiloID": v_silo_id})

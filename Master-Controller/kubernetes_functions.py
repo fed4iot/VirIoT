@@ -114,6 +114,15 @@ def convert_env(env, prec_env = []):
 
     return tuple(new_env)
 
+# prec_hosts contains the list of hostAliases
+# found in the yaml file for a deployment
+def convert_hostAliases(hosts, prec_hosts = []):
+    new_hosts = prec_hosts
+    for host in hosts:
+        new_hosts.append({"ip": host["cluster_ip"], "hostnames": [host["prec"]]})
+
+    return tuple(new_hosts)
+
 
 def discover_mongodb_nodeport_debug(mongodb_svc_name, working_namespace):
     api_instance_core = kubernetes.client.CoreV1Api()

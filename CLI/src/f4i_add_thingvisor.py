@@ -47,7 +47,7 @@ def init_args(parser):
     parser.add_argument('-n', action='store', dest='name',
                         help='ThingVisor ID (default: helloworld-tv)', default='helloworld-tv')
     parser.add_argument('-p', action='store', dest='params',
-                        help='ThingVisor params, JSON object (default: '') ', default='')
+                        help='ThingVisor params, JSON object (default: "") ', default='')
     parser.add_argument('-d', action='store', dest='description',
                         help='ThingVisor description (default: hello thingVisor)', default='hello thingVisor')
     parser.add_argument('-y', action='store', dest='yamlFilesPath',

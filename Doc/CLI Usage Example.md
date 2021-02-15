@@ -60,17 +60,18 @@ python3 f4i.py register -c http://[master_controller_ip]:[master_controller_port
   
 
 ### Add Flavour  
-There are already several vSilo Flavours available.
+There are already several vSilo Flavours available. (When using kubernetes, the yaml files of the various flavours are available in the "yaml" folder, they have the flavours-* prefix).
 
 #### MOBIUS (for developers that want to use the oneM2M IoT standard)
 Add a vSilo flavour for [Mobius](https://github.com/IoTKETI/Mobius).
 Mobius is a [oneM2M](http://www.onem2m.org) server implementation.
 It got the oneM2M certification and it is designated as one of the golden samples.
 
-```bash  
-python3 f4i.py add-flavour -c http://[master_controller_ip]:[master_controller_port] -f Mobius-base-f -s Mobius -i fed4iot/mobius-base-f:2.2 -d "silo with a oneM2M Mobius broker"  
-# Kubernetes: add the flavour yaml argument using -y   
-python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -f Mobius-base-f -s Mobius -d "silo with a oneM2M Mobius broker" -y "../yaml/flavours-mobius-base.yaml"   
+```bash
+# Docker: point to the docker image of the flavour using argument -i
+python3 f4i.py add-flavour -c http://[master_controller_ip]:[master_controller_port] -i fed4iot/mobius-base-f:2.2 -f Mobius-base-f -s Mobius -d "silo with a oneM2M Mobius broker"  
+# Kubernetes: point to the yaml file of the flavour using argument -y   
+python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -y "../yaml/flavours-mobius-base.yaml" -f Mobius-base-f -s Mobius -d "silo with a oneM2M Mobius broker"  
 ```  
 
 
@@ -79,10 +80,11 @@ Add a vSilo flavour for [Orion](https://fiware-orion.readthedocs.io/en/master/).
 Orion is a C++ implementation of the [NGSIv2](https://fiware.github.io/specifications/ngsiv2/stable/) REST API
 binding developed as a part of the FIWARE platform.
 
-```bash  
-python3 f4i.py add-flavour -c http://[master_controller_ip]:[master_controller_port] -f orion-f -i fed4iot/orion-f:2.2 -d "silo with a FIWARE Orion broker" -s ""  
-# Kubernetes: add the flavour yaml argument using -y   
-python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -f orion-f -d "silo with a FIWARE Orion broker" -s "" -y "../yaml/flavours-orion.yaml"  
+```bash
+# Docker: point to the docker image of the flavour using argument -i 
+python3 f4i.py add-flavour -c http://[master_controller_ip]:[master_controller_port] -i fed4iot/orion-f:2.2 -f orion-f -s "" -d "silo with a FIWARE Orion broker" 
+# Kubernetes: point to the yaml file of the flavour using argument -y   
+python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -y "../yaml/flavours-orion.yaml" -f orion-f -s "" -d "silo with a FIWARE Orion broker"
 ```  
 
 #### SCORPIO (for developers that want to use the ETSI NGSI-LD standard for IoT and context data)
@@ -92,10 +94,11 @@ compliant context broker developed by NEC Laboratories Europe and NEC Technologi
 NGSI-LD is an open API and Datamodel specification for context management published by ETSI.
 Scorpio is developed in Java using the SpringCloud microservices framework.
 
-```bash  
-python3 f4i.py add-flavour -c http://[master_controller_ip]:[master_controller_port] -f ngsild-scorpio-f -i fed4iot/ngsild-scorpio-f:2.2 -d "silo with a Scorpio NGSI-LD broker" -s ""  
-# Kubernetes: add the flavour yaml argument using -y   
-python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -f ngsild-scorpio-f -d "silo with a Scorpio NGSI-LD broker" -s '{"brokerport":9090}' -y "../yaml/flavours-ngsild-scorpio-multicontainer.yaml"  
+```bash
+# Docker: point to the docker image of the flavour using argument -i 
+python3 f4i.py add-flavour -c http://[master_controller_ip]:[master_controller_port] -i fed4iot/ngsild-scorpio-f:2.2 -f ngsild-scorpio-f -d "silo with a Scorpio NGSI-LD broker" -s ""  
+# Kubernetes: point to the yaml file of the flavour using argument -y
+python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -y "../yaml/flavours-ngsild-scorpio-multicontainer.yaml" -f ngsild-scorpio-f -d "silo with a Scorpio NGSI-LD broker" -s '{"brokerport":9090}'
 ```
 
 
@@ -106,10 +109,11 @@ compliant context broker developed by EGM.
 NGSI-LD is an open API and Datamodel specification for context management published by ETSI.
 This project is part of FIWARE. For more information check the FIWARE Catalogue entry for Core Context.
 
-```bash  
+```bash
+# Docker: point to the docker image of the flavour using argument -i 
 python3 f4i.py add-flavour -c http://[master_controller_ip]:[master_controller_port] -f ngsild-stellio-f -i fed4iot/ngsild-stellio-f:2.2 -d "silo with a Stellio NGSI-LD broker" -s ""  
-# Kubernetes: add the flavour yaml argument using -y   
-python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -f ngsild-scorpio-f -d "silo with a Scorpio NGSI-LD broker" -s '{"brokerport":8090}' -y "../yaml/flavours-ngsild-stellio.yaml"  
+# Kubernetes: point to the yaml file of the flavour using argument -y
+python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -y "../yaml/flavours-ngsild-stellio.yaml" -f ngsild-stellio-f -d "silo with a Stellio NGSI-LD broker" -s '{"brokerport":8090}'   
 ```  
 
 #### ORIONLD (for developers that want to use the ETSI NGSI-LD standard for IoT and context data)
@@ -120,10 +124,11 @@ NGSI-LD is an open API and Datamodel specification for context management publis
 This Generic Enabler implements the NGSI-LD API Orion-LD extends the Orion Context Broker
 This project is part of FIWARE. For more information check the FIWARE Catalogue entry for Core Context.
 
-```bash  
-python3 f4i.py add-flavour -c http://[master_controller_ip]:[master_controller_port] -f ngsild-stellio-f -i fed4iot/ngsild-stellio-f:2.2 -d "silo with a OrionLD NGSI-LD broker" -s ""  
-# Kubernetes: add the flavour yaml argument using -y   
-python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -f ngsild-scorpio-f -d "silo with a Scorpio NGSI-LD broker" -s '{"brokerport":1026}' -y "../yaml/flavours-ngsild-orionld-multicontainer.yaml"  
+```bash
+# Docker: point to the docker image of the flavour using argument -i 
+python3 f4i.py add-flavour -c http://[master_controller_ip]:[master_controller_port] -i fed4iot/ngsild-stellio-f:2.2 -f ngsild-orionld-f -d "silo with a OrionLD NGSI-LD broker" -s ""  
+# Kubernetes: point to the yaml file of the flavour using argument -y 
+python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -y "../yaml/flavours-ngsild-orionld-multicontainer.yaml" -f ngsild-orionld-f -d "silo with a OrionLD NGSI-LD broker" -s '{"brokerport":1026}'  
 ```  
 
 

@@ -44,7 +44,7 @@ def run(args):
         'content-type': "application/json",
         'cache-control': "no-cache"
         }
-    payload = {"userID": args.userID, "password": args.password, "role": args.role}
+    payload = {"userID": args.userID.lower(), "password": args.password, "role": args.role}
 
     response = requests.request("POST", url, headers=headers, data=json.dumps(payload))
     print(response.json().get('message', response.text) + "\n")

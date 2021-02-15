@@ -29,8 +29,8 @@ def run(args):
     url = args.controllerUrl + "/siloCreate"
     print("Creating IoT silo, please wait ....")
 
-    payload = "{\n\t\"tenantID\":\"" + args.tenantID + \
-              "\",\n\t\"vSiloName\":\"" + args.vSiloName + \
+    payload = "{\n\t\"tenantID\":\"" + args.tenantID.lower() + \
+              "\",\n\t\"vSiloName\":\"" + args.vSiloName.lower() + \
               "\",\n\t\"flavourID\":\"" + args.flavourName + \
               "\",\n\t\"vSiloZone\":\"" + args.vSiloZone + \
               "\",\"debug_mode\":" + args.debug_mode + "\n}"

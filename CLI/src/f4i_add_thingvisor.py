@@ -67,7 +67,7 @@ def run(args):
     yaml_list = get_yaml_file(args.yamlFilesPath)
 
     payload = {"imageName": args.imageName,
-               "thingVisorID": args.name,
+               "thingVisorID": args.name.lower(),
                "params": args.params,
                "description": args.description,
                "debug_mode": False if args.debug_mode == "false" else True,

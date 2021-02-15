@@ -15,6 +15,12 @@ spec:
       labels:
         app: scorpio-aaio
     spec:
+      hostAliases:
+        - ip: "127.0.0.1"
+          hostnames:
+            - "kafka"
+            - "postgres"
+            - "zookeeper"
       containers:
       - name: ngsildsilocontroller
         image: fed4iot/ngsild-silocontroller:latest
@@ -59,15 +65,6 @@ spec:
         resources: {}
       - name: scorpio
         image: scorpiobroker/scorpio:scorpio-aaio_latest
-        lifecycle:
-          postStart:
-            exec:
-              command: [
-                        "/bin/sh", 
-                        "-c", 
-                        "echo '127.0.0.1 kafka' >> /etc/hosts &&
-                        echo '127.0.0.1 postgres' >> /etc/hosts"
-                        ]
         ports:
         - containerPort: 9090
           name: scorpio

@@ -26,15 +26,17 @@ Move to the CLI directory to use the Command Line Interface.
 cd VirIoT/CLI  
 ```  
 
-The `f4i.py` CLI commands are the same for both the [Kubernetes-based](Kubernetes%20Deployment.md) 
+IMPORTANT: The `f4i.py` CLI commands are the same for both the [Kubernetes-based](Kubernetes%20Deployment.md) 
 and the [Docker-based](Docker%20Depolyment.md) deployments, provided of course you adjust `-c <ControllerURL>` argument, so that it points to the correct Master Conteroller's exposed IP and port.
 
-For instance, when running on Kubernetes, you can issue the following command, the most common possibilities for the `ControllerURL` are:
+When the commands differ, we show examples of both syntaxes. Usually, this is the case when they differ by usage of -y argument in Kubernets-based deployments, rather than -i argument, for instance in the Add Flavour action.
+
+Concerning how to obtain the IP address of the Master-Controller, when running on Kubernetes, you can issue the following command; in this case, the most common possibilities for the `ControllerURL` are:
 1. The ip address of the ClusterIP of the Master-Controller service along with the `8090` port.
 2. The ip address of any node of the cluster, along with the `NodePort` of the Master-Controller service.
 3. If set, the external ip address of any node of the cluster, followed by the `NodePort` of the Master-Controller service.
 
-On Kubernetes, the following command is useful:
+On Kubernetes, the following command is also very useful:
 ```bash  
 # to know the ClusterIP and NodePort related to the Master-Controller service:  
 kubectl get svc f4i-master-controller-svc 
@@ -60,7 +62,7 @@ python3 f4i.py register -c http://[master_controller_ip]:[master_controller_port
   
 
 ### Add Flavour  
-There are already several vSilo Flavours available. (When using kubernetes, the yaml files of the various flavours are available in the "yaml" folder, they have the flavours-* prefix).
+There are already several vSilo Flavours available. For each command, forst the Docker-based variant is given, and then the Kubernetes-based variant (essentially they differ by usage of -y argument in Kubernets-based deployments, rather than -i argument. All other arguments are the same). (When using kubernetes, the yaml files of the various flavours are available in the "yaml" folder, they have the flavours-* prefix). 
 
 #### MOBIUS (for developers that want to use the oneM2M IoT standard)
 Add a vSilo flavour for [Mobius](https://github.com/IoTKETI/Mobius).
@@ -110,8 +112,7 @@ NGSI-LD is an open API and Datamodel specification for context management publis
 This project is part of FIWARE. For more information check the FIWARE Catalogue entry for Core Context.
 
 ```bash
-# Docker: point to the docker image of the flavour using argument -i 
-python3 f4i.py add-flavour -c http://[master_controller_ip]:[master_controller_port] -f ngsild-stellio-f -i fed4iot/ngsild-stellio-f:2.2 -d "silo with a Stellio NGSI-LD broker" -s ""  
+# Docker: the STELLIO broker is only available with Kubernetes deployments of VirIoT
 # Kubernetes: point to the yaml file of the flavour using argument -y
 python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -y "../yaml/flavours-ngsild-stellio.yaml" -f ngsild-stellio-f -d "silo with a Stellio NGSI-LD broker" -s '{"brokerport":8090}'   
 ```  
@@ -125,8 +126,7 @@ This Generic Enabler implements the NGSI-LD API Orion-LD extends the Orion Conte
 This project is part of FIWARE. For more information check the FIWARE Catalogue entry for Core Context.
 
 ```bash
-# Docker: point to the docker image of the flavour using argument -i 
-python3 f4i.py add-flavour -c http://[master_controller_ip]:[master_controller_port] -i fed4iot/ngsild-stellio-f:2.2 -f ngsild-orionld-f -d "silo with a OrionLD NGSI-LD broker" -s ""  
+# Docker: the STELLIO broker is only available with Kubernetes deployments of VirIoT
 # Kubernetes: point to the yaml file of the flavour using argument -y 
 python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -y "../yaml/flavours-ngsild-orionld-multicontainer.yaml" -f ngsild-orionld-f -d "silo with a OrionLD NGSI-LD broker" -s '{"brokerport":1026}'  
 ```  
@@ -145,7 +145,8 @@ python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -f mqtt-f -d "silo
 
 ### List flavours  
 
-```bash  
+```bash
+# Docker
 python3 f4i.py list-flavours -c http://[master_controller_ip]:[master_controller_port]  
 # Kubernetes  
 python3 f4i.py list-flavours -c http://[k8s_node_ip]:[NodePort]  
@@ -172,7 +173,8 @@ python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n weather -p '
   
 Add thingVisor for oneM2M container on oneM2M of EGM in Grasse: 
 
-```bash  
+```bash
+# Docker
 python3 f4i.py add-thingvisor -c http://[master_controller_ip]:[master_controller_port] -i fed4iot/onem2m-tv:2.2 -n EGM-Abbass -d "OneM2M data from EGM Abbass sensor" -p '{"CSEurl":"https://fed4iot.eglobalmark.com","origin":"Superman","cntArn":"Abbas123456/humidity/value","vThingName":"EGM-Abbas123456-humidity","vThingDescription":"OneM2M humidity data from EGM Abbass sensor"}'  
 # Kubernetes: add the flavour yaml argument using -y and the optional zone to deploy the pod -z  
 python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n EGM-Abbass -d "OneM2M data from EGM Abbass sensor" -p '{"CSEurl":"https://fed4iot.eglobalmark.com","origin":"Superman","cntArn":"Abbas123456/humidity/value","vThingName":"EGM-Abbas123456-humidity","vThingDescription":"OneM2M humidity data from EGM Abbass sensor"}' -y "../yaml/thingVisor-oneM2M.yaml" -z Japan  
@@ -182,6 +184,7 @@ python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n EGM-Abbass -
 Add thingVisor FIWARE Murcia, change notify_ip address with the public address of the running machine:
 
 ```bash
+# Docker
 python3 f4i.py add-thingvisor -c http://[master_controller_ip]:[master_controller_port] -i fed4iot/fiware-greedy-tv:2.2 -n Murcia_Sensors -p '{"ocb_service":["trafico","aparcamiento","pluviometria","tranvia","autobuses","bicis","lecturas","gps","suministro"], "ocb_ip":"fiware-dev.inf.um.es", "ocb_port":"1026"}' -d "Greedy ThingVisor for FIWARE Murcia Platform"  
 # Kubernetes: add the flavour yaml argument using -y and the optional zone to deploy the pod -z  
 python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n Murcia_Sensors -p '{"ocb_service":["trafico","aparcamiento","pluviometria","tranvia","autobuses","bicis","lecturas","gps","suministro"], "ocb_ip":"fiware-dev.inf.um.es", "ocb_port":"1026"}' -d "Greedy ThingVisor for FIWARE Murcia Platform" -y "../yaml/thingVisor-fiWARE.yaml" -z Japan  
@@ -190,7 +193,8 @@ python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n Murcia_Senso
 
 Add ThingVisor Hello World:
 
-```bash  
+```bash
+# Docker
 python3 f4i.py add-thingvisor -c http://[master_controller_ip]:[master_controller_port] -i fed4iot/helloworld-tv:2.2 -n helloWorld -d "hello thingVisor"  
 # Kubernetes: add the flavour yaml argument using -y and the optional zone to deploy the pod -z  
 python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n helloWorld -d "hello thingVisor" -y "../yaml/thingVisor-helloWorld.yaml" -z Japan  
@@ -208,7 +212,8 @@ HelloWorld-tv periodically produces an array of NGSI-LD entity as follows:
 
 List ThingVisor, including info about vThingIDs of the handled virtual things:
 
-```bash  
+```bash
+# Docker
 python3 f4i.py list-thingvisors -c http://[master_controller_ip]:[master_controller_port]  
 # Kubernetes  
 python3 f4i.py list-thingvisors -c http://[k8s_node_ip]:[NodePort]  
@@ -219,7 +224,8 @@ python3 f4i.py list-thingvisors -c http://[k8s_node_ip]:[NodePort]
 
 Logout as admin and login as tenant1 if you prefer but some operation are forbidden as user:
 
-```bash  
+```bash
+# Docker
 python3 f4i.py logout -c http://[master_controller_ip]:[master_controller_port]  
 # Kubernetes  
 python3 f4i.py logout -c http://[k8s_node_ip]:[NodePort]  
@@ -231,7 +237,8 @@ python3 f4i.py logout -c http://[k8s_node_ip]:[NodePort]
 
 Create a oneM2M based virtual Silo (this will start a flavour container for the tenant):
 
-```bash  
+```bash
+# Docker
 python3 f4i.py create-vsilo -c http://[master_controller_ip]:[master_controller_port] -t tenant1 -f Mobius-base-f -s Silo1  
 # This returns the private IP address of the vsilo broker (Mobius in this example) and the port to use for accessing, and also the port mapping by the whitch is possible to acces the broker using the  public IP address of the platform   
   
@@ -242,11 +249,15 @@ python3 f4i.py create-vsilo -c http://[k8s_node_ip]:[NodePort] -t tenant1 -f Mob
   
 Create FIWARE Orion based Silo2 and rawMQTT Silo3:
 
-```bash  
+```bash
+# create Silo2
+# Docker
 python3 f4i.py create-vsilo -c http://[master_controller_ip]:[master_controller_port] -t tenant1 -f orion-f -s Silo2   
 # Kubernetes, add optional zone to deploy the pod -z  
 python3 f4i.py create-vsilo -c http://[k8s_node_ip]:[NodePort] -t tenant1 -f orion-f -s Silo2 -z Japan  
- 
+
+# Now create Silo3
+# Docker
 python3 f4i.py create-vsilo -c http://[master_controller_ip]:[master_controller_port] -t tenant1 -f mqtt-f -s Silo3  
 # Kubernetes, add optional zone to deploy the pod -z  
 python3 f4i.py create-vsilo -c http://[k8s_node_ip]:[NodePort] -t tenant1 -f mqtt-f -s Silo3 -z Japan  
@@ -257,7 +268,8 @@ python3 f4i.py create-vsilo -c http://[k8s_node_ip]:[NodePort] -t tenant1 -f mqt
 
 Inspect tenant1 information:  
   
-```bash  
+```bash
+# Docker
 python3 f4i.py inspect-tenant -t tenant1 -c http://[master_controller_ip]:[master_controller_port]  
 # Kubernetes  
 python3 f4i.py inspect-tenant -t tenant1 -c http://[k8s_node_ip]:[NodePort]  

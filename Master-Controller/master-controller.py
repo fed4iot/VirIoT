@@ -1413,9 +1413,9 @@ class httpThread(Thread):
         try:
             tenant_id = request.json.get("tenantID", get_jwt_identity())
             print(tenant_id)
-            # if not User(get_jwt_identity()).check_user_permission(db, user_collection, tenant_id):
-            #     httpThread.app.logger.warn('%s tried to inspect the tenant (%s)', get_jwt_identity(), tenant_id)
-            #     return json.dumps({"message": "operation not allowed"}), 401
+            if not User(get_jwt_identity()).check_user_permission(db, user_collection, tenant_id):
+                httpThread.app.logger.warn('%s tried to inspect the tenant (%s)', get_jwt_identity(), tenant_id)
+                return json.dumps({"message": "operation not allowed"}), 401
             res = {'vSilos': json.loads(dumps(db[v_silo_collection].find({"tenantID": tenant_id}, {"_id": 0}))),
                    'vThings': json.loads(dumps(db[v_thing_collection].find({"tenantID": tenant_id}, {"_id": 0})))}
             return Response(json.dumps(res), 200, mimetype='application/json')

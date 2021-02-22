@@ -15,7 +15,7 @@ The camera system will send results to ThingVisor on each status change, that is
 
 ## How To Run
 
-### VirIoT Docker-base deployment
+### VirIoT Docker-based deployment
 
 Use the following Docker command to build locally the image of the ThingVisor.
 
@@ -26,21 +26,21 @@ docker build -t facerecognition-tv .
 Use the VirIoT CLI and run the following command to add the ThingVisor to VirIoT.
 
 ```bash
-python3 f4i.py add-thingvisor -i facerecognition-tv:latest -n facerec -d "faceRecognition thingVisor" -p '{}'
+python3 f4i.py add-thingvisor -c http://[master_controller_ip]:[master_controller_port] -i facerecognition-tv:latest -n facerec -d "faceRecognition thingVisor" -p '{}'
 ```
 
-### VirIoT k8s-base deployment
+### VirIoT k8s-based deployment
 
 Use the VirIoT CLI and run the following command to add the ThingVisor to VirIoT.
 
 ```bash
-python3 f4i.py add-thingvisor -c http://$(minikube ip):$NODE_PORT -n facerec -d "faceRecognition thingVisor" -y "../yaml/thingVisor-faceRecognition.yaml" -p '{}'
+python3 f4i.py add-thingvisor -c http://[k8s_node_ip]:[NodePort] -n facerec -d "faceRecognition thingVisor" -y "../yaml/thingVisor-faceRecognition.yaml" -p '{}'
 ```
 
 Run the following command to delete the ThingVisor from VirIoT.
 
 ```bash
-python3 f4i.py del-thingvisor -c http://$(minikube ip):$NODE_PORT -n facerec
+python3 f4i.py del-thingvisor -c http://[k8s_node_ip]:[NodePort] -n facerec
 ```
 
 ### ThingVisor parameters
@@ -59,7 +59,7 @@ Currently, the FaceRecognition thingvisor accepts the following parameters:
 When the ThingVisor runs, it creates the detector vThing. You must add the vThing to your silo with the following command:
 
 ```bash
-python3 f4i.py add-vthing -t tenant1 -s Silo1 -v facerec/detector -c http://$(minikube ip):$NODE_PORT
+python3 f4i.py add-vthing -t tenant1 -s Silo1 -v facerec/detector -c http://[k8s_node_ip]:[NodePort]
 ```
 
 This will make you be able to send command and receive command results.

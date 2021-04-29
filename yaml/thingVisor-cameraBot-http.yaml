@@ -1,0 +1,44 @@
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: f4i-tv-camerabot
+spec:
+  selector:
+    matchLabels:
+      app: f4i-camerabot
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: f4i-camerabot
+    spec:
+      containers:
+      - name: f4i-camerabot
+        image: camerabot-tv:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 5000 
+      - name: mongo-for-camerabot
+        image: mongo:latest
+      - name: f4i-http-sidecar
+        image: fed4iot/http-sidecar-tv
+        ports:
+        - containerPort: 5001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: f4i-camerabot-tv-svc
+  labels:
+    app: f4i-camerabot
+spec:
+  type: NodePort
+  selector:
+    app: f4i-camerabot
+  ports:
+  - port: 5000
+    nodePort:
+    name: port5000 
+  - port: 80
+    targetPort: 5001
+    name: http

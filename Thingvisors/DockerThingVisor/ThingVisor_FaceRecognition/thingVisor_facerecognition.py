@@ -146,15 +146,15 @@ def on_post_PATCH_faceInput(request,lookup):
             a = faceInput.find_one({'_id':id})
             image=app.media.get(a['image'])
 
-            # send all data to the robot
-            _robot_ip, _robot_port=get_robot_ip_port()
+            # send all data to the camera system
+            _camera_ip, _camera_port=get_camera_ip_port()
             payload = {'name':name,'id':id}
             files={'image':image}
-            res=requests.post("http://"+_robot_ip+':'+_robot_port+'/images', data=payload, files=files)
+            res=requests.post("http://"+_camera_ip+':'+_camera_port+'/images', data=payload, files=files)
 
             # check response
             if res.status_code>=400:
-                print("Error when posting to the JetBot: "+str(res.status_code))
+                print("Error when posting to the camera system: "+str(res.status_code))
                 return 
     except:
         traceback.print_exc()
@@ -249,15 +249,15 @@ def delete_endpoint(n):
     print("Destroying endpoint for "+n)
     rest.del_vthing_endpoint(controller_url, v_things[n]['ID'], tenant_id, admin_psw)
 
-def get_robot_ip_port():
-    #global robot_ip,robot_port
-    if robot_ip==None or robot_port==None:
+def get_camera_ip_port():
+    #global camera_ip,camera_port
+    if camera_ip==None or camera_port==None:
         with app.app_context():
-            robots = app.data.driver.db['robots']
-            a = robots.find_one({'_id':0})
+            cameras = app.data.driver.db['cameras']
+            a = cameras.find_one({'_id':0})
             return a['ip'], a['port']
     else:
-        return robot_ip, robot_port
+        return camera_ip, camera_port
 
 def get_vthing_name(name):
     name=name.split(':')[-1]
@@ -365,10 +365,10 @@ class mqttDataThread(Thread):
 
 
     def on_start(self, cmd_name, cmd_info, id_LD, actuatorThread):
-        print("Sending start command to robot")
+        print("Sending start command to camera system")
 
-        _robot_ip, _robot_port=get_robot_ip_port()
-        res=requests.get("http://"+_robot_ip+':'+_robot_port+'/start')
+        _camera_ip, _camera_port=get_camera_ip_port()
+        res=requests.get("http://"+_camera_ip+':'+_camera_port+'/start')
 
         # publish command result
         if "cmd-qos" in cmd_info:
@@ -376,10 +376,10 @@ class mqttDataThread(Thread):
                 self.send_commandResult(cmd_name, cmd_info, id_LD, res.status_code)
     
     def on_stop(self, cmd_name, cmd_info, id_LD, actuatorThread):
-        print("Sending stop command to robot")
+        print("Sending stop command to camera system")
 
-        _robot_ip, _robot_port=get_robot_ip_port()
-        res=requests.get("http://"+_robot_ip+':'+_robot_port+'/stop')
+        _camera_ip, _camera_port=get_camera_ip_port()
+        res=requests.get("http://"+_camera_ip+':'+_camera_port+'/stop')
         
         # publish command result
         if "cmd-qos" in cmd_info:
@@ -457,9 +457,9 @@ class mqttDataThread(Thread):
                         self.send_commandResult(cmd_name, cmd_info, id_LD, "The name "+name+" doesn't exist.")
                 return
             
-            # send to the robot the deletion request
-            _robot_ip, _robot_port=get_robot_ip_port()
-            res=requests.delete("http://"+_robot_ip+':'+_robot_port+'/people/'+name)
+            # send to the camera system the deletion request
+            _camera_ip, _camera_port=get_camera_ip_port()
+            res=requests.delete("http://"+_camera_ip+':'+_camera_port+'/people/'+name)
 
             # check response
             if res.status_code>=400:
@@ -576,13 +576,13 @@ class MqttControlThread(Thread):
         print("Shutdown completed")
 
     def on_message_update_thing_visor(self, jres):
-        global robot_ip, robot_port
+        global camera_ip, camera_port
 
         print("Print update_info:", jres['update_info'])
-        if 'robot_ip' in jres['params']:
-            robot_ip=jres['params']['robot_ip']
-        if 'robot_port' in jres['params']:
-            robot_port=jres['params']['robot_port']
+        if 'camera_ip' in jres['params']:
+            camera_ip=jres['params']['camera_ip']
+        if 'camera_port' in jres['params']:
+            camera_port=jres['params']['camera_port']
 
     # handler for mqtt control topics
     def __init__(self):
@@ -692,17 +692,17 @@ if __name__ == '__main__':
         exit()
 
     
-    robot_ip=None
-    robot_port=None
+    camera_ip=None
+    camera_port=None
     controller_url=None
     tenant_id=None
     admin_psw=None
 
     if params:
-        if 'robot_ip' in params:
-            robot_ip = params['robot_ip']
-        if 'robot_port' in params:
-            robot_port = params['robot_port']
+        if 'camera_ip' in params:
+            camera_ip = params['camera_ip']
+        if 'camera_port' in params:
+            camera_port = params['camera_port']
         if 'controller_url' in params:
             controller_url = params['controller_url']
         if 'tenant_id' in params:
@@ -747,13 +747,13 @@ if __name__ == '__main__':
     mqtt_data_thread = mqttDataThread()  # mqtt data thread
     mqtt_data_thread.start()
 
-    # create the robot vThing
+    # create the camera system vThing
     detector=create_vthing("detector","FaceDetector",["start","stop","set-face-feature","delete-by-name"])
 
-    # post item for robot
+    # post item for camera system
     with app.app_context():
         with app.test_request_context():
-            post_internal('robots', {"_id": 0})
+            post_internal('cameras', {"_id": 0})
 
     # set eve callbacks
     app.on_post_PATCH_faceInput += on_post_PATCH_faceInput

@@ -79,10 +79,10 @@ schema2 = {
     },    
 }
 
-robots = {
+cameras = {
     # 'title' tag used in item links. Defaults to the resource title minus
     # the final, plural 's' (works fine in most cases but not for 'people')
-    'item_title': 'robot',
+    'item_title': 'camera',
     'item_url': 'int', # specifies that the url for the item must be interpreted as an integer
 
     # We choose to override global cache-control directives for this resource.
@@ -133,7 +133,7 @@ faceOutput = {
     'schema': schema2
 }
 
-DOMAIN = {"robots": robots, "faceInput": faceInput, "faceOutput": faceOutput}
+DOMAIN = {"cameras": cameras, "faceInput": faceInput, "faceOutput": faceOutput}
 DEBUG=True
 
 

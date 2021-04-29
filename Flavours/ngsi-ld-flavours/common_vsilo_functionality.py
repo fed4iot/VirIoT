@@ -72,31 +72,23 @@ def recv_notify(attr):
         return 'Bad notification format', 401
     
     entity=jres['data'][0]
-    if 'cmd-id' in entity[attr]['value']:
-        # in any case lets overwrite the nuri, to avoid injecting a malicious nuri
-        # so, not only if 'cmd-nuri' not in entity[attr]['value']:
-        entity[attr]['value']['cmd-nuri'] = 'viriot://vSilo/'+v_silo_id+'/data_in'
-        # BEWARE HERE that 'object' is ok if generatedByVThing is a Relationship
-        # but if it is a Property, then it has to be 'value'. This may be the case
-        # because some NGSI-LD Brokers (maybe Stellio) do not allow dangling Relationships.
-        # This is why we decided to use Property instead of Relationship.
-        vThingID=entity['generatedByVThing']['value']
+    if attr in entity:
+        if 'cmd-id' in entity[attr]['value']:
+            # in any case lets overwrite the nuri, to avoid injecting a malicious nuri
+            # so, not only if 'cmd-nuri' not in entity[attr]['value']:
+            entity[attr]['value']['cmd-nuri'] = 'viriot://vSilo/'+v_silo_id+'/data_in'
+            # BEWARE HERE that 'object' is ok if generatedByVThing is a Relationship
+            # but if it is a Property, then it has to be 'value'. This may be the case
+            # because some NGSI-LD Brokers (maybe Stellio) do not allow dangling Relationships.
+            # This is why we decided to use Property instead of Relationship.
+            vThingID=entity['generatedByVThing']['value']
 
-        cmd_value = entity[attr]['value']
-        cmd_name = attr
-        cmd_LD_ID = entity['id']
-        cmd_LD_Type = entity['type']
-
-        print("Clearing command \""+cmd_name+"\"")
-        # let's set to emty the only property we received, i.e. the one referring to the command
-        entity[cmd_name]['value']={}
-        # the notification did not contain @context
-        entity['@context']=["http://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"]
-        # let's POST the entity, which contains just the one (command) property to be modified
-        brokerspecific.add_or_modify_entity_under_vThing_on_Broker(vThingID, entity)
-
-        print("Sending command out...")
-        send_command_out(cmd_LD_ID, cmd_LD_Type,cmd_name, cmd_value, vThingID)
+            cmd_value = entity[attr]['value']
+            cmd_name = attr
+            cmd_LD_ID = entity['id']
+            cmd_LD_Type = entity['type']
+            print("Sending command out...")
+            send_command_out(cmd_LD_ID, cmd_LD_Type,cmd_name, cmd_value, vThingID)
 
     #print(jres)
     # return ""

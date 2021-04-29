@@ -48,7 +48,7 @@ def overwrite_or_append_or_create_entity(url, entity):
 # Create any the NGSI-LD Entity, if they do not exist
 def batch_entity_upsert(url, entities):
   #print(entities)
-  entities_end_point = "/entityOperations/upsert/"
+  entities_end_point = "/entityOperations/upsert?options=update"
   entities_url = url + entities_end_point
 
   # setting up the data for the request
@@ -183,9 +183,7 @@ def subscribe_to_entity(broker_url, entity_id_to_subscribe, entity_type, nuri, w
         "type": entity_type
       }
     ],
-    #"watchedAttributes": watchedAttributes,
     "notification": {
-      #"attributes": watchedAttributes,
       "endpoint": {
         "uri": nuri,
         "accept": "application/json"
@@ -196,12 +194,13 @@ def subscribe_to_entity(broker_url, entity_id_to_subscribe, entity_type, nuri, w
     ]
   }
 
-  # if we have attributes to watch, then define them into the subscription
-  # and also inform the broker that we want all other attributes
-  # be removed from the notification we will receive, except the generatedByVThing
+  # if we have attributes to watch, then define them into the subscription (watchedAttributes field)
+  # and also inform the broker that we want all other (non-watched) attributes
+  # be not present in the notification we will receive, except the generatedByVThing,
+  # by setting "attributes" to just the watched ones, plus generatedByVThing
   if len(watchedAttributes)>0:
-    dic['watchedAttributes']=watchedAttributes
-    dic['notification']['attributes']=watchedAttributes
+    dic['watchedAttributes']=watchedAttributes.copy()
+    dic['notification']['attributes']=watchedAttributes.copy()
     dic['notification']['attributes'].append("generatedByVThing")
   payload = json.dumps(dic)
 

@@ -15,7 +15,6 @@ spec:
       containers:
       - name: f4i-camerabot
         image: fed4iot/camerabot-tv:latest
-        imagePullPolicy: Never
         ports:
         - containerPort: 5000 
       - name: mongo-for-camerabot

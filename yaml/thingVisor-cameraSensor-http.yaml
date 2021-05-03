@@ -15,7 +15,6 @@ spec:
       containers:
       - name: f4i-camerasensor
         image: fed4iot/camerasensor-tv:latest
-        imagePullPolicy: Never
         ports:
         - containerPort: 5000 
       - name: mongo-for-camerasensor

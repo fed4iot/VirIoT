@@ -12,13 +12,26 @@ spec:
       labels:
         app: f4i-camerasensor
     spec:
+      volumes:
+      - name: shared-ram-disk
+        emptyDir:
+          medium: "Memory"
       containers:
       - name: f4i-camerasensor
         image: fed4iot/camerasensor-tv:latest
         ports:
-        - containerPort: 5000 
-      - name: mongo-for-camerasensor
-        image: mongo:latest
+        - containerPort: 5000
+        volumeMounts:
+        - name: shared-ram-disk
+          mountPath: "/app/redis"
+      - name: redis-for-camerasensor
+        image: redis:alpine
+        volumeMounts:
+        - name: shared-ram-disk
+          mountPath: "/var/run/redis"
+        command: ["redis-server"]
+        # port 0 disables TCP
+        args: ["--unixsocket /var/run/redis/redis.sock ", "--unixsocketperm 666", "--port 0"]
       - name: f4i-http-sidecar
         image: fed4iot/http-sidecar-tv
         ports:

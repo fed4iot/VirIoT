@@ -27,19 +27,105 @@ from concurrent.futures import ThreadPoolExecutor
 import requests
 import uuid
 
-##### CUSTOMIZE generic TV
+##### CUSTOMIZE generic TV imports
 import pathlib
-from collections import OrderedDict
-import threading
+import redis
+import io
 
 from flask import Flask, request, Response
 app=Flask(__name__)
 
 
-# function for sending messages through mqtt
-def send_message(message):
-    print("topic name: " + v_thing['topic'] + '/' + v_thing_data_suffix + ", message: " + json.dumps(message))
-    mqtt_data_client.publish(v_thing['topic'] + '/' + v_thing_data_suffix,
+##### CUSTOMIZE generic TV
+##### GLOBALS
+buffer_of_frames = OrderedDict()
+buffer_of_frames_lock = threading.Lock()
+
+@app.route('/currentframe/<randomid>')
+def GET_current_frame_by_id(randomid):
+    ### i could offer the img_str buffer via HTTP at this point
+    headers={"Content-disposition": "attachment"}
+    headers["Cache-Control"]="no-cache"
+    print("GET ", randomid)
+    # acquire lock
+    buffer_of_frames_lock.acquire()
+    try:
+        rspns = buffer_of_frames[randomid]
+    except:
+        rspns = ""
+    # release lock
+    buffer_of_frames_lock.release()
+    return Response(rspns, mimetype='image/jpeg', headers=headers)
+
+def read_camera_frames(fps, camera_frames_folder):
+    global buffer_of_frames_lock
+    global buffer_of_frames
+
+    try:
+        # Change the current working Directory    
+        os.chdir(camera_frames_folder)
+    except OSError:
+        print("Can't change the Current Working Directory to " + str(camera_frames_folder))
+        threading.Timer(fps, read_camera_frames, [fps, camera_frames_folder]).start()
+        return
+    
+    # scan folder every fps, then
+    # for each image in folder put it in the buffer
+    filepaths = pathlib.Path().glob("*.jpeg")
+    for file in filepaths:
+        print(file)
+        with open(file, 'rb') as fh:
+            buf = io.BytesIO(fh.read())
+        img_str = buf.getvalue()
+    
+        randomid = uuid.uuid1()
+        print("Producing ", randomid.hex)
+    
+        # acquire lock
+        buffer_of_frames_lock.acquire()
+        # we keep at most 20 images in the buffer
+        if len(buffer_of_frames) > 20:
+            buffer_of_frames.popitem(last=False)
+        buffer_of_frames[randomid.hex]=img_str
+        # release lock
+        buffer_of_frames_lock.release()
+
+    threading.Timer(fps, read_camera_frames, [fps, camera_frames_folder]).start()
+##### END GLOBAL CUSTOMIZE generic TV
+
+
+def publish_entities_of_this_vthing(entities):
+    for entity in entities:
+        for property in entity.properties:
+            entity={
+                "@context": [
+                    "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
+                ],
+                "id": "urn:ngsi-ld:CameraBotPicture:"+str(index),
+                "type": "CameraBotPicture",
+                "link_to_picture": {
+                    "type": "Property",
+                    "value": "/cameras/"+str(index)+"/image"
+                },
+                "timestamp": {
+                    "type": "Property",
+                    "value": "0"
+                }
+            }
+
+            if 'timestamp' in rdata:
+                entity['timestamp']['value']=rdata['timestamp']
+
+            message = {"data": [entity], "meta": {"vThingID": v_thing_ID[index]}}
+            future = executor.submit(send_message, message, index)
+
+
+    return
+
+# function for publishing messages through mqtt on the vthing's data out topic
+def publish_to_vthing_data_out_topic(message):
+    print("topic name: " + v_thing['topic'] + '/' + out_data_suffix + ", message: " + json.dumps(message))
+    mqtt_data_client.publish(v_thing['topic'] + '/' + out_data_suffix,
                                 json.dumps(message))  # publish received data to data topic by using neutral format
 
 def create_vthing(name, type, commands):
@@ -297,13 +383,6 @@ class MqttControlThread(Thread):
                                                 self.on_message_in_control_vThing)
         mqtt_control_client.subscribe(v_thing['topic'] + '/' + in_control_suffix)
 
-
-##### CUSTOMIZE generic TV
-##### GLOBALS
-    buffer_of_frames = OrderedDict()
-    buffer_of_frames_lock = threading.Lock()
-
-
 # main
 if __name__ == '__main__':
     MAX_RETRY = 3
@@ -366,11 +445,15 @@ if __name__ == '__main__':
         else:
             print("WARNING: no folder where to fetch camera frames was specified. Using /camera_frames")
             camera_frames_folder = "/camera_frames"
+        if 'fps' in params:
+            fps = params['fps']
+        else:
+            print("WARNING: no fps was specified. Using 1")
+            fps = 1
 
     # mqtt settings
     tv_control_prefix = "TV"  # prefix name for controller communication topic
     v_thing_prefix = "vThing"  # prefix name for virtual Thing data and control topics
-    v_thing_data_suffix = "data_out"
     in_control_suffix = "c_in"
     out_control_suffix = "c_out"
     out_data_suffix = "data_out"
@@ -397,46 +480,16 @@ if __name__ == '__main__':
     mqtt_data_thread.start()
 
 ##### CUSTOMIZE generic TV
-##### decide here to start flask or not
+    print("camera_frames_folder: " + str(camera_frames_folder))
+    print("v_thing_name: " + str(v_thing_name))
+    print("v_thing_type: " + str(v_thing_type))
+    print("fps: " + str(fps))
+    print()
+##### periodically read camera frames into a FIFO buffer
+    read_camera_frames(fps, camera_frames_folder)
+    
+##### CUSTOMIZE generic TV
+##### decide here to start flask or not, and in that case the main thread
+##### block with flask
     # starting flask
     app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)
-
-##### CUSTOMIZE generic TV
-##### periodically read camera frames into a FIFO buffer
-    read_camera_frames()
-
-    # loop until keyboard interrupt
-    while True:
-        try:
-            time.sleep(3)
-        except:
-            print("KeyboardInterrupt"+"\n")
-            time.sleep(1)
-            os._exit(1)
-
-def read_camera_frames():
-    global buffer_of_frames_lock
-    global buffer_of_frames
-    
-    # scan folder every fps, then
-    # for each image in folder put it in the buffer
-    filepaths = pathlib.Path().glob("*.jpeg")
-    for file in filepaths:
-        print(file)
-        with open(file, 'rb') as fh:
-            buf = BytesIO(fh.read())
-        img_str = buf.getvalue()
-    
-        randomid = uuid.uuid1()
-        print("Producing ", randomid.hex)
-    
-        # acquire lock
-        buffer_of_frames_lock.acquire()
-        if len(buffer_of_frames) > 6:
-            buffer_of_frames.popitem(last=False)
-        buffer_of_frames[randomid.hex]=img_str
-        # release lock
-        buffer_of_frames_lock.release()
-
-    threading.Timer(10.0, timer).start()
-    print("Ciao mondo!")

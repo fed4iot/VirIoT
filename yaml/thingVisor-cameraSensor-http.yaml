@@ -28,10 +28,10 @@ spec:
         image: redis:alpine
         volumeMounts:
         - name: shared-ram-disk
-          mountPath: "/var/run/redis"
+          mountPath: "/tmp/redis"
         command: ["redis-server"]
         # port 0 disables TCP
-        args: ["--unixsocket /var/run/redis/redis.sock ", "--unixsocketperm 666", "--port 0"]
+        args: ["--unixsocket /tmp/redis/redis.sock ", "--unixsocketperm 666", "--port 0"]
       - name: f4i-http-sidecar
         image: fed4iot/http-sidecar-tv
         ports:

@@ -12,10 +12,6 @@ spec:
       labels:
         app: f4i-camerasensor
     spec:
-      volumes:
-      - name: shared-ram-disk
-        emptyDir:
-          medium: "Memory"
       containers:
       - name: f4i-camerasensor
         image: fed4iot/camerasensor-tv:latest
@@ -36,6 +32,10 @@ spec:
         image: fed4iot/http-sidecar-tv
         ports:
         - containerPort: 5001
+      volumes:
+      - name: shared-ram-disk
+        emptyDir:
+          medium: "Memory"
 ---
 apiVersion: v1
 kind: Service

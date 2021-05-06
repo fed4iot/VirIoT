@@ -20,53 +20,48 @@ import json
 import base64
 import traceback
 import paho.mqtt.client as mqtt
-from threading import Thread
+from threading import Thread, Timer
 from pymongo import MongoClient
 from context import Context
 from concurrent.futures import ThreadPoolExecutor
 import requests
-import uuid
 
 ##### CUSTOMIZE generic TV imports
 import pathlib
 import redis
 import io
+rdis = redis.Redis(unix_socket_path="/app/redis/redis.sock")
+buffername = "bufferofframes"
 
 from flask import Flask, request, Response
 app=Flask(__name__)
 
 
-##### CUSTOMIZE generic TV
-##### GLOBALS
-buffer_of_frames = OrderedDict()
-buffer_of_frames_lock = threading.Lock()
-
 @app.route('/currentframe/<randomid>')
 def GET_current_frame_by_id(randomid):
+    global rdis
+    global buffername
     ### i could offer the img_str buffer via HTTP at this point
     headers={"Content-disposition": "attachment"}
     headers["Cache-Control"]="no-cache"
     print("GET ", randomid)
-    # acquire lock
-    buffer_of_frames_lock.acquire()
+
     try:
-        rspns = buffer_of_frames[randomid]
+        rspns = rdis.xread({buffername:randomid}).data
     except:
         rspns = ""
-    # release lock
-    buffer_of_frames_lock.release()
+
     return Response(rspns, mimetype='image/jpeg', headers=headers)
 
 def read_camera_frames(fps, camera_frames_folder):
-    global buffer_of_frames_lock
-    global buffer_of_frames
-
+    global rdis
+    global buffername
     try:
         # Change the current working Directory    
         os.chdir(camera_frames_folder)
     except OSError:
         print("Can't change the Current Working Directory to " + str(camera_frames_folder))
-        threading.Timer(fps, read_camera_frames, [fps, camera_frames_folder]).start()
+        Timer(fps, read_camera_frames, [fps, camera_frames_folder]).start()
         return
     
     # scan folder every fps, then
@@ -77,20 +72,17 @@ def read_camera_frames(fps, camera_frames_folder):
         with open(file, 'rb') as fh:
             buf = io.BytesIO(fh.read())
         img_str = buf.getvalue()
+        creation_time = file.stat().st_ctime
     
-        randomid = uuid.uuid1()
-        print("Producing ", randomid.hex)
-    
-        # acquire lock
-        buffer_of_frames_lock.acquire()
-        # we keep at most 20 images in the buffer
-        if len(buffer_of_frames) > 20:
-            buffer_of_frames.popitem(last=False)
-        buffer_of_frames[randomid.hex]=img_str
-        # release lock
-        buffer_of_frames_lock.release()
+        # Redis client instances can safely be shared between threads.
+        # Internally, connection instances are only retrieved from the connection
+        # pool during command execution, and returned to the pool directly after.
+        # Command execution never modifies state on the client instance.
+        # We keep at most 20 images in the buffer
+        id = rdis.xadd(buffername, {"data":img_str, "observedAt":creation_time}, maxlen=20, approximate=True)
 
-    threading.Timer(fps, read_camera_frames, [fps, camera_frames_folder]).start()
+        print("Pushed to redis ", id)
+    Timer(fps, read_camera_frames, [fps, camera_frames_folder]).start()
 ##### END GLOBAL CUSTOMIZE generic TV
 
 

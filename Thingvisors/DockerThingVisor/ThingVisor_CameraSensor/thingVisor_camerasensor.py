@@ -47,11 +47,19 @@ def GET_current_frame_by_id(randomid):
     print("GET ", randomid)
 
     try:
-        rspns = rdis.xread({buffername:randomid}).data
+        # get from the redis stream named "buffername" just 1 item (from randomid to randomid)
+        list_of_matching_results = rdis.xrange(buffername,randomid,randomid)
+        # we get back a list of results (with only 1 result). we pick it
+        first_result = list_of_matching_results[0]
+        # each result is a tuple where first element [0] is the id (key),
+        # second element [1] is the dict (value) holding the frame information
+        frame_information = first_result[1]
+        data = frame_information[b"data"]
+        observedAt = frame_information[b"observedAt"]
     except:
-        rspns = ""
+        data = ""
 
-    return Response(rspns, mimetype='image/jpeg', headers=headers)
+    return Response(data, mimetype='image/jpeg', headers=headers)
 
 def read_camera_frames(fps, camera_frames_folder):
     global rdis

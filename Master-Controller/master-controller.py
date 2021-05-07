@@ -231,12 +231,16 @@ def create_virtual_silo_on_kubernetes(v_silo_id, v_silo_name, tenant_id, flavour
                     print("Deployment Creation")
                     yaml["spec"]["selector"]["matchLabels"]["siloID"] = label_app
                     yaml["spec"]["template"]["metadata"]["labels"]["siloID"] = label_app
-                    if "volumes" in yaml["spec"]["template"]["spec"]:
-                        del yaml["spec"]["template"]["spec"]["volumes"]
+#                    # volumes (and volumeMounts) are NOT supported if they are external,
+#                    # i.e. of kind: PersistentVolumeClaim
+#                    # but other types YES, so we keep them here even if we should check...
+#                    # Otherwise, if you want to remove them altogether, uncomment the following
+#                    if "volumes" in yaml["spec"]["template"]["spec"]:
+#                        del yaml["spec"]["template"]["spec"]["volumes"]
                     for container in yaml["spec"]["template"]["spec"]["containers"]:
-                        # dropping any volumeMounts property since they are not supported
-                        if "volumeMounts" in container:
-                            del container["volumeMounts"]
+#                        # dropping any volumeMounts property if we drop the "volumes" above
+#                        if "volumeMounts" in container:
+#                            del container["volumeMounts"]
                         if 'env' in container:
                             container["env"] = k8s.convert_env(env, container['env'])
                         else:
@@ -507,12 +511,16 @@ def create_thing_visor_on_kubernetes(tv_img_name, debug_mode, tv_id, tv_params, 
                     yaml["metadata"]["name"] += "-" + tv_id.lower().replace("_", "-")
                     #yaml["spec"]["template"]["spec"]["containers"][0]["env"] = k8s.convert_env(env)
                     #tv_img_name = yaml["spec"]["template"]["spec"]["containers"][0]["image"]
-                    if "volumes" in yaml["spec"]["template"]["spec"]:
-                        del yaml["spec"]["template"]["spec"]["volumes"]
+#                    # volumes (and volumeMounts) are NOT supported if they are external,
+#                    # i.e. of kind: PersistentVolumeClaim
+#                    # but other types YES, so we keep them here even if we should check...
+#                    # Otherwise, if you want to remove them altogether, uncomment the following
+#                    if "volumes" in yaml["spec"]["template"]["spec"]:
+#                        del yaml["spec"]["template"]["spec"]["volumes"]
                     for container in  yaml["spec"]["template"]["spec"]["containers"]:
-                        # dropping any volumeMounts property since they are not supported
-                        if "volumeMounts" in container:
-                            del container["volumeMounts"]
+#                        # dropping any volumeMounts property if we drop the "volumes" above
+#                        if "volumeMounts" in container:
+#                            del container["volumeMounts"]
                         if 'env' in container:
                             container["env"] = k8s.convert_env(env, container['env'])
                         else:

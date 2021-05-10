@@ -20,16 +20,14 @@ import json
 import base64
 import traceback
 import paho.mqtt.client as mqtt
-from threading import Thread, Timer
+from threading import Thread
 from pymongo import MongoClient
 from context import Context
 from concurrent.futures import ThreadPoolExecutor
 import requests
 
 ##### CUSTOMIZE generic TV imports
-import pathlib
 import redis
-import io
 rdis = redis.Redis(unix_socket_path="/app/redis/redis.sock")
 buffername = "bufferofframes"
 
@@ -61,36 +59,29 @@ def GET_current_frame_by_id(randomid):
 
     return Response(data, mimetype='image/jpeg', headers=headers)
 
-def read_camera_frames(fps, camera_frames_folder):
+
+@app.route('/framesinput',methods=['POST'])            
+def POST_frames():
     global rdis
     global buffername
-    try:
-        # Change the current working Directory    
-        os.chdir(camera_frames_folder)
-    except OSError:
-        print("Can't change the Current Working Directory to " + str(camera_frames_folder))
-        Timer(fps, read_camera_frames, [fps, camera_frames_folder]).start()
-        return
-    
-    # scan folder every fps, then
-    # for each image in folder put it in the buffer
-    filepaths = pathlib.Path().glob("*.jpeg")
-    for file in filepaths:
-        print(file)
-        with open(file, 'rb') as fh:
-            buf = io.BytesIO(fh.read())
-        img_str = buf.getvalue()
-        creation_time = file.stat().st_ctime
-    
-        # Redis client instances can safely be shared between threads.
-        # Internally, connection instances are only retrieved from the connection
-        # pool during command execution, and returned to the pool directly after.
-        # Command execution never modifies state on the client instance.
-        # We keep at most 20 images in the buffer
-        id = rdis.xadd(buffername, {"data":img_str, "observedAt":creation_time}, maxlen=20, approximate=True)
+    print(request.files)
+    print(type(request.files))
+    print(len(request.files))
+    for keys,values in request.files.items():
+        print(keys)
+        print(values)
+    uploaded_cameraframe = request.files.get("file")
+    metadata = json.load(request.files.get("json"))
+    data = uploaded_cameraframe.read()
+    # Redis client instances can safely be shared between threads.
+    # Internally, connection instances are only retrieved from the connection
+    # pool during command execution, and returned to the pool directly after.
+    # Command execution never modifies state on the client instance.
+    # We keep at most 20 images in the buffer
+    id = rdis.xadd(buffername, {"data":data, "observedAt":metadata["observedAt"]}, maxlen=20, approximate=True)
 
-        print("Pushed to redis ", id)
-    Timer(fps, read_camera_frames, [fps, camera_frames_folder]).start()
+    print("Pushed to redis ", id)
+    return 'success'
 ##### END GLOBAL CUSTOMIZE generic TV
 
 
@@ -438,18 +429,6 @@ if __name__ == '__main__':
             v_thing_name = params['v_thing_name']
         if 'v_thing_type' in params:
             v_thing_type = params['v_thing_type']
-##### CUSTOMIZE generic TV
-##### add here the parameters you need from outside
-        if 'camera_frames_folder' in params:
-            camera_frames_folder = params['camera_frames_folder']
-        else:
-            print("WARNING: no folder where to fetch camera frames was specified. Using /camera_frames")
-            camera_frames_folder = "/camera_frames"
-        if 'fps' in params:
-            fps = params['fps']
-        else:
-            print("WARNING: no fps was specified. Using 1")
-            fps = 1
 
     # mqtt settings
     tv_control_prefix = "TV"  # prefix name for controller communication topic
@@ -480,15 +459,9 @@ if __name__ == '__main__':
     mqtt_data_thread.start()
 
 ##### CUSTOMIZE generic TV
-    print("camera_frames_folder: " + str(camera_frames_folder))
     print("v_thing_name: " + str(v_thing_name))
     print("v_thing_type: " + str(v_thing_type))
-    print("fps: " + str(fps))
     print()
-##### periodically read camera frames into a FIFO buffer
-    read_camera_frames(fps, camera_frames_folder)
-    
-##### CUSTOMIZE generic TV
 ##### decide here to start flask or not, and in that case the main thread
 ##### block with flask
     # starting flask

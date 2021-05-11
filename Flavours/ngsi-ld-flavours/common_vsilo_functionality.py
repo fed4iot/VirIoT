@@ -34,6 +34,8 @@ import requests
 # It is thread-safe, so we use it to also signal if the vthing is already
 # created (and we can proceed with data insert in parallel), or by
 # removing it (and we block the parallel ongoing data insert)
+# I MAY GET RID OF THIS if the NGSI-LD Broker supports the query "get all entities with this property having this value,
+# REGARDLESS the entity type" as was specified in version 1.3.1 of the API
 import plyvel
 # the following is used to delete the folder of the on-disk hashmap at startup
 # and in production would not be needed because we only run dockerized and
@@ -698,8 +700,8 @@ def start_silo_controller(broker_specific_module_name):
     print("importing module: " + broker_specific_module_name)
     brokerspecific = import_module(broker_specific_module_name)
 
-    # threadPoolExecutor of size one to handle one command at a time in a fifo order
-    executor = ThreadPoolExecutor(1)
+    # threadPoolExecutor default size is number of CPUs
+    executor = ThreadPoolExecutor()
 
     # connect to the on-disk hashmap
     shutil.rmtree('plyvelhashmap', ignore_errors=True)

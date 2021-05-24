@@ -21,24 +21,6 @@ SORTING = False
 IF_MATCH = False
 
 
-schema = {
-    # Schema definition, based on Cerberus grammar. Check the Cerberus project
-    # (https://github.com/pyeve/cerberus) for details.
-    '_id': {
-        'type': 'uuid', # custom type for the id field
-        'unique': True,
-        'required': True,
-    },
-    'ip': {
-        'type': 'string',
-        'required': False,
-    },
-    'port': {
-        'type': 'string',
-        'required': False,
-    },
-}
-
 schema1 = {
     # Schema definition, based on Cerberus grammar. Check the Cerberus project
     # (https://github.com/pyeve/cerberus) for details.
@@ -79,17 +61,6 @@ schema2 = {
     },    
 }
 
-cameras = {
-    # 'title' tag used in item links. Defaults to the resource title minus
-    # the final, plural 's' (works fine in most cases but not for 'people')
-    'item_title': 'camera',
-    'item_url': 'int', # specifies that the url for the item must be interpreted as an integer
-
-    # We choose to override global cache-control directives for this resource.
-    'cache_control': 'no-cache',
-
-    'schema': schema
-}
 
 faceInput = {
     # 'title' tag used in item links. Defaults to the resource title minus
@@ -133,7 +104,7 @@ faceOutput = {
     'schema': schema2
 }
 
-DOMAIN = {"cameras": cameras, "faceInput": faceInput, "faceOutput": faceOutput}
+DOMAIN = {"faceInput": faceInput, "faceOutput": faceOutput}
 DEBUG=True
 
 
@@ -141,10 +112,8 @@ DEBUG=True
 
 # Please note that MONGO_HOST and MONGO_PORT could very well be left
 # out as they already default to a bare bones local 'mongod' instance.
-MONGO_HOST = '127.0.0.1'
-MONGO_PORT = 27017
-#MONGO_HOST = '192.168.1.3'
-#MONGO_PORT = 28000
+#MONGO_HOST = '127.0.0.1'
+#MONGO_PORT = 27017
 
 # # Skip this block if your db has no auth. But it really should.
 # MONGO_USERNAME = '<your username>'

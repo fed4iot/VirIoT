@@ -40,9 +40,19 @@ import requests
 import uuid
 import magic
 
-import master_controller_invoke_REST as rest
 
 # -*- coding: utf-8 -*-
+
+# This TV creates just one vthing hardcoded name "detector". If the TV is named "facerec-tv", then:
+# the vthing ID is: facerec-tv/detector, and the vthing produces a stream of one NGSI-LD entity,
+# which has NGSI-LD identifier: urn:ngsi-ld:facerec-tv:detector, and the NGSI-LD type of the
+# produced entity is hardcoded to: FaceDetector
+# The vthing supports the following commands: ["start","stop","set-face-feature","delete-by-name"].
+# Users interact with the vthing by actuating it, i.e. sending commands.
+# A target face to be recognized cannot be embedded into a command, hence the set-face-feature command
+
+
+
 
 # validator for custom uuid type
 # in this case, it's an integer representing the camera number
@@ -183,7 +193,7 @@ def on_post_POST_faceOutput(request,lookup):
                 "link_to_current_image": "/faceOutput/"+data['_id']+"/image"
             }
 
-            mqtt_data_thread.send_commandStatus(
+            mqtt_data_thread.publish_actuation_commandStatus_message(
                 command_data[id]['cmd_name'],
                 command_data[id]['cmd_info'],
                 command_data[id]['id_LD'],
@@ -192,204 +202,10 @@ def on_post_POST_faceOutput(request,lookup):
     except:
         traceback.print_exc()
 
-def send_message(message, n):
-    print("topic name: " + v_things[n]['topic'] + '/' + v_thing_data_suffix + ", message: " + json.dumps(message))
-    mqtt_data_client.publish(v_things[n]['topic'] + '/' + v_thing_data_suffix,
-                                json.dumps(message))  # publish received data to data topic by using neutral format
-
-def create_vthing(n, type, commands):
-    v_things[n]={}
-
-    v_things[n]['name']=n
-    v_things[n]['type_attr']=type
-    v_things[n]['ID']=thing_visor_ID + "/" + n
-    v_things[n]['label']=n
-    v_things[n]['description']="faceRecognition virtual thing"
-    v_things[n]['v_thing']={
-        "label": v_things[n]['label'],
-        "id": v_things[n]['ID'],
-        "description": v_things[n]['description']
-    }
-    v_things[n]['caching']=False
-
-    v_things[n]['ID_LD']="urn:ngsi-ld:"+thing_visor_ID+":" + v_things[n]['name']
-
-    # Context is a "map" of current virtual thing state
-    # create and save the Context for the new vThing
-    v_things[n]['context']=Context()
-
-    # set topic the name of mqtt topic on witch publish vThing data
-    # e.g vThing/helloWorld/hello
-    v_things[n]['topic']=v_thing_prefix + "/" + v_things[n]['ID']
-
-    # set the commands array for the vThing
-    v_things[n]['commands']=commands
-
-    # control
-    mqtt_control_thread.create_vthing(n)
-
-    # data
-    mqtt_data_thread.create_vthing(n)
-
-    return n
-
-def destroy_vthing(n):
-    mqtt_control_thread.send_destroy_v_thing_message(n)
-    delete_endpoint(n)
-    del v_things[n]
-
-def create_endpoint(n):
-    time.sleep(6)
-    # create vthings endpoint through REST
-    print("Creating endpoint for "+n)
-    rest.set_vthing_endpoint(controller_url, v_things[n]['ID'], "http://localhost:5000/public", tenant_id, admin_psw)
-
-def delete_endpoint(n):
-    # delete vthings endpoint through REST
-    print("Destroying endpoint for "+n)
-    rest.del_vthing_endpoint(controller_url, v_things[n]['ID'], tenant_id, admin_psw)
-
-def get_camera_ip_port():
-    #global camera_ip,camera_port
-    if camera_ip==None or camera_port==None:
-        with app.app_context():
-            cameras = app.data.driver.db['cameras']
-            a = cameras.find_one({'_id':0})
-            return a['ip'], a['port']
-    else:
-        return camera_ip, camera_port
-
-def get_vthing_name(name):
-    name=name.split(':')[-1]
-    return name
-
-def get_silo_name(nuri):
-    return nuri.split('/')[-2]
-
-class mqttDataThread(Thread):
-    # Class used to:
-    # 1) handle actuation command workflow
-    # 2) publish actuator status when it changes
-    global mqtt_data_client, context_list, executor, commands
-
-    def send_commandResult(self, cmd_name, cmd_info, id_LD, result_code):
-        try:  
-            n=get_vthing_name(id_LD)
-
-            pname = cmd_name+"-result"
-            pvalue = cmd_info.copy()
-            pvalue['cmd-result'] = result_code
-            ngsiLdEntityResult = {"id": id_LD,
-                                    "type": v_things[n]['type_attr'],
-                                    pname: {"type": "Property", "value": pvalue},
-                                    "@context": [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]
-                                    }
-            data = [ngsiLdEntityResult]
-            # LampActuatorContext.update(data)
-            
-            message = {"data": data, "meta": {
-                "vThingID": v_things[n]['ID']}}  # neutral-format message
-            if "cmd-nuri" in cmd_info:
-                if cmd_info['cmd-nuri'].startswith("viriot://"):
-                    topic = cmd_info['cmd-nuri'][len("viriot://"):]
-                    self.publish(message, topic)
-                else:
-                    self.publish(message, v_things[n]['topic'])
-            else:
-                self.publish(message, v_things[n]['topic'])
-        except:
-            traceback.print_exc()
-
-    def send_commandStatus(self, cmd_name, cmd_info, id_LD, status_code):
-        try:  
-            n=get_vthing_name(id_LD)
-
-            pname = cmd_name+"-status"
-            pvalue = cmd_info.copy()
-            pvalue['cmd-status'] = status_code
-            ngsiLdEntityStatus = {"id": id_LD,
-                                    "type": v_things[n]['type_attr'],
-                                    pname: {"type": "Property", "value": pvalue},
-                                    "@context": [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]
-                                    }
-            data = [ngsiLdEntityStatus]
-            
-            message = {"data": data, "meta": {
-                "vThingID": v_things[n]['ID']}}  # neutral-format message
-            if "cmd-nuri" in cmd_info:
-                if cmd_info['cmd-nuri'].startswith("viriot://"):
-                    topic = cmd_info['cmd-nuri'][len("viriot://"):]
-                    self.publish(message, topic)
-                else:
-                    self.publish(message, v_things[n]['topic'])
-            else:
-                self.publish(message, v_things[n]['topic'])
-        except:
-            traceback.print_exc()
-
-    def receive_commandRequest(self, cmd_entity):
-        try:
-            #jsonschema.validate(data, commandRequestSchema)
-            id_LD = cmd_entity["id"]
-            n=get_vthing_name(id_LD)
-            for cmd_name in v_things[n]['commands']:
-                if cmd_name in cmd_entity:
-                    cmd_info = cmd_entity[cmd_name]['value']
-                    fname = cmd_name.replace('-','_')
-                    fname = "on_"+fname
-                    f=getattr(self,fname)
-                    if "cmd-qos" in cmd_info:
-                        if int(cmd_info['cmd-qos']) == 2:
-                            self.send_commandStatus(cmd_name, cmd_info, id_LD, "PENDING")
-                    future = executor.submit(f, cmd_name, cmd_info, id_LD, self)
-                    
-
-        #except jsonschema.exceptions.ValidationError as e:
-            #print("received commandRequest got a schema validation error: ", e)
-        #except jsonschema.exceptions.SchemaError as e:
-            #print("commandRequest schema not valid:", e)
-        except:
-            traceback.print_exc()
-
-    # def on_set_caching(self, cmd_name, cmd_info, id_LD, actuatorThread):
-    #     global caching
-
-    #     n=get_vthing_name(id_LD)
-
-    #     print("Setting caching for "+n+" to "+str(cmd_info['cmd-value']))
-    #     v_things[n]['caching']=cmd_info['cmd-value']
-
-    #     if "cmd-qos" in cmd_info:
-    #         if int(cmd_info['cmd-qos']) > 0:
-    #             self.send_commandResult(cmd_name, cmd_info, id_LD, "OK")
-
-
-    def on_start(self, cmd_name, cmd_info, id_LD, actuatorThread):
-        print("Sending start command to camera system")
-
-        _camera_ip, _camera_port=get_camera_ip_port()
-        res=requests.get("http://"+_camera_ip+':'+_camera_port+'/start')
-
-        # publish command result
-        if "cmd-qos" in cmd_info:
-            if int(cmd_info['cmd-qos']) > 0:
-                self.send_commandResult(cmd_name, cmd_info, id_LD, res.status_code)
-    
-    def on_stop(self, cmd_name, cmd_info, id_LD, actuatorThread):
-        print("Sending stop command to camera system")
-
-        _camera_ip, _camera_port=get_camera_ip_port()
-        res=requests.get("http://"+_camera_ip+':'+_camera_port+'/stop')
-        
-        # publish command result
-        if "cmd-qos" in cmd_info:
-            if int(cmd_info['cmd-qos']) > 0:
-                self.send_commandResult(cmd_name, cmd_info, id_LD, res.status_code)
-
-    def on_set_face_feature(self, cmd_name, cmd_info, id_LD, actuatorThread):
+    def on_set_face_feature(self, cmd_name, cmd_info, id_LD):
         try:
             if "cmd-qos" not in cmd_info or int(cmd_info['cmd-qos']) != 2:
-                self.send_commandResult(cmd_name, cmd_info, id_LD, "Error: cmd-qos must be 2.")
+                self.publish_actuation_commandResult_message(cmd_name, cmd_info, id_LD, "Error: cmd-qos must be 2.")
                 return
             
             n=get_vthing_name(id_LD)
@@ -423,27 +239,15 @@ class mqttDataThread(Thread):
 
             # send URL where the user can PATCH
             payload={'message': "You can PATCH here.", 'url': "/vstream/"+thing_visor_ID+"/"+v_things[n]['name']+"/faceInput/"+id}
-            self.send_commandStatus(cmd_name, cmd_info, id_LD, payload)
+            self.publish_actuation_commandStatus_message(cmd_name, cmd_info, id_LD, payload)
         except:
             traceback.print_exc()
 
-        # # update the Context, publish new actuator status on data_out, send result
-        # ngsiLdEntity = {"id": id_LD,
-        #                 "type": v_things[n]['type_attr'],
-        #                 "@context": [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]
-        #                 }
-        # data = [ngsiLdEntity]
-        # v_things[n]['context'].update(data)
-        
-        # # publish changed status
-        # message = {"data": data, "meta": {
-        #     "vThingID": v_things[n]['ID']}}  # neutral-format
-        # self.publish(message, v_things[n]['topic'])
     
-    def on_delete_by_name(self, cmd_name, cmd_info, id_LD, actuatorThread):
+    def on_delete_by_name(self, cmd_name, cmd_info, id_LD):
         try:
             if "cmd-qos" in cmd_info and int(cmd_info['cmd-qos']) == 2:
-                self.send_commandResult(cmd_name, cmd_info, id_LD, "Error: cmd-qos must be 0 or 1.")
+                self.publish_actuation_commandResult_message(cmd_name, cmd_info, id_LD, "Error: cmd-qos must be 0 or 1.")
                 return
             
             # get the name of the person to delete
@@ -454,7 +258,7 @@ class mqttDataThread(Thread):
             if name not in image_count:
                 if "cmd-qos" in cmd_info:
                     if int(cmd_info['cmd-qos']) > 0:
-                        self.send_commandResult(cmd_name, cmd_info, id_LD, "The name "+name+" doesn't exist.")
+                        self.publish_actuation_commandResult_message(cmd_name, cmd_info, id_LD, "The name "+name+" doesn't exist.")
                 return
             
             # send to the camera system the deletion request
@@ -465,7 +269,7 @@ class mqttDataThread(Thread):
             if res.status_code>=400:
                 if "cmd-qos" in cmd_info:
                     if int(cmd_info['cmd-qos']) > 0:
-                        self.send_commandResult(cmd_name, cmd_info, id_LD, res.status_code)
+                        self.publish_actuation_commandResult_message(cmd_name, cmd_info, id_LD, res.status_code)
                 return
 
             # find all ids of images to delete
@@ -491,159 +295,271 @@ class mqttDataThread(Thread):
 
             if "cmd-qos" in cmd_info:
                 if int(cmd_info['cmd-qos']) > 0:
-                    self.send_commandResult(cmd_name, cmd_info, id_LD, "OK")
-        except:
-            traceback.print_exc()
-    
-    def publish(self, message, out_topic):
-        msg=json.dumps(message)
-        #msg = str(message).replace("\'", "\"")
-        print("Message sent on "+out_topic + "\n" + msg+"\n")
-        # publish data to out_topic
-        mqtt_data_client.publish(out_topic, msg)
-
-    def on_message_data_in_vThing(self, mosq, obj, msg):
-        payload = msg.payload.decode("utf-8", "ignore")
-        print("Message received on "+msg.topic + "\n" + payload+"\n")
-        jres = json.loads(payload.replace("\'", "\""))
-        try:
-            data = jres["data"]
-            for entity in data:
-                id_LD = entity["id"]
-                #if id_LD != ID_LD[-1]:
-                #    print("Entity not handled by the Thingvisor, message dropped")
-                #    continue
-                n=get_vthing_name(id_LD)
-                for cmd in v_things[n]['commands']:
-                    if cmd in entity:
-                        self.receive_commandRequest(entity)
-                        continue
+                    self.publish_actuation_commandResult_message(cmd_name, cmd_info, id_LD, "OK")
         except:
             traceback.print_exc()
 
 
-    # mqtt client for sending data
-    def __init__(self):
-        Thread.__init__(self)
 
-    def run(self):
-        print("Thread mqtt data started")
-        global mqtt_data_client
-        #mqtt_data_client.connect(MQTT_data_broker_IP, MQTT_data_broker_port, 30)
+def initialize_vthing(vthingindex, type, description, commands):
+    v_things[vthingindex]={}
 
-        # HERE vThings are processed in cameraBot TV
+    v_things[vthingindex]['name']=vthingindex
+    v_things[vthingindex]['type_attr']=type
+    v_things[vthingindex]['ID']=thing_visor_ID + "/" + n
+    v_things[vthingindex]['label']=vthingindex
+    v_things[vthingindex]['description']=description
+    v_things[vthingindex]['v_thing']={
+        "label": v_things[vthingindex]['label'],
+        "id": v_things[vthingindex]['ID'],
+        "description": v_things[vthingindex]['description']
+    }
+    v_things[vthingindex]['caching']=False
 
-        mqtt_data_client.loop_forever()
-        print("Thread '" + self.name + "' terminated")
+    v_things[vthingindex]['ID_LD']="urn:ngsi-ld:"+thing_visor_ID+":" + v_things[vthingindex]['name']
 
-    def create_vthing(self,n):
-        # Subscribe mqtt_data_client to the vThing topic
+    # Context is a "map" of current virtual thing state
+    # create and save the Context for the new vThing
+    v_things[vthingindex]['context']=Context()
 
-        ngsiLdEntity = {"id": v_things[n]['ID_LD'],
-                    "type": v_things[n]['type_attr'],
-                    "commands": {"type": "Property", "value": v_things[n]['commands']},
-                    "@context": [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]
+    # set topic the name of mqtt topic on witch publish vThing data
+    # e.g vThing/helloWorld/hello
+    v_things[vthingindex]['topic']=v_thing_prefix + "/" + v_things[vthingindex]['ID']
+
+    # set the commands array for the vThing
+    v_things[vthingindex]['commands']=commands
+
+
+    create_vthing_initial_context(vthingindex)
+
+    # control
+    publish_create_vthing_command(vthingindex)
+    subscribe_vthing_control_in_topic(vthingindex)
+
+    # data
+    subscribe_vthing_data_in_topic(vthingindex)
+
+    return vthingindex
+
+def create_vthing_initial_context(vthingindex):
+    print("Creating initial vthing context (commands, initial data...)")
+    ngsiLdEntity = { "id" : v_things[vthingindex]['ID_LD'],
+                "type" : v_things[vthingindex]['type_attr'],
+                "commands" : {"type": "Property", "value": v_things[vthingindex]['commands']},
+                "@context" : [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]
+                }
+    data = [ngsiLdEntity]
+    v_things[vthingindex]['context'].set_all(data)
+
+
+
+def remove_vthing(vthingindex):
+    mqtt_control_thread.publish_deleteVThing_command(vthingindex)
+    del v_things[vthingindex]
+
+def get_vthing_name(name):
+    name=name.split(':')[-1]
+    return name
+
+def get_silo_name(nuri):
+    return nuri.split('/')[-2]
+
+def publish_actuation_commandResult_message(cmd_name, cmd_info, id_LD, result_code):
+    try:  
+        n=get_vthing_name(id_LD)
+
+        pname = cmd_name+"-result"
+        pvalue = cmd_info.copy()
+        pvalue['cmd-result'] = result_code
+        ngsiLdEntityResult = {"id": id_LD,
+                                "type": v_things[n]['type_attr'],
+                                pname: {"type": "Property", "value": pvalue},
+                                "@context": [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]
+                                }
+        data = [ngsiLdEntityResult]
+        # LampActuatorContext.update(data)
+        
+        message = {"data": data, "meta": {
+            "vThingID": v_things[n]['ID']}}  # neutral-format message
+        if "cmd-nuri" in cmd_info:
+            if cmd_info['cmd-nuri'].startswith("viriot://"):
+                topic = cmd_info['cmd-nuri'][len("viriot://"):]
+                publish_message(message, topic)
+            else:
+                publish_message(message, v_things[n]['topic'])
+        else:
+            publish_message(message, v_things[n]['topic'])
+    except:
+        traceback.print_exc()
+
+def publish_actuation_commandStatus_message(cmd_name, cmd_info, id_LD, status_code):
+    try:  
+        n=get_vthing_name(id_LD)
+
+        pname = cmd_name+"-status"
+        pvalue = cmd_info.copy()
+        pvalue['cmd-status'] = status_code
+        ngsiLdEntityStatus = {"id": id_LD,
+                                "type": v_things[n]['type_attr'],
+                                pname: {"type": "Property", "value": pvalue},
+                                "@context": [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]
+                                }
+        data = [ngsiLdEntityStatus]
+        
+        message = {"data": data, "meta": {
+            "vThingID": v_things[n]['ID']}}  # neutral-format message
+        if "cmd-nuri" in cmd_info:
+            if cmd_info['cmd-nuri'].startswith("viriot://"):
+                topic = cmd_info['cmd-nuri'][len("viriot://"):]
+                publish_message(message, topic)
+            else:
+                publish_message(message, v_things[n]['topic'])
+        else:
+            publish_message(message, v_things[n]['topic'])
+    except:
+        traceback.print_exc()
+
+def process_actuation_commandRequest(cmd_entity):
+    try:
+        #jsonschema.validate(data, commandRequestSchema)
+        id_LD = cmd_entity["id"]
+        n=get_vthing_name(id_LD)
+        for cmd_name in v_things[n]['commands']:
+            if cmd_name in cmd_entity:
+                cmd_info = cmd_entity[cmd_name]['value']
+                fname = cmd_name.replace('-','_')
+                fname = "on_"+fname
+                f=getattr(self,fname)
+                if "cmd-qos" in cmd_info:
+                    if int(cmd_info['cmd-qos']) == 2:
+                        self.publish_actuation_commandStatus_message(cmd_name, cmd_info, id_LD, "PENDING")
+                future = executor.submit(f, cmd_name, cmd_info, id_LD)
+                
+
+    #except jsonschema.exceptions.ValidationError as e:
+        #print("received commandRequest got a schema validation error: ", e)
+    #except jsonschema.exceptions.SchemaError as e:
+        #print("commandRequest schema not valid:", e)
+    except:
+        traceback.print_exc()
+
+def publish_message(message, out_topic):
+    msg=json.dumps(message)
+    #msg = str(message).replace("\'", "\"")
+    print("Message sent on "+out_topic + "\n" + msg+"\n")
+    # publish data to out_topic
+    mqtt_data_client.publish(out_topic, msg)
+
+# use this function to send into viriot's MQTT
+def send_message(message, n):
+    print("topic name: " + v_things[n]['topic'] + '/' + v_thing_data_suffix + ", message: " + json.dumps(message))
+    mqtt_data_client.publish(v_things[n]['topic'] + '/' + v_thing_data_suffix,
+                            json.dumps(message))  # publish received data to data topic by using neutral format
+
+def callback_for_mqtt_data_in_vthing(mosq, obj, msg):
+    payload = msg.payload.decode("utf-8", "ignore")
+    print("Message received on "+msg.topic + "\n" + payload+"\n")
+    jres = json.loads(payload.replace("\'", "\""))
+    try:
+        data = jres["data"]
+        for entity in data:
+            id_LD = entity["id"]
+            #if id_LD != ID_LD[-1]:
+            #    print("Entity not handled by the Thingvisor, message dropped")
+            #    continue
+            n=get_vthing_name(id_LD)
+            for cmd in v_things[n]['commands']:
+                if cmd in entity:
+                    self.process_actuation_commandRequest(entity)
+                    continue
+    except:
+        traceback.print_exc()
+
+
+    # Subscribe mqtt_data_client to the vThing topic
+    mqtt_data_client.message_callback_add(v_things[vthingindex]['topic'] + "/" + in_data_suffix, callback_for_mqtt_data_in_vthing)
+    mqtt_data_client.subscribe(v_things[vthingindex]['topic'] + "/" + in_data_suffix)
+
+def callback_for_mqtt_control_in_vthing(mosq, obj, msg):
+    payload = msg.payload.decode("utf-8", "ignore")
+    print(msg.topic + " " + str(payload))
+    jres = json.loads(payload.replace("\'", "\""))
+    try:
+        command_type = jres["command"]
+        name=jres["vThingID"].split('/')[-1]
+        n=get_vthing_name(name)
+        if command_type == "getContextRequest":
+            publish_getContextResponse_command(jres,n)
+    except:
+        traceback.print_exc()
+
+def callback_for_mqtt_control_in_TV(mosq, obj, msg):
+
+def publish_getContextResponse_command(jres, vthingindex):
+    silo_id = jres["vSiloID"]
+    message = {"command": "getContextResponse", "data": v_things[n]['context'].get_all(), "meta": {"vThingID": v_things[n]['ID']}}
+    mqtt_control_client.publish(v_silo_prefix + "/" + silo_id + "/" + in_control_suffix, json.dumps(message))
+
+def publish_deleteVThing_command(vthingindex):
+    msg = {"command": "deleteVThing", "vThingID": v_things[n]['ID'], "vSiloID": "ALL"}
+    mqtt_control_client.publish(v_thing_prefix + "/" + v_things[n]['ID'] + "/" + out_control_suffix, json.dumps(msg))
+
+def publish_destroyTVAck_command():
+    msg = {"command": "destroyTVAck", "thingVisorID": thing_visor_ID}
+    mqtt_control_client.publish(tv_control_prefix + "/" + thing_visor_ID + "/" + out_control_suffix, json.dumps(msg))
+
+def publish_create_vthing_command(vthingindex):
+
+def destroy_thing_visor(jres):
+    db_client.close()
+    for n in v_things:
+        publish_deleteVThing_command(n)
+    publish_destroyTVAck_command()
+    print("Shutdown completed")
+
+def update_thing_visor(jres):
+    global fps
+
+    print("Print update_info:", jres['update_info'])
+    if 'fps' in jres['params']:
+        fps=jres['params']['fps']
+
+
+    payload = msg.payload.decode("utf-8", "ignore")
+    jres = json.loads(payload)
+    print(msg.topic + " " + str(jres))
+    try:
+        command_type = jres["command"]
+        if command_type == "destroyTV":
+            destroy_thing_visor(jres)
+        elif command_type == "updateTV":
+            update_thing_visor(jres)
+    except:
+        traceback.print_exc()
+    return 'invalid command'
+
+def connect_control_client_and_subscribe_TV_control_topic():
+    print("connecting mqtt control")
+    # Add message callbacks that will only trigger on a specific subscription match
+    mqtt_control_client.message_callback_add(tv_control_prefix + "/" + thing_visor_ID + "/" + in_control_suffix, callback_for_mqtt_control_in_TV)
+    mqtt_control_client.subscribe(tv_control_prefix + "/" + thing_visor_ID + "/" + in_control_suffix)
+
+def publish_create_vthing_command(vthingindex):
+    # Publish on the thingVisor out_control topic the createVThing command and other parameters
+    v_thing_message = { "command" : "createVThing",
+                        "thingVisorID" : thing_visor_ID,
+                        "vThing" : v_things[vthingindex]['v_thing']
                     }
-        data = [ngsiLdEntity]
-        v_things[n]['context'].set_all(data)
+    mqtt_control_client.publish(tv_control_prefix + "/" + thing_visor_ID + "/" + out_control_suffix, json.dumps(v_thing_message))
 
-        mqtt_data_client.message_callback_add(v_things[n]['topic'] + "/" + in_data_suffix,
-                                            self.on_message_data_in_vThing)
-        mqtt_data_client.subscribe(
-            v_things[n]['topic'] + "/" + in_data_suffix)
+def subscribe_vthing_control_in_topic(vthingindex):
+    # Add message callbacks that will only trigger on a specific subscription match
+    mqtt_control_client.message_callback_add(v_things[vthingindex]['topic'] + "/" + in_control_suffix, callback_for_mqtt_control_in_vthing)
+    mqtt_control_client.subscribe(v_things[vthingindex]['topic'] + '/' + in_control_suffix)
 
 
-class MqttControlThread(Thread):
-    def on_message_get_thing_context(self, jres,n):
-        silo_id = jres["vSiloID"]
-        message = {"command": "getContextResponse", "data": v_things[n]['context'].get_all(), "meta": {"vThingID": v_things[n]['ID']}}
-        mqtt_control_client.publish(v_silo_prefix + "/" + silo_id + "/" + in_control_suffix, json.dumps(message))
+def subscribe_vthing_data_in_topic(vthingindex):
 
-    def send_destroy_v_thing_message(self,n):
-        msg = {"command": "deleteVThing", "vThingID": v_things[n]['ID'], "vSiloID": "ALL"}
-        mqtt_control_client.publish(v_thing_prefix + "/" + v_things[n]['ID'] + "/" + out_control_suffix, json.dumps(msg))
-
-    def send_destroy_thing_visor_ack_message(self):
-        msg = {"command": "destroyTVAck", "thingVisorID": thing_visor_ID}
-        mqtt_control_client.publish(tv_control_prefix + "/" + thing_visor_ID + "/" + out_control_suffix, json.dumps(msg))
-
-    def on_message_destroy_thing_visor(self, jres):
-        global db_client
-        db_client.close()
-        for n in v_things:
-            self.send_destroy_v_thing_message(n)
-        self.send_destroy_thing_visor_ack_message()
-        print("Shutdown completed")
-
-    def on_message_update_thing_visor(self, jres):
-        global camera_ip, camera_port
-
-        print("Print update_info:", jres['update_info'])
-        if 'camera_ip' in jres['params']:
-            camera_ip=jres['params']['camera_ip']
-        if 'camera_port' in jres['params']:
-            camera_port=jres['params']['camera_port']
-
-    # handler for mqtt control topics
-    def __init__(self):
-        Thread.__init__(self)
-
-    def on_message_in_control_vThing(self, mosq, obj, msg):
-        payload = msg.payload.decode("utf-8", "ignore")
-        print(msg.topic + " " + str(payload))
-        jres = json.loads(payload.replace("\'", "\""))
-        try:
-            command_type = jres["command"]
-            name=jres["vThingID"].split('/')[-1]
-            n=get_vthing_name(name)
-            if command_type == "getContextRequest":
-                self.on_message_get_thing_context(jres,n)
-        except:
-            traceback.print_exc()
-
-    def on_message_in_control_TV(self, mosq, obj, msg):
-        payload = msg.payload.decode("utf-8", "ignore")
-        jres = json.loads(payload)
-        print(msg.topic + " " + str(jres))
-        try:
-            command_type = jres["command"]
-            if command_type == "destroyTV":
-                self.on_message_destroy_thing_visor(jres)
-            elif command_type == "updateTV":
-                self.on_message_update_thing_visor(jres)
-        except:
-            traceback.print_exc()
-        return 'invalid command'
-
-    def run(self):
-        print("Thread mqtt control started")
-        global mqtt_control_client, mqtt_control_status
-        #mqtt_control_client.connect(MQTT_control_broker_IP, MQTT_control_broker_port, 30)
-
-        # HERE vThings are processed in cameraBot TV
-
-        # Add message callbacks that will only trigger on a specific subscription match
-        mqtt_control_client.message_callback_add(tv_control_prefix + "/" + thing_visor_ID + "/" + in_control_suffix,
-                                                 self.on_message_in_control_TV)
-        mqtt_control_client.subscribe(tv_control_prefix + "/" + thing_visor_ID + "/" + in_control_suffix)
-
-        mqtt_control_client.loop_forever()
-        print("Thread '" + self.name + "' terminated")
-    
-    def create_vthing(self,n):
-        # Publish on the thingVisor out_control topic the createVThing command and other parameters
-        v_thing_message = {"command": "createVThing",
-                        "thingVisorID": thing_visor_ID,
-                        "vThing": v_things[n]['v_thing']}
-        mqtt_control_client.publish(tv_control_prefix + "/" + thing_visor_ID + "/" + out_control_suffix,
-                                    json.dumps(v_thing_message))
-
-        v_things[n]['future'] = executor.submit(create_endpoint, n)
-
-        # Add message callbacks that will only trigger on a specific subscription match
-        mqtt_control_client.message_callback_add(v_things[n]['topic'] + "/" + in_control_suffix,
-                                                self.on_message_in_control_vThing)
-        mqtt_control_client.subscribe(v_things[n]['topic'] + '/' + in_control_suffix)
 
 # main
 if __name__ == '__main__':
@@ -692,29 +608,26 @@ if __name__ == '__main__':
         exit()
 
     
-    camera_ip=None
-    camera_port=None
-    controller_url=None
-    tenant_id=None
-    admin_psw=None
+    fps=None
+    upstream_camera_sensor=None
 
     if params:
-        if 'camera_ip' in params:
-            camera_ip = params['camera_ip']
-        if 'camera_port' in params:
-            camera_port = params['camera_port']
-        if 'controller_url' in params:
-            controller_url = params['controller_url']
-        if 'tenant_id' in params:
-            tenant_id = params['tenant_id']
-        if 'admin_psw' in params:
-            admin_psw = params['admin_psw']
+        if 'upstream_camera_sensor' in params:
+            upstream_camera_sensor = params['upstream_camera_sensor']
+        if 'fps' in params:
+            fps = params['fps']
 
     v_things={}
 
-    # Map images to names, save image count for every name
+    # Map images to names
     image_to_name_mapping={}
+    # store image count for every name
     image_count={}
+    # for each image, store the command information BL BLA
+    # NOTE that the native dict type is inherently thread safe in python, so
+    # the two threads can concurrently modify it. Moreover, the dict is global
+    # because variables in python have global visibility, unless when you CHANGE
+    # it, in that case a NEW, LOCAL variable is created if you don't use the global keyword.
     command_data={}
 
     # mqtt settings
@@ -733,39 +646,18 @@ if __name__ == '__main__':
     mqtt_control_client = mqtt.Client()
     mqtt_data_client = mqtt.Client()
 
-    mqtt_control_status=False
-    mqtt_data_status=False
-
-    # threadPoolExecutor of size one to handle one command at a time in a fifo order
-    executor = ThreadPoolExecutor(1)
+    # threadPoolExecutor of default size
+    executor = ThreadPoolExecutor()
 
     mqtt_control_client.connect(MQTT_control_broker_IP, MQTT_control_broker_port, 30)
-    mqtt_control_thread = MqttControlThread()  # mqtt control thread
-    mqtt_control_thread.start()
-
     mqtt_data_client.connect(MQTT_data_broker_IP, MQTT_data_broker_port, 30)
-    mqtt_data_thread = mqttDataThread()  # mqtt data thread
-    mqtt_data_thread.start()
 
-    # create the camera system vThing
-    detector=create_vthing("detector","FaceDetector",["start","stop","set-face-feature","delete-by-name"])
-
-    # post item for camera system
-    with app.app_context():
-        with app.test_request_context():
-            post_internal('cameras', {"_id": 0})
+    # create the detector vThing: name, type, description, array of commands
+    detector=create_vthing("detector","FaceDetector","faceRecognition virtual thing",["start","stop","set-face-feature","delete-by-name"])
 
     # set eve callbacks
     app.on_post_PATCH_faceInput += on_post_PATCH_faceInput
     app.on_post_POST_faceOutput += on_post_POST_faceOutput
 
-    # runs eve
+    # runs eve, and ends the main thread
     app.run(debug=False,host='0.0.0.0',port='5000')
-
-    # while True:
-    #     try:
-    #         time.sleep(3)
-    #     except:
-    #         print("KeyboardInterrupt"+"\n")
-    #         time.sleep(1)
-    #         os._exit(1)

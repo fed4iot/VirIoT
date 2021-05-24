@@ -341,6 +341,19 @@ def initialize_vthing(vthingindex, type, description, commands):
 
     return vthingindex
 
+def publish_create_vthing_command(vthingindex):
+    # Publish on the thingVisor out_control topic the createVThing command and other parameters
+    v_thing_message = { "command" : "createVThing",
+                        "thingVisorID" : thing_visor_ID,
+                        "vThing" : v_things[vthingindex]['v_thing']
+                    }
+    mqtt_control_client.publish(tv_control_prefix + "/" + thing_visor_ID + "/" + out_control_suffix, json.dumps(v_thing_message))
+
+def subscribe_vthing_control_in_topic(vthingindex):
+    # Add message callbacks that will only trigger on a specific subscription match
+    mqtt_control_client.message_callback_add(v_things[vthingindex]['topic'] + "/" + in_control_suffix, callback_for_mqtt_control_in_vthing)
+    mqtt_control_client.subscribe(v_things[vthingindex]['topic'] + '/' + in_control_suffix)
+
 def create_vthing_initial_context(vthingindex):
     print("Creating initial vthing context (commands, initial data...)")
     ngsiLdEntity = { "id" : v_things[vthingindex]['ID_LD'],
@@ -350,8 +363,6 @@ def create_vthing_initial_context(vthingindex):
                 }
     data = [ngsiLdEntity]
     v_things[vthingindex]['context'].set_all(data)
-
-
 
 def remove_vthing(vthingindex):
     mqtt_control_thread.publish_deleteVThing_command(vthingindex)
@@ -538,25 +549,21 @@ def update_thing_visor(jres):
         traceback.print_exc()
     return 'invalid command'
 
-def connect_control_client_and_subscribe_TV_control_topic():
+def subscribe_TV_control_topic(client, userdata, flags, rc):
     print("connecting mqtt control")
     # Add message callbacks that will only trigger on a specific subscription match
-    mqtt_control_client.message_callback_add(tv_control_prefix + "/" + thing_visor_ID + "/" + in_control_suffix, callback_for_mqtt_control_in_TV)
-    mqtt_control_client.subscribe(tv_control_prefix + "/" + thing_visor_ID + "/" + in_control_suffix)
+    client.message_callback_add(tv_control_prefix + "/" + thing_visor_ID + "/" + in_control_suffix, callback_for_mqtt_control_in_TV)
+    client.subscribe(tv_control_prefix + "/" + thing_visor_ID + "/" + in_control_suffix)
+    print("MQTT control client connected with result code "+str(rc))
+    global connected_clients
+    connected_clients += 1
 
-def publish_create_vthing_command(vthingindex):
-    # Publish on the thingVisor out_control topic the createVThing command and other parameters
-    v_thing_message = { "command" : "createVThing",
-                        "thingVisorID" : thing_visor_ID,
-                        "vThing" : v_things[vthingindex]['v_thing']
-                    }
-    mqtt_control_client.publish(tv_control_prefix + "/" + thing_visor_ID + "/" + out_control_suffix, json.dumps(v_thing_message))
-
-def subscribe_vthing_control_in_topic(vthingindex):
-    # Add message callbacks that will only trigger on a specific subscription match
-    mqtt_control_client.message_callback_add(v_things[vthingindex]['topic'] + "/" + in_control_suffix, callback_for_mqtt_control_in_vthing)
-    mqtt_control_client.subscribe(v_things[vthingindex]['topic'] + '/' + in_control_suffix)
-
+def mqtt_control_reconnect(client, userdata, rc):
+    if rc != 0:
+        print("Unexpected MQTT control channel disconnection.")
+    else:
+        print("MQTT control channel disconnection.")
+    client.reconnect()
 
 def subscribe_vthing_data_in_topic(vthingindex):
 
@@ -607,7 +614,30 @@ if __name__ == '__main__':
         print("Error: Parameters not found in tv_entry", e)
         exit()
 
-    
+    port_mapping = db[thing_visor_collection].find_one({"thingVisorID": thing_visor_ID}, {"port": 1, "_id": 0})
+    print("port mapping: " + str(port_mapping))
+
+    # mqtt settings
+    tv_control_prefix = "TV"  # prefix name for controller communication topic
+    v_thing_prefix = "vThing"  # prefix name for virtual Thing data and control topics
+    v_thing_data_suffix = "data_out"
+    in_control_suffix = "c_in"
+    out_control_suffix = "c_out"
+    out_data_suffix = "data_out"
+    in_data_suffix = "data_in"
+    v_silo_prefix = "vSilo"
+
+    mqtt_control_client = mqtt.Client()
+    mqtt_control_client.on_connect = subscribe_TV_control_topic
+    mqtt_control_client.on_disconnect = mqtt_control_reconnect
+    mqtt_data_client = mqtt.Client()
+    mqtt_control_client.connect(MQTT_control_broker_IP, MQTT_control_broker_port, 30)
+    mqtt_data_client.connect(MQTT_data_broker_IP, MQTT_data_broker_port, 30)
+
+    # threadPoolExecutor of default size
+    executor = ThreadPoolExecutor()    
+
+
     fps=None
     upstream_camera_sensor=None
 
@@ -630,30 +660,9 @@ if __name__ == '__main__':
     # it, in that case a NEW, LOCAL variable is created if you don't use the global keyword.
     command_data={}
 
-    # mqtt settings
-    tv_control_prefix = "TV"  # prefix name for controller communication topic
-    v_thing_prefix = "vThing"  # prefix name for virtual Thing data and control topics
-    v_thing_data_suffix = "data_out"
-    in_control_suffix = "c_in"
-    out_control_suffix = "c_out"
-    out_data_suffix = "data_out"
-    in_data_suffix = "data_in"
-    v_silo_prefix = "vSilo"
-
-    port_mapping = db[thing_visor_collection].find_one({"thingVisorID": thing_visor_ID}, {"port": 1, "_id": 0})
-    print("port mapping: " + str(port_mapping))
-
-    mqtt_control_client = mqtt.Client()
-    mqtt_data_client = mqtt.Client()
-
-    # threadPoolExecutor of default size
-    executor = ThreadPoolExecutor()
-
-    mqtt_control_client.connect(MQTT_control_broker_IP, MQTT_control_broker_port, 30)
-    mqtt_data_client.connect(MQTT_data_broker_IP, MQTT_data_broker_port, 30)
-
     # create the detector vThing: name, type, description, array of commands
     detector=create_vthing("detector","FaceDetector","faceRecognition virtual thing",["start","stop","set-face-feature","delete-by-name"])
+
 
     # set eve callbacks
     app.on_post_PATCH_faceInput += on_post_PATCH_faceInput

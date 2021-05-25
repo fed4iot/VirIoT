@@ -53,77 +53,6 @@ import magic
 
 app = Eve()
 
-@app.route('/genericFaceInput/<name>', methods=['POST'])
-def post_by_name(name):
-    # check if person exists
-    if name not in image_count:
-        return("The name "+name+" doesn't exist.")
-
-    # make empty element
-    id=str(uuid.uuid4())
-    with app.app_context():
-        with app.test_request_context():
-            post_internal('faceInput', {"_id": id})
-
-    # insert into arrays
-    image_to_name_mapping[id]=name
-    if name not in image_count:
-        image_count[name]=1
-    else:
-        image_count[name]+=1
-
-    print("")
-    print("genericFaceInput: created new item for person "+name)
-    print("Current status:")
-    print(image_to_name_mapping)
-    print(image_count)
-    print("")
-
-    # send image
-    files={'image': request.files['image']}
-    res=requests.patch("http://localhost:5000/faceInput/"+id, files=files)
-
-    # check response
-    if res.status_code>=400:
-        return str(res.status_code)
-    
-    return("OK")
-
-@app.route('/faceInput/<id>/image')
-def get_input_image(id):
-    faceInput = app.data.driver.db['faceInput']
-    a = faceInput.find_one({'_id':id})
-    b=app.media.get(a['image'])
-    c=b.read()
-
-    mm = magic.Magic(mime=True)
-    mime=mm.from_buffer(c)
-
-    headers={"Content-disposition": "attachment"}
-    headers["Cache-Control"]="no-cache"
-
-    return Response(
-        c,
-        mimetype=mime,
-        headers=headers)
-
-@app.route('/faceOutput/<id>/image')
-def get_output_image(id):
-    faceOutput = app.data.driver.db['faceOutput']
-    a = faceOutput.find_one({'_id':id})
-    b=app.media.get(a['image'])
-    c=b.read()
-
-    mm = magic.Magic(mime=True)
-    mime=mm.from_buffer(c)
-
-    headers={"Content-disposition": "attachment"}
-    headers["Cache-Control"]="no-cache"
-
-    return Response(
-        c,
-        mimetype=mime,
-        headers=headers)
 
 def on_post_PATCH_faceInput(request,lookup):
     try:
@@ -154,6 +83,7 @@ def on_post_PATCH_faceInput(request,lookup):
                 return 
     except:
         traceback.print_exc()
+
 
 def on_post_POST_faceOutput(request,lookup):
     try:
@@ -188,103 +118,73 @@ def on_post_POST_faceOutput(request,lookup):
     except:
         traceback.print_exc()
 
-    def on_set_face_feature(self, cmd_name, cmd_info, id_LD):
-        try:
-            if "cmd-qos" not in cmd_info or int(cmd_info['cmd-qos']) != 2:
-                self.publish_actuation_commandResult_message(cmd_name, cmd_info, id_LD, "Error: cmd-qos must be 2.")
-                return
-            
-            n=get_vthing_name(id_LD)
+    
+def on_start(self, cmd_name, cmd_info, id_LD, actuatorThread):
+    print("Sending start command to camera system")
 
-            # make empty element
-            id=str(uuid.uuid4())
-            with app.app_context():
-                with app.test_request_context():
-                    post_internal('faceInput', {"_id": id})
+    _camera_ip, _camera_port=get_camera_ip_port()
+    res=requests.get("http://"+_camera_ip+':'+_camera_port+'/start')
 
-            # Make full name (nuri+name)
-            nuri=get_silo_name(cmd_info['cmd-nuri'])
-            name=nuri+"_"+cmd_info['cmd-value']['name']
-
-            # insert into arrays
-            image_to_name_mapping[id]=name
-            if name not in image_count:
-                image_count[name]=1
-            else:
-                image_count[name]+=1
-            
-            print("")
-            print("on_set_face_feature: created new item for person "+name)
-            print("Current status:")
-            print(image_to_name_mapping)
-            print(image_count)
-            print("")
-
-            # collect command data
-            command_data[id]={'cmd_name':cmd_name,'cmd_info':cmd_info,'id_LD':id_LD}
-
-            # send URL where the user can PATCH
-            payload={'message': "You can PATCH here.", 'url': "/vstream/"+thing_visor_ID+"/"+v_things[n]['name']+"/faceInput/"+id}
-            self.publish_actuation_commandStatus_message(cmd_name, cmd_info, id_LD, payload)
-        except:
-            traceback.print_exc()
+    # publish command result
+    if "cmd-qos" in cmd_info:
+        if int(cmd_info['cmd-qos']) > 0:
+            self.send_commandResult(cmd_name, cmd_info, id_LD, res.status_code)
 
     
-    def on_delete_by_name(self, cmd_name, cmd_info, id_LD):
-        try:
-            if "cmd-qos" in cmd_info and int(cmd_info['cmd-qos']) == 2:
-                self.publish_actuation_commandResult_message(cmd_name, cmd_info, id_LD, "Error: cmd-qos must be 0 or 1.")
-                return
-            
-            # get the name of the person to delete
-            nuri=get_silo_name(cmd_info['cmd-nuri'])
-            name=nuri+"_"+cmd_info['cmd-value']['name']
+def on_delete_by_name(self, cmd_name, cmd_info, id_LD):
+    try:
+        if "cmd-qos" in cmd_info and int(cmd_info['cmd-qos']) == 2:
+            self.publish_actuation_commandResult_message(cmd_name, cmd_info, id_LD, "Error: cmd-qos must be 0 or 1.")
+            return
+        
+        # get the name of the person to delete
+        nuri=get_silo_name(cmd_info['cmd-nuri'])
+        name=nuri+"_"+cmd_info['cmd-value']['name']
 
-            # check if this name is registered
-            if name not in image_count:
-                if "cmd-qos" in cmd_info:
-                    if int(cmd_info['cmd-qos']) > 0:
-                        self.publish_actuation_commandResult_message(cmd_name, cmd_info, id_LD, "The name "+name+" doesn't exist.")
-                return
-            
-            # send to the camera system the deletion request
-            _camera_ip, _camera_port=get_camera_ip_port()
-            res=requests.delete("http://"+_camera_ip+':'+_camera_port+'/people/'+name)
-
-            # check response
-            if res.status_code>=400:
-                if "cmd-qos" in cmd_info:
-                    if int(cmd_info['cmd-qos']) > 0:
-                        self.publish_actuation_commandResult_message(cmd_name, cmd_info, id_LD, res.status_code)
-                return
-
-            # find all ids of images to delete
-            temp=[]
-            for x in image_to_name_mapping:
-                if image_to_name_mapping[x]==name:
-                    temp.append(x)
-            
-            # delete images
-            with app.app_context():
-                with app.test_request_context():
-                    for x in temp:
-                        #deleteitem_internal('faceInput', {"_id": x})
-                        del image_to_name_mapping[x]
-            del image_count[name]
-
-            print("")
-            print("Deleted person "+name)
-            print("Current status:")
-            print(image_to_name_mapping)
-            print(image_count)
-            print("")
-
+        # check if this name is registered
+        if name not in image_count:
             if "cmd-qos" in cmd_info:
                 if int(cmd_info['cmd-qos']) > 0:
-                    self.publish_actuation_commandResult_message(cmd_name, cmd_info, id_LD, "OK")
-        except:
-            traceback.print_exc()
+                    self.publish_actuation_commandResult_message(cmd_name, cmd_info, id_LD, "The name "+name+" doesn't exist.")
+            return
+        
+        # send to the camera system the deletion request
+        _camera_ip, _camera_port=get_camera_ip_port()
+        res=requests.delete("http://"+_camera_ip+':'+_camera_port+'/people/'+name)
 
+        # check response
+        if res.status_code>=400:
+            if "cmd-qos" in cmd_info:
+                if int(cmd_info['cmd-qos']) > 0:
+                    self.publish_actuation_commandResult_message(cmd_name, cmd_info, id_LD, res.status_code)
+            return
+
+        # find all ids of images to delete
+        temp=[]
+        for x in image_to_name_mapping:
+            if image_to_name_mapping[x]==name:
+                temp.append(x)
+        
+        # delete images
+        with app.app_context():
+            with app.test_request_context():
+                for x in temp:
+                    #deleteitem_internal('faceInput', {"_id": x})
+                    del image_to_name_mapping[x]
+        del image_count[name]
+
+        print("")
+        print("Deleted person "+name)
+        print("Current status:")
+        print(image_to_name_mapping)
+        print(image_count)
+        print("")
+
+        if "cmd-qos" in cmd_info:
+            if int(cmd_info['cmd-qos']) > 0:
+                self.publish_actuation_commandResult_message(cmd_name, cmd_info, id_LD, "OK")
+    except:
+        traceback.print_exc()
 
 
 def initialize_vthing(vthingindex, type, description, commands):
@@ -530,12 +430,6 @@ def process_actuation_commandRequest(cmd_entity):
                     if int(cmd_info['cmd-qos']) == 2:
                         self.publish_actuation_commandStatus_message(cmd_name, cmd_info, id_LD, "PENDING")
                 future = executor.submit(f, cmd_name, cmd_info, id_LD)
-                
-
-    #except jsonschema.exceptions.ValidationError as e:
-        #print("received commandRequest got a schema validation error: ", e)
-    #except jsonschema.exceptions.SchemaError as e:
-        #print("commandRequest schema not valid:", e)
     except:
         traceback.print_exc()
 

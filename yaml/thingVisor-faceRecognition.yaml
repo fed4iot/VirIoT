@@ -15,14 +15,12 @@ spec:
       containers:
       - name: f4i-facerecognition
         image: fed4iot/facerecognition-tv:latest
-        imagePullPolicy: Never
         ports:
         - containerPort: 5000 
       - name: mongo-for-facerecognition
         image: mongo:latest
       - name: f4i-http-sidecar
         image: fed4iot/http-sidecar-tv:latest
-        imagePullPolicy: Never
         ports:
         - containerPort: 5001
 ---

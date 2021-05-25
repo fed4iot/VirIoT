@@ -4,7 +4,6 @@ FROM python:3.6-slim
 
 RUN apt update
 RUN apt -y install screen
-RUN apt -y install libmagic1
 
 COPY . /app
 WORKDIR /app

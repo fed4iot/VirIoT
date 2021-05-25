@@ -3,4 +3,3 @@ paho-mqtt
 pymongo
 eve
 requests
-python-magic

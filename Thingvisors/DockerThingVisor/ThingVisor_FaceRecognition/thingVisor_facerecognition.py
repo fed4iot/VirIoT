@@ -177,16 +177,12 @@ if __name__ == '__main__':
     detector=thingvisor.initialize_vthing("detector","FaceRecognitionEvent","faceRecognition virtual thing",["start","stop","delete-by-name"])
     print("All vthings initialized")  
     print(thingvisor.v_things['detector'])
-    fps=None
-    upstream_camera_sensor=None
 
     if thingvisor.params:
         if 'upstream_camera_sensor' in thingvisor.params:
-            upstream_camera_sensor = thingvisor.params['upstream_camera_sensor']
-            print("parsed upstream_camera_sensor parameter: " + str(upstream_camera_sensor))
+            print("parsed upstream_camera_sensor parameter: " + str(thingvisor.params['upstream_camera_sensor']))
         if 'fps' in thingvisor.params:
-            fps = thingvisor.params['fps']
-            print("parsed fps parameter: " + str(fps))
+            print("parsed fps parameter: " + str(thingvisor.params['fps']))
 
     # Map images to names
     image_to_name_mapping={}
@@ -200,4 +196,3 @@ if __name__ == '__main__':
     # runs eve, and halts the main thread
     app.run(debug=False,host='0.0.0.0',port='5000')
     print("EVE was running. Bye.")
-    ### END CUSTOMIZE parameters & behaviour

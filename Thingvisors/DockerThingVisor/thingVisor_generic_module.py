@@ -257,10 +257,9 @@ def destroy_thing_visor(jres):
 
 
 def update_thing_visor(jres):
-    global fps
-    print("Print update_info:", jres['update_info'])
-    if 'fps' in jres['params']:
-        fps=jres['params']['fps']
+    print("Updated parameters received:", jres['update_info'])
+    for key in jres['update_info']:
+        params[key] = jres['update_info'][key]
 
 
 # main initializer of the TV

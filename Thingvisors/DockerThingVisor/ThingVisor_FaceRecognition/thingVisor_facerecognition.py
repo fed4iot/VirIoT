@@ -15,7 +15,8 @@
 
 import thingVisor_generic_module as thingvisor
 
-
+import requests
+from threading import Timer
 from eve import Eve
 from flask import request, Response
 
@@ -32,8 +33,13 @@ from flask import request, Response
 # A target face to be recognized cannot be embedded into a command, but a dedicated HTTP endpoint
 # is offered by this TV, so that users can PUT/POST to it to accumulate target pictures
 
-app = Eve()
+# The CameraSensor TV (hosting the sensor vthing) needs a sidecar-tv so that downstream
+# clients can ask for TV_IP:TV_PORT_80/sensor/currentframe/xxx
+# The FaceRecognition TV needs a sidecar-flavour so that the above TV_IP:TV_PORT_80/sensor/currentframe/xxx is
+# proxied everywhere in the platfors as 
 
+app = Eve()
+proxies = { "http": "http://viriot-nginx.default.svc.cluster.local",}
 
 def on_post_PATCH_faceInput(request,lookup):
     try:
@@ -112,84 +118,38 @@ def on_start(self, cmd_name, cmd_info, id_LD, actuatorThread):
         if int(cmd_info['cmd-qos']) > 0:
             self.send_commandResult(cmd_name, cmd_info, id_LD, res.status_code)
 
-    
-def on_delete_by_name(self, cmd_name, cmd_info, id_LD):
-    try:
-        if "cmd-qos" in cmd_info and int(cmd_info['cmd-qos']) == 2:
-            publish_actuation_response_message(cmd_name, cmd_info, id_LD, "Error: cmd-qos must be 0 or 1.", "result")
-            return
-        
-        # get the name of the person to delete
-        nuri=get_silo_name(cmd_info['cmd-nuri'])
-        name=nuri+"_"+cmd_info['cmd-value']['name']
 
-        # check if this name is registered
-        if name not in image_count:
-            if "cmd-qos" in cmd_info:
-                if int(cmd_info['cmd-qos']) > 0:
-                    self.publish_actuation_commandResult_message(cmd_name, cmd_info, id_LD, "The name "+name+" doesn't exist.")
-            return
-        
-        # send to the camera system the deletion request
-        _camera_ip, _camera_port=get_camera_ip_port()
-        res=requests.delete("http://"+_camera_ip+':'+_camera_port+'/people/'+name)
-
-        # check response
-        if res.status_code>=400:
-            if "cmd-qos" in cmd_info:
-                if int(cmd_info['cmd-qos']) > 0:
-                    self.publish_actuation_commandResult_message(cmd_name, cmd_info, id_LD, res.status_code)
-            return
-
-        # find all ids of images to delete
-        temp=[]
-        for x in image_to_name_mapping:
-            if image_to_name_mapping[x]==name:
-                temp.append(x)
-        
-        # delete images
-        with app.app_context():
-            with app.test_request_context():
-                for x in temp:
-                    #deleteitem_internal('faceInput', {"_id": x})
-                    del image_to_name_mapping[x]
-        del image_count[name]
-
-        print("")
-        print("Deleted person "+name)
-        print("Current status:")
-        print(image_to_name_mapping)
-        print(image_count)
-        print("")
-
-        if "cmd-qos" in cmd_info:
-            if int(cmd_info['cmd-qos']) > 0:
-                self.publish_actuation_commandResult_message(cmd_name, cmd_info, id_LD, "OK")
-    except:
-        traceback.print_exc()
-
+def periodically_every_fps():
+    # use current frame name to GET it from upstream camera sensor
+    # see if we have a new frame
+    if len(thingvisor.upstream_entities) != 0:
+        upstream_vthing = thingvisor.params['upstream_vthingid'].split('/',1)[1] # second element of the split
+        id = thingvisor.upstream_entities[0]["frameIdentifier"]["value"]
+        frame_url = "/" + upstream_vthing + "/currentframe/" + id
+        url = "http://" + thingvisor.upstream_tv_http_service + frame_url
+        r = requests.get(url, proxies=proxies)
+        if r.status_code == 200:
+            print("i got " + id + + " from " + url)
+        else:
+            print("i got error " + str(r.status_code) + " when going to " + url)
+    Timer(1/thingvisor.params['fps'], periodically_every_fps).start()
 
 
 # main
 if __name__ == '__main__':
     thingvisor.initialize_thingvisor()
     # create the detector vThing: name, type, description, array of commands
-    detector=thingvisor.initialize_vthing("detector","FaceRecognitionEvent","faceRecognition virtual thing",["start","stop","delete-by-name"])
+    thingvisor.initialize_vthing("detector","FaceRecognitionEvent","faceRecognition virtual thing",["start","stop","delete-by-name"])
     print("All vthings initialized")  
     print(thingvisor.v_things['detector'])
 
-
-    if 'upstream_camera_sensor' in thingvisor.params:
-        print("parsed upstream_camera_sensor parameter: " + str(thingvisor.params['upstream_camera_sensor']))
-    else:
-        print("NO UPSTREAM camera sensor where to fetch frams has been configured. Exiting.")
-        exit()
+    if not 'upstream_vthingid' in thingvisor.params:
+        print("NO UPSTREAM camera sensor where to fetch frames has been configured. Waiting for it.")
     if 'fps' in thingvisor.params:
         print("parsed fps parameter: " + str(thingvisor.params['fps']))
     else:
         thingvisor.params['fps'] = 2
         print("defaulting fps parameter: " + str(thingvisor.params['fps']))
-
 
     # Map images to names
     image_to_name_mapping={}
@@ -199,6 +159,9 @@ if __name__ == '__main__':
     # set eve callbacks
     app.on_post_PATCH_faceInput += on_post_PATCH_faceInput
     app.on_post_POST_faceOutput += on_post_POST_faceOutput
+
+    # enters the main timer thread that obtains the new video frame every fps
+    periodically_every_fps()
 
     # runs eve, and halts the main thread
     app.run(debug=False,host='0.0.0.0',port='5000')

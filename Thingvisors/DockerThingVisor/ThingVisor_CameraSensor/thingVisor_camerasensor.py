@@ -17,6 +17,19 @@
 
 import thingVisor_generic_module as thingvisor
 
+# This TV is usually called camerasensor-tv
+# This TV has just one vthing, which is hardcode-named "sensor"
+# Thus the vthing id is camerasensor-tv/sensor and the NGSI-LD id_LD is urn:ngsi-ld:camerasensor-tv:sensor
+# The neutral format is as follows:
+# {
+#    id : urn:ngsi-ld:camerasensor-tv:sensor
+#    type : NewFrameEvent
+#    frameIdentifier : {
+#        type : Property
+#        value : "djvn5jntvG"
+#    }
+# }
+
 
 import redis
 import json
@@ -60,16 +73,18 @@ def POST_frames():
     # pool during command execution, and returned to the pool directly after.
     # Command execution never modifies state on the client instance.
     # We keep at most BUFFERSIZE images in the buffer
-    id = rdis.xadd(buffername, {"data":data, "observedAt":metadata["observedAt"]}, maxlen=thingvisor.params['buffersize'], approximate=True)
-
+    id = rdis.xadd(buffername, {"data":data, "observedAt":metadata["observedAt"]}, maxlen=thingvisor.params["buffersize"], approximate=True)
     print("Pushed to redis ", id)
+    # id is of type bytes, needs to be a string to serialize
+    attributes = [{"attributename":"frameIdentifier", "attributevalue":id.decode("utf-8")}]
+    thingvisor.publish_attributes_of_a_vthing("sensor", attributes)
     return 'success'
 
 # main
 if __name__ == '__main__':
     thingvisor.initialize_thingvisor()
     # create the detector vThing: name, type, description, array of commands
-    detector=thingvisor.initialize_vthing("sample","NewFrameEvent","camera sensor to distribute frames",[])
+    thingvisor.initialize_vthing("sensor","NewFrameEvent","camera sensor to distribute frames",[])
     print("All vthings initialized")
 
     if 'buffersize' in thingvisor.params:

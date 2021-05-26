@@ -46,9 +46,9 @@ def initialize_vthing(vthingindex, type, description, commands):
     v_things[vthingindex]['context']=Context()
 
     # set topic to the name of mqtt topic of the specific vThing.
-    # When suffixed with "out_data" this bwcomes the topic on which to publish vThing data
+    # When suffixed with "out_data" this becomes the topic on which to publish vThing data
     # When suffixed with "in_data" this becomes the topic to listen to for receiving actuation commands
-    # directred to this specific vThing (see: callback_for_mqtt_data_in_vthing)
+    # directed to this specific vThing (see: callback_for_mqtt_data_in_vthing)
     # v_thing_prefix is constant "vThing"
     v_things[vthingindex]['topic']=v_thing_prefix + "/" + v_things[vthingindex]['ID'] #vThing/facerec-tv/detector
 
@@ -62,7 +62,6 @@ def initialize_vthing(vthingindex, type, description, commands):
     # control
     publish_create_vthing_command(vthingindex)
     subscribe_vthing_control_in_topic(vthingindex)
-    return vthingindex
 
 
 def subscribe_TV_control_in_topic(client, userdata, flags, rc):
@@ -124,6 +123,27 @@ def add_core_context_to_ngsildentity(entity):
     entity['@context'] = [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]
 
 
+def publish_attributes_of_a_vthing(vthingindex, attributes):
+    # create a ngsild entity with id and type extracted from the vthingindex
+    # and with properties (or relationships) coming from the given
+    # list of attributes.
+    # each item of the list is a dict as follows:
+    # {attributename:STRING, attributevalue:WHATEVER, isrelationship:BOOL (optional)}
+    ngsildentity = { "id": v_things[vthingindex]["ID_LD"], "type": v_things[vthingindex]["type_attr"] }
+    for attribute in attributes:
+        if "isrelationship" in attribute and attribute["isrelationship"] == True:
+            ngsildentity[attribute["attributename"]] = {"type":"Relationship", "object":attribute["attributevalue"]}
+        else:
+            ngsildentity[attribute["attributename"]] = {"type":"Property", "value":attribute["attributevalue"]}
+    add_core_context_to_ngsildentity(ngsildentity)
+    data = [ngsildentity]
+    v_things[vthingindex]['context'].update(data)
+    message = { "data": data, "meta": {"vThingID": v_things[vthingindex]['ID']} }  # neutral-format message
+    # usual broadcast topic, so that data is sent to all subscribers of this vthing
+    topic = v_things[vthingindex]['topic'] + "/" + out_data_suffix
+    publish_message_with_data_client(message, topic)
+
+
 def publish_message_with_data_client(message, topic):
     msg=json.dumps(message)
     print("Message published to " + topic + "\n" + msg+"\n")
@@ -134,7 +154,7 @@ def publish_message_with_data_client(message, topic):
 def message_to_jres(message):
     # Utility function
     payload = message.payload.decode("utf-8", "ignore")
-    print("Received on topic " + message.topic + ": " + str(payload))
+    #print("Received on topic " + message.topic + ": " + str(payload))
     jres = json.loads(payload.replace("\'", "\""))
     return jres
     
@@ -147,14 +167,24 @@ def processor_for_mqtt_data_in_vthing(message):
         data = jres["data"]
         for entity in data:
             id_LD = entity["id"]
-            #if id_LD != ID_LD[-1]:
-            #    print("Entity not handled by the Thingvisor, message dropped")
-            #    continue
             vthingindex = get_vthing_name(id_LD)
             for cmd in v_things[vthingindex]['commands']:
                 if cmd in entity:
                     process_actuation_request(entity)
                     continue
+    except:
+        traceback.print_exc()
+
+
+def callback_for_mqtt_data_out_upstream_vthing(mosq, obj, message):
+    executor.submit(processor_for_mqtt_data_out_upstream_vthing, message)
+def processor_for_mqtt_data_out_upstream_vthing(message):
+    jres = message_to_jres(message)
+    upstream_entities.clear()
+    try:
+        data = jres["data"]
+        for entity in data:
+            upstream_entities.append(entity)
     except:
         traceback.print_exc()
 
@@ -200,11 +230,11 @@ def publish_actuation_response_message(cmd_name, cmd_info, id_LD, payload, type_
         ngsiLdEntity = { "id": id_LD, "type": v_things[vthingindex]['type_attr'], pname: {"type": "Property", "value": pvalue} }
         add_core_context_to_ngsildentity(ngsiLdEntity)
         data = [ngsiLdEntity]
-        # LampActuatorContext.update(data)
+        # not updating the vthings context in the actuation because the commands results are ephemeral
         message = { "data": data, "meta": {"vThingID": v_things[vthingindex]['ID']} }  # neutral-format message
         # fallback broadcast topic, so that data is sent to all subscribers of this vthing, in case the
         # unicast cmd-nuri was not set in the received actuation command 
-        topic = v_things[n]['topic'] + "/" + out_data_suffix
+        topic = v_things[vthingindex]['topic'] + "/" + out_data_suffix
         if "cmd-nuri" in cmd_info:
             if cmd_info['cmd-nuri'].startswith("viriot://"):
                 topic = cmd_info['cmd-nuri'][len("viriot://"):]
@@ -261,6 +291,23 @@ def update_thing_visor(jres):
     for key in jres['params']:
         params[key] = jres['params'][key]
         print("  param " + key + " updated to " + str(params[key]))
+        if key == "upstream_vthingid":
+            connect_to_upstream_thingvisor()
+
+
+def connect_to_upstream_thingvisor():
+    global upstream_tv_http_service
+    SVC_SUFFIX = ".default.svc.cluster.local"
+    print("parsed upstream_vthingid parameter: " + str(params['upstream_vthingid']))
+    upstream_tv_id = params['upstream_vthingid'].split('/',1)[0]
+    # get stream information from db
+    upstream_tvServiceName = db[thing_visor_collection].find_one({"thingVisorID": upstream_tv_id})['serviceName']
+    upstream_tv_http_service = upstream_tvServiceName + SVC_SUFFIX
+    print("...and found upstream TV service: " + str(upstream_tv_http_service))
+    # now subscribe to data coming from upstream vthing
+    upstream_topic = v_thing_prefix + "/" + params['upstream_vthingid'] #vThing/camerasensor-tv/sensor
+    mqtt_control_client.message_callback_add(upstream_topic + "/" + out_data_suffix, callback_for_mqtt_data_out_upstream_vthing)
+    mqtt_control_client.subscribe(upstream_topic + '/' + out_data_suffix)
 
 
 # main initializer of the TV
@@ -279,6 +326,10 @@ def initialize_thingvisor():
     global mqtt_data_client
     global executor
     global params
+    global db
+    global upstream_entities
+    global thing_visor_collection
+    upstream_entities = []
 
     MAX_RETRY = 3
     thing_visor_ID = os.environ["thingVisorID"]
@@ -330,6 +381,11 @@ def initialize_thingvisor():
     for key in params:
         print(str(key) + " -> " + str(params[key]))
     
+
+    if 'upstream_vthingid' in params:
+        connect_to_upstream_thingvisor()
+
+
     port_mapping = db[thing_visor_collection].find_one({"thingVisorID": thing_visor_ID}, {"port": 1, "_id": 0})
     print("port mapping: " + str(port_mapping))
 

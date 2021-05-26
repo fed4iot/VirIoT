@@ -264,13 +264,13 @@ def process_actuation_request(cmd_entity):
 
 def publish_getContextResponse_command(jres, vthingindex):
     silo_id = jres["vSiloID"]
-    message = {"command": "getContextResponse", "data": v_things[n]['context'].get_all(), "meta": {"vThingID": v_things[n]['ID']}}
+    message = {"command": "getContextResponse", "data": v_things[vthingindex]['context'].get_all(), "meta": {"vThingID": v_things[vthingindex]['ID']}}
     mqtt_control_client.publish(v_silo_prefix + "/" + silo_id + "/" + in_control_suffix, json.dumps(message))
 
 
 def publish_deleteVThing_command(vthingindex):
-    msg = {"command": "deleteVThing", "vThingID": v_things[n]['ID'], "vSiloID": "ALL"}
-    mqtt_control_client.publish(v_thing_prefix + "/" + v_things[n]['ID'] + "/" + out_control_suffix, json.dumps(msg))
+    msg = {"command": "deleteVThing", "vThingID": v_things[vthingindex]['ID'], "vSiloID": "ALL"}
+    mqtt_control_client.publish(v_thing_prefix + "/" + v_things[vthingindex]['ID'] + "/" + out_control_suffix, json.dumps(msg))
 
 
 def publish_destroyTVAck_command():
@@ -329,6 +329,7 @@ def initialize_thingvisor():
     global db
     global upstream_entities
     global thing_visor_collection
+    global db_client
     upstream_entities = []
 
     MAX_RETRY = 3

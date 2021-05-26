@@ -129,7 +129,7 @@ def periodically_every_fps():
         url = "http://" + thingvisor.upstream_tv_http_service + frame_url
         r = requests.get(url, proxies=proxies)
         if r.status_code == 200:
-            print("i got " + id + + " from " + url)
+            print("i got " + id + " from " + url)
         else:
             print("i got error " + str(r.status_code) + " when going to " + url)
     Timer(1/thingvisor.params['fps'], periodically_every_fps).start()

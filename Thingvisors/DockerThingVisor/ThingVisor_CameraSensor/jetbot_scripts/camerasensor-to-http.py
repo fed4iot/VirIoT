@@ -10,6 +10,8 @@ import io
 
 ##### globals
 fps=1
+# in case of error in POST
+sleep = 0
 
 
 # camera
@@ -23,20 +25,16 @@ calibration_params = pickle.load( open( "calibration.p", "rb" ) )
 
 # execute function
 def callback(change):
-    image = change['new']
-    
+    global sleep
+    image = change['new'] 
     # undistort
     image = cv2.undistort(image, calibration_params['mtx'], calibration_params['dist'], None)
-    
     # Resize frame of video to 1/4 size for faster face recognition processing
-    #small_frame = cv2.resize(image, (0, 0), fx=0.25, fy=0.25)
-    small_frame = image
-
+    small_frame = cv2.resize(image, (0, 0), fx=0.25, fy=0.25)
     # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
     rgb_small_frame = small_frame[:, :, ::-1]
-
     # compress image to jpeg
-    is_success, buffer = cv2.imencode(".jpg", image)
+    is_success, buffer = cv2.imencode(".jpg", rgb_small_frame)
     # need a stream to send it via http requests
     io_buf = io.BytesIO(buffer)
     img_str = io_buf.getvalue()
@@ -50,16 +48,25 @@ def callback(change):
          'json': ("metadata", json.dumps(payload), 'application/json'),
          'file': ("cameraframe", img_str, 'application/octet-stream')
     }
-    r = requests.post(server_url, files=files)
-    print(r.content)
+    try:
+        if(sleep == 0):
+            r = requests.post(server_url, files=files)
+        else:
+            print("SLEEPING")
+            time.sleep(sleep)
+            sleep = 0
+    except Exception as e:
+        print(e)
+        sleep = 1
+
 
 # on the camera object observe the field named "value"
 camera.observe(callback, names='value')
 
 
-# forever
+# forever, so that main thread does not exit
 while True:
-    time.sleep(0.1)
+    time.sleep(10)
 
 camera.unobserve(execute, names='value')
 

@@ -257,9 +257,10 @@ def destroy_thing_visor(jres):
 
 
 def update_thing_visor(jres):
-    print("Updated parameters received:", jres['update_info'])
-    for key in jres['update_info']:
-        params[key] = jres['update_info'][key]
+    print("Update received:", jres['params'])
+    for key in jres['params']:
+        params[key] = jres['params'][key]
+        print("  param " + key + " updated to " + str(params[key]))
 
 
 # main initializer of the TV
@@ -311,7 +312,10 @@ def initialize_thingvisor():
         MQTT_control_broker_port = int(tv_entry["MQTTControlBroker"]["port"])
 
         parameters = tv_entry["params"]
-        if parameters:
+        if parameters and not isinstance(parameters, dict):
+            # decode as string only if it is not a 'dict' because sometimes it arrives
+            # to us as a string, some other times as a dict... Specifically, after a master controller
+            # update-thingvisor command, it turns into a dict...
             params = json.loads(parameters)
         else:
             params={}
@@ -322,7 +326,10 @@ def initialize_thingvisor():
     except Exception as e:
         print("Error: Parameters not found in tv_entry", e)
         exit()
-
+    print("Init-time params: ")
+    for key in params:
+        print(str(key) + " -> " + str(params[key]))
+    
     port_mapping = db[thing_visor_collection].find_one({"thingVisorID": thing_visor_ID}, {"port": 1, "_id": 0})
     print("port mapping: " + str(port_mapping))
 

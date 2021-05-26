@@ -19,6 +19,7 @@ import thingVisor_generic_module as thingvisor
 
 
 import redis
+import json
 rdis = redis.Redis(unix_socket_path="/app/redis/redis.sock")
 buffername = "bufferofframes"
 
@@ -51,12 +52,6 @@ def GET_current_frame_by_id(randomid):
 
 @app.route('/framesinput',methods=['POST'])            
 def POST_frames():
-    print(request.files)
-    print(type(request.files))
-    print(len(request.files))
-    for keys,values in request.files.items():
-        print(keys)
-        print(values)
     uploaded_cameraframe = request.files.get("file")
     metadata = json.load(request.files.get("json"))
     data = uploaded_cameraframe.read()
@@ -74,12 +69,14 @@ def POST_frames():
 if __name__ == '__main__':
     thingvisor.initialize_thingvisor()
     # create the detector vThing: name, type, description, array of commands
-    detector=thingvisor.initialize_vthing("sensor","NewFrameEvent","camera sensor to distribute frames",[])
+    detector=thingvisor.initialize_vthing("sample","NewFrameEvent","camera sensor to distribute frames",[])
     print("All vthings initialized")
 
-    if thingvisor.params:
-        if 'buffersize' in thingvisor.params:
-            print("parsed buffersize parameter: " + str(thingvisor.params['buffersize']))
+    if 'buffersize' in thingvisor.params:
+        print("parsed buffersize parameter: " + str(thingvisor.params['buffersize']))
+    else:
+        thingvisor.params['buffersize'] = 20
+        print("defaulting buffersize parameter: " + str(thingvisor.params['buffersize']))
     
     # starting flask
     app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)

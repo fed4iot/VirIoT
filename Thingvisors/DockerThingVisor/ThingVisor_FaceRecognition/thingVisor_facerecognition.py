@@ -178,11 +178,18 @@ if __name__ == '__main__':
     print("All vthings initialized")  
     print(thingvisor.v_things['detector'])
 
-    if thingvisor.params:
-        if 'upstream_camera_sensor' in thingvisor.params:
-            print("parsed upstream_camera_sensor parameter: " + str(thingvisor.params['upstream_camera_sensor']))
-        if 'fps' in thingvisor.params:
-            print("parsed fps parameter: " + str(thingvisor.params['fps']))
+
+    if 'upstream_camera_sensor' in thingvisor.params:
+        print("parsed upstream_camera_sensor parameter: " + str(thingvisor.params['upstream_camera_sensor']))
+    else:
+        print("NO UPSTREAM camera sensor where to fetch frams has been configured. Exiting.")
+        exit()
+    if 'fps' in thingvisor.params:
+        print("parsed fps parameter: " + str(thingvisor.params['fps']))
+    else:
+        thingvisor.params['fps'] = 2
+        print("defaulting fps parameter: " + str(thingvisor.params['fps']))
+
 
     # Map images to names
     image_to_name_mapping={}

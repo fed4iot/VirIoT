@@ -16,9 +16,12 @@
 import thingVisor_generic_module as thingvisor
 
 import requests
+import json
+import traceback
 from threading import Timer
 from eve import Eve
 from flask import request, Response
+from bson.objectid import ObjectId
 import face_recognition
 import cv2
 import numpy as np
@@ -136,7 +139,31 @@ def periodically_every_fps():
     Timer(1/thingvisor.params['fps'], periodically_every_fps).start()
 
 
-def encode_face(request, payload):
+def encode_target_face_callback(request, response):
+    thingvisor.executor.submit(encode_target_face_processor, response)
+def encode_target_face_processor(request, response):
+    print("LOIsd")
+    data = json.loads(response.get_data())
+    print(str(data))
+    print("LOIOOOOO")
+
+    if '_id' in data:
+        stringid = data["_id"]
+        print("Image POSTed on " + stringid)
+        # get image record from the collection. collection name is the EVE DOMAIN variable in settings.py
+        targetface_collection = app.data.driver.db['faceinputAPI']
+        print(str(targetface_collection))
+        # need to convert to ObjectId, string not possible directly
+        targetface_record = targetface_collection.find_one({'_id':ObjectId(stringid)})
+        print(str(targetface_record))
+        job = targetface_record["job"]
+        name = targetface_record["name"]
+        print("JOB " + job + "NAME " + name)
+        image_data = app.media.get(targetface_record['pic'])
+        print(len(image_data))
+
+        
+    
     # request.files is MultiDict object containing all uploaded files. Each key in files is the name
     # from the <input type="file" name="">. Each value in files is a Werkzeug FileStorage object.
     # It basically behaves like a standard file object you know from Python,
@@ -146,17 +173,13 @@ def encode_face(request, payload):
     # It will be empty otherwise.
     #See the MultiDict / FileStorage documentation for more details about the used data structure.
     #http://flask.pocoo.org/docs/1.0/api/#flask.Request.files
-    immutable_multi_dict = request.files
-    pic = immutable_multi_dict["pic"]
-    print(str(pic))
-    print(str(type(pic)))
-    data = pic.read()
-    print(str(data))
-    print(str(type(data)))
+    #immutable_multi_dict = request.files
+    #pic = immutable_multi_dict["pic"]
+
 
 
 app = Eve()
-app.on_post_POST_faceinputAPI += encode_face
+app.on_post_POST_faceinputAPI += encode_target_face_processor
 
 proxies = { "http": "http://viriot-nginx.default.svc.cluster.local",}
 

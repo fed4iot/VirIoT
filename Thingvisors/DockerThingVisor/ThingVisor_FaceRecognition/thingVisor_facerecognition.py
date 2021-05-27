@@ -54,12 +54,13 @@ import numpy as np
 #   }
 # }
 def on_start(cmd_name, cmd_info, id_LD):
+    global pending_commands
     # the important information is within "cmd-value" of cmd_info
     if "cmd-value" in cmd_info:
         if "job" in cmd_info["cmd-value"]:
             job = cmd_info["cmd-value"]["job"]
             pending_commands[job] = {'cmd_name':cmd_name,'cmd_info':cmd_info,'id_LD':id_LD}
-            print("added command for job " + job)
+            print("added command for job " + job + " so we have " + str(len(pending_commands))+ " jobs")
             # give status uodate that we have started
             if "cmd-qos" in cmd_info:
                 if int(cmd_info['cmd-qos']) > 0:
@@ -73,17 +74,18 @@ def on_start(cmd_name, cmd_info, id_LD):
 
 
 def periodically_every_fps():
+    global pending_commands
     # use current frame name to GET it from upstream camera sensor
     # See if we have a new frame in upstream TV that sends
     # neutral format as follows:
-# {
-#    id : urn:ngsi-ld:camerasensor-tv:sensor
-#    type : NewFrameEvent
-#    frameIdentifier : {
-#        type : Property
-#        value : "djvn5jntvG"
-#    }
-# }
+    # {
+    #    id : urn:ngsi-ld:camerasensor-tv:sensor
+    #    type : NewFrameEvent
+    #    frameIdentifier : {
+    #        type : Property
+    #        value : "djvn5jntvG"
+    #    }
+    # }
     if len(thingvisor.upstream_entities) != 0:
         upstream_vthing = thingvisor.params['upstream_vthingid'].split('/',1)[1] # second element of the split
         id = thingvisor.upstream_entities[0]["frameIdentifier"]["value"]
@@ -105,7 +107,19 @@ def periodically_every_fps():
                 # See if the face is a match for the known face(s)
                 matches = face_recognition.compare_faces(known_encodings, principal_encoding)
                 print(str(matches))
-
+                # go through metadata and keep only those in active jobs (that have matched!)
+                for index, metadata in enumerate(known_metadata):
+                    if matches[index]: #if the element at position 'index' in 'matches' array is True
+                        print("M"+str(index)+" "+metadata["job"]+" "+str(len(pending_commands)))
+                        if metadata["job"] in pending_commands.keys(): # if pending_commands contains a key for the string representing the "job" field of the current metadata of the loop
+                            job = metadata["job"]
+                            cmd_name = pending_commands[job]["cmd_name"]
+                            cmd_info = pending_commands[job]["cmd_info"]
+                            id_LD = pending_commands[job]["id_LD"]
+                            payload = metadata.copy()
+                            type_of_message = "status"
+                            thingvisor.publish_actuation_response_message(cmd_name, cmd_info, id_LD, payload, type_of_message)
+                            print("CHECK YOUR BROKER: " + str(payload))
         else:
             print("i got error " + str(r.status_code) + " when going to " + url)
     Timer(1/thingvisor.params['fps'], periodically_every_fps).start()
@@ -134,10 +148,15 @@ def encode_target_face_process(request, response):
         face_encodings = face_recognition.face_encodings(decoded_image, face_locations)
         for face_encoding in face_encodings:
             known_encodings.append(face_encoding)
-            known_metadata.append({"face_encoding":face_encoding, "job":job, "name":name})
+            # for "original_pic" i convert the mongo objectid of the media pic to a string
+            known_metadata.append({"job":job, "name":name, "original_pic":"/media/"+str(targetface_record['pic'])})
     else:
         print("The POST of the target picture went wrong")
 
+
+# main
+#if __name__ == '__main__':
+thingvisor.initialize_thingvisor("thingVisor_facerecognition")
 
 # globally
 pending_commands = dict()
@@ -145,28 +164,23 @@ proxies = { "http": "http://viriot-nginx.default.svc.cluster.local",}
 known_encodings = []
 known_metadata = []
 app = Eve()
+app.on_post_POST_faceinputAPI += encode_target_face_process
+# create the detector vThing: name, type, description, array of commands
+thingvisor.initialize_vthing("detector","FaceRecognitionEvent","faceRecognition virtual thing",["start","stop","delete-by-name"])
+print("All vthings initialized")  
+print(thingvisor.v_things['detector'])
 
-# main
-if __name__ == '__main__':
-    app.on_post_POST_faceinputAPI += encode_target_face_process
+if not 'upstream_vthingid' in thingvisor.params:
+    print("NO UPSTREAM camera sensor where to fetch frames has been configured. Waiting for it.")
+if 'fps' in thingvisor.params:
+    print("parsed fps parameter: " + str(thingvisor.params['fps']))
+else:
+    thingvisor.params['fps'] = 2
+    print("defaulting fps parameter: " + str(thingvisor.params['fps']))
 
-    thingvisor.initialize_thingvisor("thingVisor_facerecognition")
-    # create the detector vThing: name, type, description, array of commands
-    thingvisor.initialize_vthing("detector","FaceRecognitionEvent","faceRecognition virtual thing",["start","stop","delete-by-name"])
-    print("All vthings initialized")  
-    print(thingvisor.v_things['detector'])
+# enters the main timer thread that obtains the new video frame every fps
+periodically_every_fps()
 
-    if not 'upstream_vthingid' in thingvisor.params:
-        print("NO UPSTREAM camera sensor where to fetch frames has been configured. Waiting for it.")
-    if 'fps' in thingvisor.params:
-        print("parsed fps parameter: " + str(thingvisor.params['fps']))
-    else:
-        thingvisor.params['fps'] = 2
-        print("defaulting fps parameter: " + str(thingvisor.params['fps']))
-
-    # enters the main timer thread that obtains the new video frame every fps
-    periodically_every_fps()
-
-    # runs eve, and halts the main thread
-    app.run(debug=False,host='0.0.0.0',port='5000')
-    print("EVE was running. Bye.")
+# runs eve, and halts the main thread
+app.run(debug=False,host='0.0.0.0',port='5000')
+print("EVE was running. Bye.")

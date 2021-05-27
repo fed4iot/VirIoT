@@ -22,7 +22,7 @@ import paho.mqtt.client as mqtt
 from pymongo import MongoClient
 from context import Context
 from concurrent.futures import ThreadPoolExecutor
-
+from importlib import import_module
 
 def initialize_vthing(vthingindex, type, description, commands):
     v_things[vthingindex]={}
@@ -146,7 +146,7 @@ def publish_attributes_of_a_vthing(vthingindex, attributes):
 
 def publish_message_with_data_client(message, topic):
     msg=json.dumps(message)
-    print("Message published to " + topic + "\n" + msg+"\n")
+    #print("Message published to " + topic + "\n" + msg+"\n")
     # publish data to topic
     mqtt_data_client.publish(topic, msg)
 
@@ -253,11 +253,18 @@ def process_actuation_request(cmd_entity):
                 fname = cmd_name.replace('-','_')
                 fname = "on_" + fname
                 # get function object via reflection
-                f = getattr(self,fname)
+                f = getattr(thingvisorspecific, fname)
+                # i use this form because now the function to be called is in
+                # another module that i do not know the name
+                #for k, v in list(globals().items()):
+                #    print(k + " ;; ")
+                #f = globals()[fname]
                 if "cmd-qos" in cmd_info:
                     if int(cmd_info['cmd-qos']) == 2:
                         publish_actuation_response_message(cmd_name, cmd_info, id_LD, "PENDING", "status")
-                executor.submit(f, cmd_name, cmd_info, id_LD)
+                future = executor.submit(f, cmd_name, cmd_info, id_LD)
+                print("processed actuation command with errors: "+f'{future.result()}')
+                #f(cmd_name, cmd_info, id_LD)
     except:
         traceback.print_exc()
 
@@ -311,7 +318,7 @@ def connect_to_upstream_thingvisor():
 
 
 # main initializer of the TV
-def initialize_thingvisor():
+def initialize_thingvisor(thingvisor_specific_module_name):
     global v_things
     global command_data
     global tv_control_prefix
@@ -330,6 +337,12 @@ def initialize_thingvisor():
     global upstream_entities
     global thing_visor_collection
     global db_client
+    global thingvisorspecific
+
+    # lets import the specific functions and bind them into us
+    print("importing module: " + thingvisor_specific_module_name)
+    thingvisorspecific = import_module(thingvisor_specific_module_name)
+
     upstream_entities = []
 
     MAX_RETRY = 3

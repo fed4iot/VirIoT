@@ -19,7 +19,9 @@ import requests
 from threading import Timer
 from eve import Eve
 from flask import request, Response
-
+import face_recognition
+import cv2
+import numpy as np
 
 # -*- coding: utf-8 -*-
 
@@ -28,20 +30,19 @@ from flask import request, Response
 # the vthing ID is: facerec-tv/detector, and the vthing produces a stream of one NGSI-LD entity,
 # which has NGSI-LD identifier: urn:ngsi-ld:facerec-tv:detector, and the NGSI-LD type of the
 # produced entity is hardcoded to: FaceDetector
-# The vthing supports the following commands: ["start","stop","set-face-feature","delete-by-name"].
+# The vthing supports the following commands: ["start","stop","delete-by-name"].
 # Users interact with the vthing by actuating it, i.e. sending commands.
 # A target face to be recognized cannot be embedded into a command, but a dedicated HTTP endpoint
 # is offered by this TV, so that users can PUT/POST to it to accumulate target pictures
+# This endpoint is named facesinput/
 
 # The CameraSensor TV (hosting the sensor vthing) needs a sidecar-tv so that downstream
 # clients can ask for TV_IP:TV_PORT_80/sensor/currentframe/xxx
 # The FaceRecognition TV needs a sidecar-flavour so that the above TV_IP:TV_PORT_80/sensor/currentframe/xxx is
 # proxied everywhere in the platfors as 
 
-app = Eve()
-proxies = { "http": "http://viriot-nginx.default.svc.cluster.local",}
 
-def on_post_PATCH_faceInput(request,lookup):
+def on_post_POST_faceinputAPI(request,lookup):
     try:
         data=json.loads(lookup.get_data())
 
@@ -135,6 +136,30 @@ def periodically_every_fps():
     Timer(1/thingvisor.params['fps'], periodically_every_fps).start()
 
 
+def encode_face(request, payload):
+    # request.files is MultiDict object containing all uploaded files. Each key in files is the name
+    # from the <input type="file" name="">. Each value in files is a Werkzeug FileStorage object.
+    # It basically behaves like a standard file object you know from Python,
+    # with the difference that it also has a save() function that can store the file on the filesystem.
+    # Note that files will only contain data if the request method was POST,
+    # PUT or PATCH and the <form> that posted to the request had  enctype="multipart/form-data".
+    # It will be empty otherwise.
+    #See the MultiDict / FileStorage documentation for more details about the used data structure.
+    #http://flask.pocoo.org/docs/1.0/api/#flask.Request.files
+    immutable_multi_dict = request.files
+    pic = immutable_multi_dict["pic"]
+    print(str(pic))
+    print(str(type(pic)))
+    data = pic.read()
+    print(str(data))
+    print(str(type(data)))
+
+
+app = Eve()
+app.on_post_POST_faceinputAPI += encode_face
+
+proxies = { "http": "http://viriot-nginx.default.svc.cluster.local",}
+
 # main
 if __name__ == '__main__':
     thingvisor.initialize_thingvisor()
@@ -155,10 +180,6 @@ if __name__ == '__main__':
     image_to_name_mapping={}
     # store image count for every name
     image_count={}
-
-    # set eve callbacks
-    app.on_post_PATCH_faceInput += on_post_PATCH_faceInput
-    app.on_post_POST_faceOutput += on_post_POST_faceOutput
 
     # enters the main timer thread that obtains the new video frame every fps
     periodically_every_fps()

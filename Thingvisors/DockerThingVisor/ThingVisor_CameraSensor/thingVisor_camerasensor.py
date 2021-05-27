@@ -40,13 +40,28 @@ from flask import Flask, request, Response
 app=Flask(__name__)
 
 
+@app.route('/currentframe')
+def GET_current_frame():
+    ### i could offer the img_str buffer via HTTP at this point
+    try:
+        # get from the redis stream named "buffername" just 1 item
+        list_of_matching_results = rdis.xrange(buffername, count=1)
+        # we get back a list of results (with only 1 result). we pick it
+        first_result = list_of_matching_results[0]
+        # each result is a tuple where first element [0] is the id (key),
+        # second element [1] is the dict (value) holding the frame information
+        frame_information = first_result[1]
+        data = frame_information[b"data"]
+        observedAt = frame_information[b"observedAt"]
+    except:
+        data = ""
+
+    return Response(data, mimetype='image/jpeg')
+
+
 @app.route('/currentframe/<randomid>')
 def GET_current_frame_by_id(randomid):
     ### i could offer the img_str buffer via HTTP at this point
-    headers={"Content-disposition": "attachment"}
-    headers["Cache-Control"]="no-cache"
-    print("GET ", randomid)
-
     try:
         # get from the redis stream named "buffername" just 1 item (from randomid to randomid)
         list_of_matching_results = rdis.xrange(buffername,randomid,randomid)
@@ -60,7 +75,7 @@ def GET_current_frame_by_id(randomid):
     except:
         data = ""
 
-    return Response(data, mimetype='image/jpeg', headers=headers)
+    return Response(data, mimetype='image/jpeg')
 
 
 @app.route('/framesinput',methods=['POST'])            

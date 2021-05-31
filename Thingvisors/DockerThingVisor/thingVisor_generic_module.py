@@ -86,6 +86,15 @@ def create_vthing_initial_context(vthingindex):
     add_core_context_to_ngsildentity(ngsiLdEntity)
     data = [ngsiLdEntity]
     v_things[vthingindex]['context'].set_all(data)
+    # at startup we want to renew the "commands" property, in case existing
+    # Brokers have an outdated list of "commands". We use the publish_attributes function:
+    # each item is an attribute to be injected in the Entity, as follows:
+    # {attributename:STRING, attributevalue:WHATEVER, isrelationship:BOOL (optional)}
+    publish_attributes_of_a_vthing(vthingindex,
+                                    [{
+                                    "attributename" : "commands",
+                                    "attributevalue" : v_things[vthingindex]['commands']
+                                    }] )
     
 
 def subscribe_vthing_data_in_topic(vthingindex):

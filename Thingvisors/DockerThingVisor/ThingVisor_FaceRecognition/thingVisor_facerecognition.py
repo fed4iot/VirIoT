@@ -18,7 +18,7 @@ import thingVisor_generic_module as thingvisor
 import requests
 import json
 import traceback
-from threading import Timer
+from threading import Timer, Lock
 from eve import Eve
 from flask import request, Response
 from bson.objectid import ObjectId
@@ -53,28 +53,56 @@ import numpy as np
 #     cmd-qos : 2
 #   }
 # }
-def on_start(cmd_name, cmd_info, id_LD):
-    global pending_commands
+def on_startjob(cmd_name, cmd_info, id_LD):
     # the important information is within "cmd-value" of cmd_info
     if "cmd-value" in cmd_info:
         if "job" in cmd_info["cmd-value"]:
             job = cmd_info["cmd-value"]["job"]
+            # protect the pending_commands from other threads using it
+            # while we insert a new job
+            known_encodings_lock.acquire()
             pending_commands[job] = {'cmd_name':cmd_name,'cmd_info':cmd_info,'id_LD':id_LD}
             print("added command for job " + job + " so we have " + str(len(pending_commands))+ " jobs")
+            # un protect the pending_commands from other threads using it
+            # while we inster a new job
+            known_encodings_lock.release()
             # give status uodate that we have started
             if "cmd-qos" in cmd_info:
                 if int(cmd_info['cmd-qos']) > 0:
                     thingvisor.publish_actuation_response_message(cmd_name, cmd_info, id_LD, "STARTING job: "+job, "status")
         else:
-            print("no job in START command")
+            print("no job in STARTJOB command")
     else:
-        print("no cmd-value for START command")
+        print("no cmd-value for STARTJOB command")
 
 
+def on_deletejob(cmd_name, cmd_info, id_LD):
+    # the important information is within "cmd-value" of cmd_info
+    if "cmd-value" in cmd_info:
+        if "job" in cmd_info["cmd-value"]:
+            job = cmd_info["cmd-value"]["job"]
+            # protect the pending_commands from other threads using it
+            # while we remove a job
+            known_encodings_lock.acquire()
+            pending_commands.pop(job, "NOT FOUND")
+            #TODO
+            #TODO REMOVE PICTURES OF THE JOB------------------------------
+            #TODO
+            print("delete command for job " + job + " so we have " + str(len(pending_commands))+ " jobs")
+            # un protect the pending_commands from other threads using it
+            # while we inster a new job
+            known_encodings_lock.release()
+            # give status uodate that we have started
+            if "cmd-qos" in cmd_info:
+                if int(cmd_info['cmd-qos']) > 0:
+                    thingvisor.publish_actuation_response_message(cmd_name, cmd_info, id_LD, "DELETED job: "+job, "status")
+        else:
+            print("no job in DELETE-JOB command")
+    else:
+        print("no cmd-value for DELETE-JOB command")
 
 
 def periodically_every_fps():
-    global pending_commands
     # use current frame name to GET it from upstream camera sensor
     # See if we have a new frame in upstream TV that sends
     # neutral format as follows:
@@ -104,14 +132,19 @@ def periodically_every_fps():
                 print("A face appeared")
                 face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
                 principal_encoding = face_encodings[0]
+                # protect the arrays from other threads inserting or deleting faces
+                # while we run the recognition for the current frame
+                known_encodings_lock.acquire()
                 # See if the face is a match for the known face(s)
                 matches = face_recognition.compare_faces(known_encodings, principal_encoding)
                 print(str(matches))
-                # go through metadata and keep only those in active jobs (that have matched!)
+                # go through metadata and consider only those in active jobs (that have matched!)
                 for index, metadata in enumerate(known_metadata):
                     if matches[index]: #if the element at position 'index' in 'matches' array is True
                         print("M"+str(index)+" "+metadata["job"]+" "+str(len(pending_commands)))
-                        if metadata["job"] in pending_commands.keys(): # if pending_commands contains a key for the string representing the "job" field of the current metadata of the loop
+                        # if pending_commands contains a key for the string representing the "job"
+                        # field of the current metadata of the loop
+                        if metadata["job"] in pending_commands.keys():
                             job = metadata["job"]
                             cmd_name = pending_commands[job]["cmd_name"]
                             cmd_info = pending_commands[job]["cmd_info"]
@@ -120,6 +153,9 @@ def periodically_every_fps():
                             type_of_message = "status"
                             thingvisor.publish_actuation_response_message(cmd_name, cmd_info, id_LD, payload, type_of_message)
                             print("CHECK YOUR BROKER: " + str(payload))
+                # un protect the arrays from other threads inserting or deleting faces
+                # while we run the recognition for the current frame
+                known_encodings_lock.release()
         else:
             print("i got error " + str(r.status_code) + " when going to " + url)
     Timer(1/thingvisor.params['fps'], periodically_every_fps).start()
@@ -146,10 +182,18 @@ def encode_target_face_process(request, response):
         # Find all the faces and face encodings in the current frame of video
         face_locations = face_recognition.face_locations(decoded_image)
         face_encodings = face_recognition.face_encodings(decoded_image, face_locations)
+        # protect the known_encodings and _metadata arrays from the recognition
+        # thread running in parallel while we modify them , because recognition
+        # could fail simply because the _encodings and _metadata got out of sync
+        # in terms of indexes not being aligned anymore
+        known_encodings_lock.acquire()
         for face_encoding in face_encodings:
             known_encodings.append(face_encoding)
             # for "original_pic" i convert the mongo objectid of the media pic to a string
             known_metadata.append({"job":job, "name":name, "original_pic":"/media/"+str(targetface_record['pic'])})
+        # un protect the known_encodings and _metadata arrays from the recognition
+        # thread running in parallel while we modify them
+        known_encodings_lock.release()
     else:
         print("The POST of the target picture went wrong")
 
@@ -158,15 +202,19 @@ def encode_target_face_process(request, response):
 #if __name__ == '__main__':
 thingvisor.initialize_thingvisor("thingVisor_facerecognition")
 
-# globally
+# global variables
 pending_commands = dict()
-proxies = { "http": "http://viriot-nginx.default.svc.cluster.local",}
 known_encodings = []
 known_metadata = []
+# the three arrays above must be protecterd by a guard lock because
+# they have to stay in sync
+known_encodings_lock = Lock()
+# EVE is used to store and fetch images in a mongo DB
 app = Eve()
 app.on_post_POST_faceinputAPI += encode_target_face_process
+proxies = { "http": "http://viriot-nginx.default.svc.cluster.local",}
 # create the detector vThing: name, type, description, array of commands
-thingvisor.initialize_vthing("detector","FaceRecognitionEvent","faceRecognition virtual thing",["start","stop","delete-by-name"])
+thingvisor.initialize_vthing("detector","FaceRecognitionEvent","faceRecognition virtual thing",["startjob","deletejob"])
 print("All vthings initialized")  
 print(thingvisor.v_things['detector'])
 

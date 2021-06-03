@@ -15,6 +15,7 @@
 
 import thingVisor_generic_module as thingvisor
 
+import copy
 import requests
 import json
 import traceback
@@ -64,13 +65,13 @@ def process_job_command(cmd_name, cmd_info, id_LD, jobtype):
             known_encodings_lock.acquire()
             if jobtype == "START":
                 pending_commands[job] = {'cmd_name':cmd_name,'cmd_info':cmd_info,'id_LD':id_LD}
-            else if jobtype == "DELETE":
+            elif jobtype == "DELETE":
                 pending_commands.pop(job, "NOT FOUND")
                 #TODO
                 #TODO REMOVE PICTURES OF THE JOB------------------------------
                 #TODO
             else:
-                print("unrecognized jobtype"+jobtype
+                print("unrecognized jobtype"+jobtype)
             print(jobtype+" command for job " + job + " so we have " + str(len(pending_commands))+ " jobs")
             # un protect the pending_commands from other threads using it
             # while we insert/delete a new job
@@ -132,43 +133,60 @@ def periodically_every_fps():
                 print("MATCH: "+str(matches))
                 matching_responses = []
                 # go through metadata and consider only those in active jobs (that have matched!)
+                # metadata is in the form {"job":job, "name":name, "original_pic":"/media/BLABLA"}
                 for index, metadata in enumerate(known_metadata):
                     if matches[index]: #if the element at position 'index' in 'matches' array is True
                         print("M"+str(index)+" "+metadata["job"]+" "+str(len(pending_commands)))
                         # if pending_commands contains a key for the string representing
                         # the "job" field of the current metadata of the loop
                         if metadata["job"] in pending_commands.keys():
+                            job = metadata["job"]
                             #TODO accumulate metainfo for every match into an array so that
                             # when i exit the loop i can send them
                             # via a future executor.submit that takes whatever time it needs
                             # I (deep)copy them because when i exit the lock somebody can remove them
-                            # (also strings, i am not sure they are strings; in any case it does not harm)
                             matching_responses.append({
-                                "job":metadata["job"].deepcopy(),
-                                "name":metadata["name"].deepcopy(),
-                                "cmd_name":pending_commands[job]["cmd_name"].deepcopy(),
-                                "cmd_info":pending_commands[job]["cmd_info"].deepcopy(),
-                                "id_LD":pending_commands[job]["id_LD"].deepcopy(),
-                                "payload":metadata.deepcopy()
+                                "job":job,
+                                "name":metadata["name"],
+                                "cmd_name":pending_commands[job]["cmd_name"],
+                                "cmd_info":copy.deepcopy(pending_commands[job]["cmd_info"]),
+                                "id_LD":pending_commands[job]["id_LD"],
+                                "payload":copy.deepcopy(metadata)
                             })
-                            print("CHECK YOUR BROKER: " + str(payload))
+                            print("CHECK YOUR BROKER: " + str(metadata))
                 # un protect the arrays from other threads inserting or deleting faces
                 # while we run the recognition for the current frame
                 known_encodings_lock.release()
-                thingvisor.executor.submit(insert_matching_face_and_send_responses, image_bytes, matching_responses)
+                future = thingvisor.executor.submit(insert_matching_face_and_send_responses, image_bytes, matching_responses)
+                print("processed recognition with errors: "+f'{future.result()}')
         else:
             print("i got error " + str(r.status_code) + " when going to " + url)
     Timer(1/thingvisor.params['fps'], periodically_every_fps).start()
 
 
 def insert_matching_face_and_send_responses(image_bytes, matching_responses):
-    # store the face that matches into the local storage
-    with app.app_context():
-        with app.test_request_context():
-            post_internal('recognizedfaces', {"_id": id})
     for matching_response in matching_responses:
-        #TODO BLA
-        thingvisor.publish_actuation_response_message(cmd_name, cmd_info, id_LD, payload, type_of_message)
+        job = matching_response["job"]
+        name = matching_response["name"]
+        # store the face that matches into the local storage under job and name
+        url_of_recognized_face = ""
+        with app.app_context():
+            with app.test_request_context():
+                recognized_face_payload = {
+                    "job": job,
+                    "name": name,
+                    "pic": image_bytes
+                }
+                recognizedface = post_internal('recognizedfacesAPI', recognized_face_payload)[0]
+                url_of_recognized_face = recognizedface["url"]
+                print("FECO "+str(recognizedface)+" UEL "+str(url_of_recognized_face))
+        if url_of_recognized_face != "":
+            cmd_name = matching_response["cmd_name"]
+            cmd_info = matching_response["cmd_info"]
+            id_LD = matching_response["id_LD"]
+            payload = matching_response["payload"]
+            type_of_message = "status"
+            thingvisor.publish_actuation_response_message(cmd_name, cmd_info, id_LD, payload, type_of_message)
 
 
 def encode_target_face_callback(request, response):

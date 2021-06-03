@@ -20,6 +20,7 @@ import json
 import traceback
 from threading import Timer, Lock
 from eve import Eve
+from eve.methods.post import post_internal
 from flask import request, Response
 from bson.objectid import ObjectId
 import face_recognition
@@ -33,11 +34,11 @@ import numpy as np
 # the vthing ID is: facerec-tv/detector, and the vthing produces a stream of one NGSI-LD entity,
 # which has NGSI-LD identifier: urn:ngsi-ld:facerec-tv:detector, and the NGSI-LD type of the
 # produced entity is hardcoded to: FaceDetector
-# The vthing supports the following commands: ["start","stop","delete-by-name"].
+# The vthing supports the following commands: ["startjob","deletejob"].
 # Users interact with the vthing by actuating it, i.e. sending commands.
 # A target face to be recognized cannot be embedded into a command, but a dedicated HTTP endpoint
 # is offered by this TV, so that users can PUT/POST to it to accumulate target pictures
-# This endpoint is named facesinput/
+# This endpoint is named targetfaces/
 
 # The CameraSensor TV (hosting the sensor vthing) needs a sidecar-tv so that downstream
 # clients can ask for TV_IP:TV_PORT_80/sensor/currentframe/xxx
@@ -45,61 +46,52 @@ import numpy as np
 # proxied everywhere in the platform
 
 
-# to actuate this detector, use your Broker to channge the "start" Property, as follows:
-# start : {
+# to actuate this detector, use your Broker to channge the "startjob" Property, as follows:
+# startjob : {
 #   type : Property
 #   value : {
 #     cmd-value : {"job":"dsfsdfdsf234"}
 #     cmd-qos : 2
 #   }
 # }
-def on_startjob(cmd_name, cmd_info, id_LD):
+def process_job_command(cmd_name, cmd_info, id_LD, jobtype):
     # the important information is within "cmd-value" of cmd_info
     if "cmd-value" in cmd_info:
         if "job" in cmd_info["cmd-value"]:
             job = cmd_info["cmd-value"]["job"]
             # protect the pending_commands from other threads using it
-            # while we insert a new job
+            # while we insert/delete a new job
             known_encodings_lock.acquire()
-            pending_commands[job] = {'cmd_name':cmd_name,'cmd_info':cmd_info,'id_LD':id_LD}
-            print("added command for job " + job + " so we have " + str(len(pending_commands))+ " jobs")
+            if jobtype == "START":
+                pending_commands[job] = {'cmd_name':cmd_name,'cmd_info':cmd_info,'id_LD':id_LD}
+            else if jobtype == "DELETE":
+                pending_commands.pop(job, "NOT FOUND")
+                #TODO
+                #TODO REMOVE PICTURES OF THE JOB------------------------------
+                #TODO
+            else:
+                print("unrecognized jobtype"+jobtype
+            print(jobtype+" command for job " + job + " so we have " + str(len(pending_commands))+ " jobs")
             # un protect the pending_commands from other threads using it
-            # while we inster a new job
+            # while we insert/delete a new job
             known_encodings_lock.release()
-            # give status uodate that we have started
-            if "cmd-qos" in cmd_info:
-                if int(cmd_info['cmd-qos']) > 0:
-                    thingvisor.publish_actuation_response_message(cmd_name, cmd_info, id_LD, "STARTING job: "+job, "status")
+            # give status update that we have started/deleted
+            if jobtype == "START" or jobtype == "DELETE":
+                if "cmd-qos" in cmd_info:
+                    if int(cmd_info['cmd-qos']) > 0:
+                        thingvisor.publish_actuation_response_message(cmd_name, cmd_info, id_LD, "Just received "+jobtype+" job: "+job, "status")
         else:
-            print("no job in STARTJOB command")
+            print("no job in command "+jobtype)
     else:
-        print("no cmd-value for STARTJOB command")
+        print("no cmd-value for command "+jobtype)
+
+
+def on_startjob(cmd_name, cmd_info, id_LD):
+    process_job_command(cmd_name, cmd_info, id_LD, "START")
 
 
 def on_deletejob(cmd_name, cmd_info, id_LD):
-    # the important information is within "cmd-value" of cmd_info
-    if "cmd-value" in cmd_info:
-        if "job" in cmd_info["cmd-value"]:
-            job = cmd_info["cmd-value"]["job"]
-            # protect the pending_commands from other threads using it
-            # while we remove a job
-            known_encodings_lock.acquire()
-            pending_commands.pop(job, "NOT FOUND")
-            #TODO
-            #TODO REMOVE PICTURES OF THE JOB------------------------------
-            #TODO
-            print("delete command for job " + job + " so we have " + str(len(pending_commands))+ " jobs")
-            # un protect the pending_commands from other threads using it
-            # while we inster a new job
-            known_encodings_lock.release()
-            # give status uodate that we have started
-            if "cmd-qos" in cmd_info:
-                if int(cmd_info['cmd-qos']) > 0:
-                    thingvisor.publish_actuation_response_message(cmd_name, cmd_info, id_LD, "DELETED job: "+job, "status")
-        else:
-            print("no job in DELETE-JOB command")
-    else:
-        print("no cmd-value for DELETE-JOB command")
+    process_job_command(cmd_name, cmd_info, id_LD, "DELETE")
 
 
 def periodically_every_fps():
@@ -137,28 +129,46 @@ def periodically_every_fps():
                 known_encodings_lock.acquire()
                 # See if the face is a match for the known face(s)
                 matches = face_recognition.compare_faces(known_encodings, principal_encoding)
-                print(str(matches))
+                print("MATCH: "+str(matches))
+                matching_responses = []
                 # go through metadata and consider only those in active jobs (that have matched!)
                 for index, metadata in enumerate(known_metadata):
                     if matches[index]: #if the element at position 'index' in 'matches' array is True
                         print("M"+str(index)+" "+metadata["job"]+" "+str(len(pending_commands)))
-                        # if pending_commands contains a key for the string representing the "job"
-                        # field of the current metadata of the loop
+                        # if pending_commands contains a key for the string representing
+                        # the "job" field of the current metadata of the loop
                         if metadata["job"] in pending_commands.keys():
-                            job = metadata["job"]
-                            cmd_name = pending_commands[job]["cmd_name"]
-                            cmd_info = pending_commands[job]["cmd_info"]
-                            id_LD = pending_commands[job]["id_LD"]
-                            payload = metadata.copy()
-                            type_of_message = "status"
-                            thingvisor.publish_actuation_response_message(cmd_name, cmd_info, id_LD, payload, type_of_message)
+                            #TODO accumulate metainfo for every match into an array so that
+                            # when i exit the loop i can send them
+                            # via a future executor.submit that takes whatever time it needs
+                            # I (deep)copy them because when i exit the lock somebody can remove them
+                            # (also strings, i am not sure they are strings; in any case it does not harm)
+                            matching_responses.append({
+                                "job":metadata["job"].deepcopy(),
+                                "name":metadata["name"].deepcopy(),
+                                "cmd_name":pending_commands[job]["cmd_name"].deepcopy(),
+                                "cmd_info":pending_commands[job]["cmd_info"].deepcopy(),
+                                "id_LD":pending_commands[job]["id_LD"].deepcopy(),
+                                "payload":metadata.deepcopy()
+                            })
                             print("CHECK YOUR BROKER: " + str(payload))
                 # un protect the arrays from other threads inserting or deleting faces
                 # while we run the recognition for the current frame
                 known_encodings_lock.release()
+                thingvisor.executor.submit(insert_matching_face_and_send_responses, image_bytes, matching_responses)
         else:
             print("i got error " + str(r.status_code) + " when going to " + url)
     Timer(1/thingvisor.params['fps'], periodically_every_fps).start()
+
+
+def insert_matching_face_and_send_responses(image_bytes, matching_responses):
+    # store the face that matches into the local storage
+    with app.app_context():
+        with app.test_request_context():
+            post_internal('recognizedfaces', {"_id": id})
+    for matching_response in matching_responses:
+        #TODO BLA
+        thingvisor.publish_actuation_response_message(cmd_name, cmd_info, id_LD, payload, type_of_message)
 
 
 def encode_target_face_callback(request, response):
@@ -169,7 +179,7 @@ def encode_target_face_process(request, response):
         stringid = data["_id"]
         print("Image POSTed on " + stringid)
         # get image record from the collection. collection name is the EVE DOMAIN variable in settings.py
-        targetface_collection = app.data.driver.db['faceinputAPI']
+        targetface_collection = app.data.driver.db['targetfacesAPI']
         print(str(targetface_collection))
         # need to convert to ObjectId, string not possible directly
         targetface_record = targetface_collection.find_one({'_id':ObjectId(stringid)})
@@ -211,7 +221,7 @@ known_metadata = []
 known_encodings_lock = Lock()
 # EVE is used to store and fetch images in a mongo DB
 app = Eve()
-app.on_post_POST_faceinputAPI += encode_target_face_process
+app.on_post_POST_targetfacesAPI += encode_target_face_process
 proxies = { "http": "http://viriot-nginx.default.svc.cluster.local",}
 # create the detector vThing: name, type, description, array of commands
 thingvisor.initialize_vthing("detector","FaceRecognitionEvent","faceRecognition virtual thing",["startjob","deletejob"])

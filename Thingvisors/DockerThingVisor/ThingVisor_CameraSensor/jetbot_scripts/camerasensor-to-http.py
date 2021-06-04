@@ -31,17 +31,15 @@ def callback(change):
     image = cv2.undistort(image, calibration_params['mtx'], calibration_params['dist'], None)
     # Resize frame of video to 1/4 size for faster face recognition processing
     small_frame = cv2.resize(image, (0, 0), fx=0.25, fy=0.25)
-    # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
-    rgb_small_frame = small_frame[:, :, ::-1]
     # compress image to jpeg
-    is_success, buffer = cv2.imencode(".jpg", rgb_small_frame)
+    is_success, buffer = cv2.imencode(".jpg", small_frame)
     # need a stream to send it via http requests
     io_buf = io.BytesIO(buffer)
     img_str = io_buf.getvalue()
     io_buf.seek(0)
     
     # send image + timestamp to http server
-    addr = 'http://13.80.153.4:32173'
+    addr = 'http://13.80.153.4:31867'
     server_url = addr + '/framesinput'
     payload = {"observedAt": int(time.time())}
     files = {
@@ -69,4 +67,3 @@ while True:
     time.sleep(10)
 
 camera.unobserve(execute, names='value')
-

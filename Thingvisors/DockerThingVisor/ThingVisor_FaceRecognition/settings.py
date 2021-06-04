@@ -28,9 +28,7 @@ targetfaces = {
 recognizedfaces = {
     'resource_methods': ['GET','POST'],
     'schema': faces_schema,
-    # we use the sub-resources feature of EVE here, so that "job" and "name"
-    # fields are captured from the url structure itself
-    'url': 'recognizedfaces/<' + names_regex + ':job>/<' + names_regex + ':name>'
+    'url': 'recognizedfaces'
 }
 
 DOMAIN = {

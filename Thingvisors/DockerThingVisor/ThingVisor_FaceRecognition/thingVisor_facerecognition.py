@@ -117,13 +117,11 @@ def periodically_every_fps():
         if r.status_code == 200:
             image_bytes=r.content
             decoded_image = cv2.imdecode(np.frombuffer(image_bytes, np.uint8), -1)
-            # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
-            rgb_frame = decoded_image[:, :, ::-1]
             # Find all the faces and face encodings in the current frame of video
-            face_locations = face_recognition.face_locations(rgb_frame)
+            face_locations = face_recognition.face_locations(decoded_image)
             if len(face_locations) > 0:
                 print("A face appeared")
-                face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
+                face_encodings = face_recognition.face_encodings(decoded_image, face_locations)
                 principal_encoding = face_encodings[0]
                 # protect the arrays from other threads inserting or deleting faces
                 # while we run the recognition for the current frame
@@ -133,7 +131,7 @@ def periodically_every_fps():
                 print("MATCH: "+str(matches))
                 matching_responses = []
                 # go through metadata and consider only those in active jobs (that have matched!)
-                # metadata is in the form {"job":job, "name":name, "original_pic":"/media/BLABLA"}
+                # metadata is in the form {"job":job, "name":name, "original-uri":"/media/BLABLA"}
                 for index, metadata in enumerate(known_metadata):
                     if matches[index]: #if the element at position 'index' in 'matches' array is True
                         print("M"+str(index)+" "+metadata["job"]+" "+str(len(pending_commands)))
@@ -169,22 +167,24 @@ def insert_matching_face_and_send_responses(image_bytes, matching_responses):
         job = matching_response["job"]
         name = matching_response["name"]
         # store the face that matches into the local storage under job and name
+        # If you want to use the post_internal to avoid HTTP on localhost, see:
+        # https://stackoverflow.com/questions/30333992/use-put-internal-to-upload-file-using-python-eve
         url_of_recognized_face = ""
-        with app.app_context():
-            with app.test_request_context():
-                recognized_face_payload = {
-                    "job": job,
-                    "name": name,
-                    "pic": image_bytes
-                }
-                recognizedface = post_internal('recognizedfacesAPI', recognized_face_payload)[0]
-                url_of_recognized_face = recognizedface["url"]
-                print("FECO "+str(recognizedface)+" UEL "+str(url_of_recognized_face))
-        if url_of_recognized_face != "":
+        recognized_face_payload = {
+            "job": job,
+            "name": name
+        }
+        recognizedface = requests.post('http://localhost:5000/recognizedfaces', data=recognized_face_payload, files={"pic":("recognized.jpeg", image_bytes, 'image/jpeg')})
+        response_data = recognizedface.json()
+        if '_id' in response_data:
+            id_of_recognized_face = response_data["_id"]
+            url_of_recognized_face = "/media/" + id_of_recognized_face
+            print(" recognized face at URL "+str(url_of_recognized_face))
             cmd_name = matching_response["cmd_name"]
             cmd_info = matching_response["cmd_info"]
             id_LD = matching_response["id_LD"]
             payload = matching_response["payload"]
+            payload["recognized-uri"] = url_of_recognized_face
             type_of_message = "status"
             thingvisor.publish_actuation_response_message(cmd_name, cmd_info, id_LD, payload, type_of_message)
 
@@ -217,8 +217,8 @@ def encode_target_face_process(request, response):
         known_encodings_lock.acquire()
         for face_encoding in face_encodings:
             known_encodings.append(face_encoding)
-            # for "original_pic" i convert the mongo objectid of the media pic to a string
-            known_metadata.append({"job":job, "name":name, "original_pic":"/media/"+str(targetface_record['pic'])})
+            # for "original-uri" i convert the mongo objectid of the media pic to a string
+            known_metadata.append({"job":job, "name":name, "original-uri":"/media/"+str(targetface_record['pic'])})
         # un protect the known_encodings and _metadata arrays from the recognition
         # thread running in parallel while we modify them
         known_encodings_lock.release()

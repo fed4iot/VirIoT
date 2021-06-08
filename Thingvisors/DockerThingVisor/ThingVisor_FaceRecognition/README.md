@@ -8,12 +8,29 @@ The following picture shows the face recognition architecture, which comprises t
 
 ![Face Recognition architecture](facerec.jpg)
 
-Overall, the Camera System sends to the CameraSensor TV every new video frame it captures from the Camera. The CameraSensor TV buffers the video frames and gives them unique identifiers. Whenever the FaceRecognition TV is ready to process a new picture, it gets it by name, asking it to the CameraSensor TV.
+Overall, the Camera System sends to the CameraSensor TV every new video frame it captures from the Camera. The CameraSensor TV buffers the video frames and gives them unique identifiers. Whenever the FaceRecognition TV is ready to process a new video frame, it gets it by name, asking it to the CameraSensor TV. The FaceRecognition TV processes the frame by comparing it to a target picture of a person. If a match is found, an event is sent from the FaceRecognition TV to a vSilo (that hosts the IoT Broker and talk to an external Application).
 
 More specifically:
 
 ### The Camera System
 
-- Connects to a CSI (Camera Serial Interface) Camera, via a python script. The current implementation uses CV2 to capture video from a camera attachet to a Jetson Nano board. The module responsible for video capture is called camera_mod.py (in the scripts folder of the CameraSensor TV).
-- Undistorts, compresses to jpeg and scales down each video frame.
-- Sends each new video frame to the CameraSensor TV via HTTP POST. The python module responsible for compression and HTTP communication is called camerasensor-to-http.py (in the scripts folder of the CameraSensor TV).
+- Connects to a CSI (Camera Serial Interface) Camera. The current implementation uses CV2 to capture video from a camera attached to a Jetson Nano board. 
+- Undistorts, compresses to jpeg, and scales down each video frame.
+- Sends each new video frame to the CameraSensor TV via HTTP POST.
+
+The Camera System is currently implemented as a python script responsible for compression and HTTP communication, which is called [camerasensor-to-http.py](../ThingVisor_CameraSensor/jetbot_scripts/camerasensor-to-http.py). It imports a python module, which is responsible for video capture, and is called [camera_mod.py](../ThingVisor_CameraSensor/jetbot_scripts/camera_mod.py). Both can be found in the scripts folder of the CameraSensor TV.
+
+### The CameraSensor ThingVisor
+- Offers a REST interface to receive video frames, via HTTP POST.
+
+  The interface is called ``/framesinput`` and accepts multipart POST requests composed of 2 parts:
+  - a part named ``file`` that is a jpeg file
+  - a part named ``json`` that is a json object that represents the timestamp when the video frame was captured, in the following form: ``{"observedAt":STRING}``
+
+  The REST API lives at ip port 5000, so if, for instance, <PUBLIC_IP> is the public ip address to reach the CameraSensor TV and <PORT_MAPPED_TO_5000> is the external port mapped onto internal port 5000, the following ``curl`` command is an example to POST a new video frame:
+```bash
+$ curl -i -X POST -H "Content-Type: multipart/mixed" -F "file=@/Users/username/Documents/bio.jpg" -F "json={\"observedAt\":\"03-04-2021 15:34\"};type=application/json" http://<PUBLIC_IP>:<PORT_MAPPED_TO_5000>/framesinput
+```
+- Buffers a certain (configurabile) amount of video frames, FIFO style, and it gives unique identifiers to them.
+- Offers a REST interface to fetch a specific frame by its identier, via HTTP GET.
+- Emits an event, representing context information about the video frame, in the form of a NGSI-LD Entity containing the picture's identifier, upon arrival of each new frame.

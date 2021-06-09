@@ -27,12 +27,12 @@ The Camera System is currently implemented as a python script responsible for co
   - a part named ``file`` that is a jpeg file representing the current video frame
   - a part named ``json`` that is a json file representing the timestamp when the video frame was captured, in the following form: ``{"observedAt":STRING}``
 
-  The REST API lives at ip port 5000, so if, for instance, <PUBLIC_IP> is the public ip address to reach the CameraSensor TV and <PORT_MAPPED_TO_5000> is the external port mapped onto internal port 5000, the following ``echo`` and ``curl`` command sequence is an example to POST a new video frame:
+  The REST API lives at ip port 5000, so if, for instance, <CAMERASENSORTV_PUBLIC_IP> is the public ip address to reach the CameraSensor TV and <PORT_MAPPED_TO_5000> is the external port mapped onto internal port 5000, the following ``echo`` and ``curl`` command sequence is an example to POST a new video frame:
   ```bash
   $ echo {\"observedAt\":\"02-02-2021 14:34\"} > metadata.json
-  $ curl -F "file=@currentframe.jpg" -F "json=@metadata.json" http://<PUBLIC_IP>:<PORT_MAPPED_TO_5000>/framesinput
+  $ curl -F "file=@currentframe.jpg" -F "json=@metadata.json" http://<CAMERASENSORTV_PUBLIC_IP>:<PORT_MAPPED_TO_5000>/framesinput
   ```
-- Buffers a certain (configurabile) amount of video frames, FIFO style, and it gives unique identifiers to them.
+- Buffers a certain (configurabile) amount of video frames, FIFO style, and it gives unique identifiers to them, upon arrival of each new frame.
 
   The default size of the video buffer is 20, and it holds the jpeg compressed pictures in memory.
   
@@ -50,4 +50,23 @@ The Camera System is currently implemented as a python script responsible for co
 
 - Emits an event, representing context information about the video frame, in the form of a NGSI-LD Entity containing the picture's identifier, upon arrival of each new frame.
 
+  The NGSI-LD Entity emitted at each frame arrival is in "neutral format", as follows (assuming the ThingVisor's name is "camerasensor-tv"): each event/entity is of type "NewFrameEvent" and it has just one Property, named "frameIdentifier". The information about the timestamp of the video frame is dropped, as of now, since it is not needed for face recognition purposes.
+  ```
+  {
+    id : urn:ngsi-ld:camerasensor-tv:sensor
+    type : NewFrameEvent
+    frameIdentifier : {
+      type : Property
+      value : "1623229264110-0"
+    }
+  }
+  ```
+
 - Offers a REST interface to fetch a specific frame by its identier, via HTTP GET.
+
+  The interface is called ```/currentframe/<randomid>``` and accepts GET HTTP requests. It gives back data with mime-type "image/jpeg".
+
+  The following ``curl`` command is an example to GET video frame by its id:
+  ```bash
+  $ curl --output videoframe.jpg http://<CAMERASENSORTV_PUBLIC_IP>:<PORT_MAPPED_TO_5000>/currentframe/1623229264110-0
+  ```

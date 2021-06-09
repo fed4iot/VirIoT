@@ -24,13 +24,30 @@ The Camera System is currently implemented as a python script responsible for co
 - Offers a REST interface to receive video frames, via HTTP POST.
 
   The interface is called ``/framesinput`` and accepts multipart POST requests composed of 2 parts:
-  - a part named ``file`` that is a jpeg file
-  - a part named ``json`` that is a json object that represents the timestamp when the video frame was captured, in the following form: ``{"observedAt":STRING}``
+  - a part named ``file`` that is a jpeg file representing the current video frame
+  - a part named ``json`` that is a json file representing the timestamp when the video frame was captured, in the following form: ``{"observedAt":STRING}``
 
-  The REST API lives at ip port 5000, so if, for instance, <PUBLIC_IP> is the public ip address to reach the CameraSensor TV and <PORT_MAPPED_TO_5000> is the external port mapped onto internal port 5000, the following ``curl`` command is an example to POST a new video frame:
-```bash
-$ curl -i -X POST -H "Content-Type: multipart/mixed" -F "file=@/Users/username/Documents/bio.jpg" -F "json={\"observedAt\":\"03-04-2021 15:34\"};type=application/json" http://<PUBLIC_IP>:<PORT_MAPPED_TO_5000>/framesinput
-```
+  The REST API lives at ip port 5000, so if, for instance, <PUBLIC_IP> is the public ip address to reach the CameraSensor TV and <PORT_MAPPED_TO_5000> is the external port mapped onto internal port 5000, the following ``echo`` and ``curl`` command sequence is an example to POST a new video frame:
+  ```bash
+  $ echo {\"observedAt\":\"02-02-2021 14:34\"} > metadata.json
+  $ curl -F "file=@currentframe.jpg" -F "json=@metadata.json" http://<PUBLIC_IP>:<PORT_MAPPED_TO_5000>/framesinput
+  ```
 - Buffers a certain (configurabile) amount of video frames, FIFO style, and it gives unique identifiers to them.
-- Offers a REST interface to fetch a specific frame by its identier, via HTTP GET.
+
+  The default size of the video buffer is 20, and it holds the jpeg compressed pictures in memory.
+  
+  The size of the buffer is a configurabile parameter of the ThingVisor. It can be specified at creation time, when the TV is added to VirIoT, as in the following example, where a TV is added using the yaml that specifies a CameraSensor, the name "camerasensor-tv" is given to it, and the "buffersize" parameter is set to 30.
+
+  ```bash
+  $ f4i.py add-thingvisor -y ../yaml/thingVisor-cameraSensor-http.yaml -n camerasensor-tv -d "camera frames via http" -p '{"buffersize":30}' -z default
+  ```
+
+  Alternatively, by using the update-thingvisor VirIoT command on a running TV, the "buffersize" parameter can be changed in real-time, as follows:
+
+  ```bash
+  $ f4i.py update-thingvisor -n camerasensor-tv -p '{"buffersize":40}'
+  ```
+
 - Emits an event, representing context information about the video frame, in the form of a NGSI-LD Entity containing the picture's identifier, upon arrival of each new frame.
+
+- Offers a REST interface to fetch a specific frame by its identier, via HTTP GET.

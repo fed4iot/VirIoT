@@ -16,13 +16,14 @@ The purpose of having the CameraSensor ThingVisor in between the Camera System a
 
 More specifically:
 
-### The Camera System
 
+### The Camera System
 - Connects to a CSI (Camera Serial Interface) Camera. The current implementation uses CV2 to capture video from a camera attached to a Jetson Nano board. 
 - Undistorts, compresses to jpeg, and scales down each video frame.
 - Sends each new video frame to the CameraSensor TV via an HTTP POST request to the TV's ``/framesinput`` API.
 
 The Camera System is currently implemented as a python script responsible for compression and HTTP communication, which is called [camerasensor-to-http.py](../ThingVisor_CameraSensor/jetbot_scripts/camerasensor-to-http.py). It, in turn, imports a python module, which is responsible for video capture, and is called [camera_mod.py](../ThingVisor_CameraSensor/jetbot_scripts/camera_mod.py). Both can be found in the scripts folder of the CameraSensor TV.
+
 
 ### The CameraSensor ThingVisor
 - Offers a REST interface to receive video frames, via HTTP POST.
@@ -53,13 +54,13 @@ The Camera System is currently implemented as a python script responsible for co
 - Offers a single vThing, named "sensor". This vThing, upon arrival of each new frame, emits an event representing context information about the received video frame, in the form of a NGSI-LD Entity containing the picture's identifier.
 
   The NGSI-LD Entity emitted at each frame arrival is represented in NGSI-LD "neutral format" (assuming the ThingVisor's name is "camerasensor-tv") by entity of type "NewFrameEvent". It has just one Property, named "frameIdentifier". The information about the timestamp of the video frame is dropped, as of now, since it is not needed for face recognition purposes. Here follows an example:
-  ```
+  ```JSON
   {
-    id : urn:ngsi-ld:camerasensor-tv:sensor
-    type : NewFrameEvent
-    frameIdentifier : {
-      type : Property
-      value : "1623229264110-0"
+    "id" : "urn:ngsi-ld:camerasensor-tv:sensor",
+    "type" : "NewFrameEvent",
+    "frameIdentifier" : {
+      "type" : "Property",
+      "value" : "1623229264110-0"
     }
   }
   ```
@@ -72,6 +73,7 @@ The Camera System is currently implemented as a python script responsible for co
   ```bash
   $ curl --output videoframe.jpg http://<CAMERASENSORTV_PUBLIC_IP>:<PORT_MAPPED_TO_5000>/bufferedframes/1623229264110-0
   ```
+
 
 ### The FaceRecognition ThingVisor
 - It is designed so that it "chains" to an upstream "sensor" vThing implemented by a CameraSensor ThingVisor: upon chaining, it subscribes to Entities coming from the upstream CameraSensor's "sensor" vThing. Such Entities convey the identifiers of a stream of video frames buffered by the CameraSensor TV. FaceRecognition GETs the new frames at its convenience (thus operating at its own framerate, ususally different than the framerate the video frames are produced by the Camera System).
@@ -106,16 +108,16 @@ The Camera System is currently implemented as a python script responsible for co
   - ``startjob`` command.
 
   An example JSON object to send to the ``startjob`` command, that starts a job, giving "123456" identifier to it, is:
-  ```
+  ```JSON
   {"cmd-id":"xaxaxa","cmd-qos":2,"cmd-value":{"job":"123456"}}
   ```
   - ``deletejob`` command, that is used to remove all pictures for a given job name, and to stop the corresponding recognition process. An example follows, that stops the above job:
-  ```
+  ```JSON
   {"cmd-id":"ybybyb","cmd-value":{"job":"123456"}}
   ```
 
-  The "detector" vThing, being an actuator only, is represented at the ThingVisor by an NGSI-LD Entity having just one property that lists all available commands. Its id is "urn:ngsi-ld:facerecognition-tv:detector" (assuming the ThingVisor is named "facerecognition-tv"), and its type is "FaceRecognitionEvent", as follows:
-  ```
+  The "detector" vThing, being an actuator only, is represented at the ThingVisor by an NGSI-LD Entity having just one property, i.e. the default ``commands`` property that all VirIoT actuators have, that lists all commands available at the actuator. Its id is "urn:ngsi-ld:facerecognition-tv:detector" (assuming the ThingVisor is named "facerecognition-tv"), and its type is "FaceRecognitionEvent", as follows:
+  ```JSON
   {
     "id": "urn:ngsi-ld:facerecognition-tv:detector",
     "type": "FaceRecognitionEvent",
@@ -126,72 +128,147 @@ The Camera System is currently implemented as a python script responsible for co
   }
   ```
 
-- Offers a REST interface to insert target pictures under a job identifer, tagging them with a person name, via HTTP POST, and to retrieve information about them, via HTTP GET. The interface is called ```/targetfaces/<jobdentifier>/<personname>```. This REST API is available at internal ip port 5000, but it is NOT intended for access from the outside of VirIoT, i.e. Users do not directly POST target pictures to the FaceRecognition TV's ``/targetfaces`` endpoint at port 5000. The API is proxied by the vSilos that have the "detector" vThing, because Users entrypoints to VirIoT are vSilos, not ThingVisors.
+- Offers a REST interface to insert target pictures under a job identifer, additionally tagging them with a person name, via HTTP POST, and to retrieve information about them, via HTTP GET. The interface is called ```/targetfaces/<jobdentifier>/<personname>```. This REST API is available at internal ip port 5000, but it is NOT intended for access from the outside of VirIoT, i.e. Users do not directly POST target pictures to this FaceRecognition TV's ``/targetfaces`` endpoint at port 5000. The API is proxied by the vSilos that have the "detector" vThing, instead, because Users entrypoints to VirIoT are vSilos, not ThingVisors.
 
-- Offers a REST interface to fetch pictures (both target and recognized) via their identier, via HTTP GET.
+- Offers a REST interface to fetch pictures (both target and recognized) via their identier, via HTTP GET. Similar to the above, this is accessed thorugh the vSilo. Ther interface is called ``/media/<pictureidentifier>``.
 
 
 ### The vSilo that has a "detector" vThing
 Target pictures of faces to be matched against the incoming video frames are POSTed by Users to the vSilo's HTTP Broker. The HTTP Broker running inside the vSilo acts as a proxy to the HTTP REST interfaces offered by the FaceRecognition ThingVisor, that are not intended for direct access from Users. Thus the vSilo's HTTP Broker acts as the only entry point for Users (and Applications) to the face recognition process.
 
-Here follows an example snapshot of the NGSI-LD Entity representing the "detector" right after it has detected a match for Andrea's face. The original picture was POSTed under job "123456" and tagged as "Andrea". It is downloadable, through vSilo's HTTP proxy, at "/media/60ba4b6a5faca138c398b3d4". The video frame that matched is available at "/media/60ba4b7b5faca138c398b3e8".
+**WORKFLOW**
 
-```
-{
-  "id": "urn:ngsi-ld:facerecognition-tv:detector",
-  "type": "FaceRecognitionEvent",
-  "commands": {
-      "value": [ "startjob", "deletejob" ],
+From the User's perspective, this is the typical workflow to operate the face recognition process. In the following, we assume an NGSI-LD flavor vSilo is used.
+
+1) Add the "detector" to the vSilo:
+
+   If the FaceDetector TV is called "facerecognition-tv", the NGSI-LD silo is called "silongsildorionld1-eu" and the User is called "tenant1", then the command is:
+   ```bash
+   $ f4i.py add-vthing -v facerecognition-tv/detector -t tenant1 -s silongsildorionld1-eu
+   ```
+
+2) Check the received NGSI-LD Entity and its capabilities:
+
+   Assuming the NGSI-LD Broker runs on internal port 1026, which is mapped to external <PORT_MAPPED_TO_1026>, the command will be:
+   ```bash
+   $ curl http://<VSILO_PUBLIC_IP>:<PORT_MAPPED_TO_1026>/ngsi-ld/v1/entities/urn:ngsi-ld:facerecognition-tv:detector | jq
+   ```
+   Resulting in the following NGSI-LD Entity, where we see the list of available commands, and the empty command, command-status and command-result properties created in the Broker to implement the actuation. We also see the ``generatedByVThing`` property that keeps track of the vThing that created the Entity (not relevant to this workflow).
+   ```JSON
+   {
+     "id": "urn:ngsi-ld:facerecognition-tv:detector",
+     "type": "FaceRecognitionEvent",
+     "commands": {
+       "value": [ "startjob", "deletejob" ],
+       "type": "Property"
+     },
+     "generatedByVThing": {
+       "value": "facerecognition-tv/detector",
+       "type": "Property"
+     },
+     "startjob": {
+       "value": {},
+       "type": "Property"
+     },
+     "startjob-status": {
+       "value": {},
+       "type": "Property"
+     },
+     "startjob-result": {
+       "value": {},
+       "type": "Property"
+     },
+     "deletejob": {
+       "value": {},
+       "type": "Property"
+     },
+     "deletejob-status": {
+       "value": {},
+       "type": "Property"
+     },
+     "deletejob-result": {
+       "value": {},
+       "type": "Property"
+     }
+   }
+   ```
+
+3) Send one (or more) target pictures of faces to be recognized, assigning persons' names to them and a job identifier:
+
+   Pictures are POSTed to vSilo's HTTP proxy running on internal port 80 (mapped to external <PORT_MAPPED_TO_80>). It is important to notice that the User addresses the "detector" vThing directly, without knowing the details where the vThing is currently deployed within VirIoT distributed microservices architecture. The HTTP Data Distribution will take care of efficiently routing the HTTP request.
+
+   The ``123456`` job identifier serves the purpose of a "secret link" able to protect and isolate the various jobs that different Users of different vSilos are sending to the FaceRecognition's "detector" in parallel.
+
+   ```bash
+   % curl -X POST -F "pic=@bio.jpg" http://<VSILO_PUBLIC_IP>:<PORT_MAPPED_TO_80>/vstream/facerecognition-tv/detector/targetfaces/123456/Andrea
+   ```
+
+4) Send a ``startjob`` command to the detector with the job identifier we want to start:
+
+   This is accomplished, in case of NGSI-LD Broker, by updating the ``value`` of the ``startjob`` NGSI-LD property (by a PATCH call at the ``/attrs/startjob`` endpoint of the Broker's API).
+   ```bash
+   $ curl -X PATCH http://<VSILO_PUBLIC_IP>:<PORT_MAPPED_TO_1026>/ngsi-ld/v1/entities/urn:ngsi-ld:facerecognition-tv:detector/attrs/startjob -d '{"value":{"cmd-id":"xaxaxa","cmd-qos":2,"cmd-value":{"job":"123456"}}}' -H "Content-Type: application/json"
+   ```
+
+5) Check for periodic updates of the ``startjob-status`` property:
+
+   Here follows an example snapshot of the NGSI-LD Entity representing the "detector" right after it has detected a match for Andrea's face. The original picture was POSTed under job "123456" and tagged as "Andrea". It is downloadable, through vSilo's HTTP proxy, at "/media/60ba4b6a5faca138c398b3d4". The video frame that matched is available at "/media/60ba4b7b5faca138c398b3e8".
+   ```JSON
+   {
+     "id": "urn:ngsi-ld:facerecognition-tv:detector",
+     "type": "FaceRecognitionEvent",
+     "commands": {
+        "value": [ "startjob", "deletejob" ],
+        "type": "Property"
+     },
+     "startjob": {
+       "value": {
+         "cmd-id": "xaxaxa",
+         "cmd-qos": 2,
+         "cmd-value": {
+           "job": "123456"
+         }
+       },
       "type": "Property"
-  },
-  "startjob": {
-      "value": {
-      "cmd-id": "xaxaxa",
-      "cmd-qos": 2,
-      "cmd-value": {
-          "job": "123456"
-      }
+     },
+     "startjob-status": {
+       "value": {
+         "cmd-id": "xaxaxa",
+         "cmd-nuri": "viriot://vSilo/tenant1_silongsildorionld1-eu/data_in",
+         "cmd-qos": 2,
+         "cmd-value": {
+           "job": "123456"
+         },
+         "cmd-status": {
+           "job": "123456",
+           "name": "Andrea",
+           "original-uri": "/media/60ba4b6a5faca138c398b3d4",
+           "recognized-uri": "/media/60ba4b7b5faca138c398b3e8"
+         }
       },
       "type": "Property"
-  },
-  "startjob-status": {
-      "value": {
-      "cmd-id": "xaxaxa",
-      "cmd-nuri": "viriot://vSilo/tenant1_silongsildorionld1-eu/data_in",
-      "cmd-qos": 2,
-      "cmd-value": {
-          "job": "123456"
-      },
-      "cmd-status": {
-          "job": "123456",
-          "name": "Andrea",
-          "original-uri": "/media/60ba4b6a5faca138c398b3d4",
-          "recognized-uri": "/media/60ba4b7b5faca138c398b3e8"
-      }
-      },
-      "type": "Property"
-  },
-  "startjob-result": {
-      "value": {},
-      "type": "Property"
-  },
-  "deletejob": {
-      "value": {},
-      "type": "Property"
-  },
-  "deletejob-status": {
-      "value": {},
-      "type": "Property"
-  },
-  "deletejob-result": {
-      "value": {},
-      "type": "Property"
-  }
-}
-```
-WORKFLOW
-Commands
-The job identifier serves the purpose of a "secret link" able to protect and isolate the various jobs that different Users of different vSilos are sending to the FaceRecognition's "detector" in parallel.
+     },
+     "startjob-result": {
+       "value": {},
+       "type": "Property"
+     },
+     "deletejob": {
+       "value": {},
+       "type": "Property"
+     },
+     "deletejob-status": {
+       "value": {},
+       "type": "Property"
+     },
+     "deletejob-result": {
+       "value": {},
+       "type": "Property"
+     }
+   }
+   ```
+
+6) Download the matching picture from the /media API.
+
 
 
 ## How to run it

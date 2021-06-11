@@ -274,11 +274,17 @@ From the User's perspective, this is the typical workflow to operate the face re
 ## How to run it
 
 ### Running the Camera System
+The Camera System runs on a Jetson NANO.
+
 
 ### Running the CameraSensor ThingVisor
-Set endpoint to make the HTTP Data Distribution able to proxy the /framesinput and /bufferedframes APIs. This way, the FaceRecognition TV (and other ThingVisors as well) can GET video frames using the CameraSensor TV's service name, globally within VirIoT, exploiting efficien caching and mukticast distribution of the video frames.
+Run a ``set-endpooint`` VirIoT command on the CameraSensor TV, to make the HTTP Data Distribution able to proxy the /framesinput and /bufferedframes APIs. This way, the FaceRecognition TV (and other ThingVisors as well) can GET video frames using the CameraSensor TV's service name, globally within VirIoT, exploiting efficient caching and multicast distribution of the video frames.
+```bash
+$ f4i.py set-vthing-endpoint -v camerasensor-tv/sensor -e http://127.0.0.1:5000
+```
 
 ### Running the FaceRecognition ThingVisor
-Set endpoint to make the HTTP Data Distribution able to proxy the /targetfaces and /recognizedfaces APIs.
-
-### Adding and using the "detector" vThing in vSilo
+Run a ``set-endpooint`` VirIoT command on the FaceRecognition TV, to make the HTTP Data Distribution able to proxy the /targetfaces and /media APIs.
+```bash
+$ f4i.py set-vthing-endpoint -v facerecognition-tv/detector -e http://127.0.0.1:5000
+```

@@ -6,6 +6,7 @@ import json
 import cv2
 import numpy as np
 import io
+import sys
 
 
 ##### globals
@@ -22,6 +23,8 @@ camera = Camera(width=600,height=600,fps=fps)
 # load camera parameters
 calibration_params = pickle.load( open( "calibration.p", "rb" ) )
 
+addr = sys.argv[1]
+print("Connecting to "+addr)
 
 # execute function
 def callback(change):
@@ -39,7 +42,6 @@ def callback(change):
     io_buf.seek(0)
     
     # send image + timestamp to http server
-    addr = 'http://13.80.153.4:31867'
     server_url = addr + '/framesinput'
     payload = {"observedAt": int(time.time())}
     files = {

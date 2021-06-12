@@ -18,11 +18,11 @@ More specifically:
 
 
 ### The Camera System
-- Connects to a CSI (Camera Serial Interface) Camera. The current implementation uses CV2 to capture video from a camera attached to a Jetson Nano board. 
+- Connects to a CSI (Camera Serial Interface) Camera. The current implementation uses CV2 to capture video from a camera attached to a NVIDIA Jetson Nano board. 
 - Undistorts, compresses to jpeg, and scales down each video frame.
 - Sends each new video frame to the CameraSensor TV via an HTTP POST request to the TV's ``/framesinput`` API.
 
-The Camera System is currently implemented as a python script responsible for compression and HTTP communication, which is called [camerasensor-to-http.py](../ThingVisor_CameraSensor/jetbot_scripts/camerasensor-to-http.py). It, in turn, imports a python module, which is responsible for video capture, and is called [camera_mod.py](../ThingVisor_CameraSensor/jetbot_scripts/camera_mod.py). Both can be found in the scripts folder of the CameraSensor TV.
+The Camera System is currently implemented as a python script responsible for compression and HTTP communication, which is called [camerasensor-to-http.py](../ThingVisor_CameraSensor/jetbot_scripts/camerasensor-to-http.py). It, in turn, imports a python module, which is responsible for video capture, and is called [camera_mod.py](../ThingVisor_CameraSensor/jetbot_scripts/camera_mod.py). Both can be found in the jetbot_scripts folder of the CameraSensor TV.
 
 
 ### The CameraSensor ThingVisor
@@ -272,19 +272,50 @@ From the User's perspective, this is the typical workflow to operate the face re
 
 
 ## How to run it
-
-### Running the Camera System
-The Camera System runs on a Jetson NANO.
-
+As explained above, the FaceRecognition ThingVisor gets video frames from an upstream CameraSensor ThingVisor. Hence the fist thing to do is to add a CameraSensor TV to VirIoT
 
 ### Running the CameraSensor ThingVisor
-Run a ``set-endpooint`` VirIoT command on the CameraSensor TV, to make the HTTP Data Distribution able to proxy the /framesinput and /bufferedframes APIs. This way, the FaceRecognition TV (and other ThingVisors as well) can GET video frames using the CameraSensor TV's service name, globally within VirIoT, exploiting efficient caching and multicast distribution of the video frames.
+```bash
+$ f4i.py add-thingvisor -y ../yaml/thingVisor-cameraSensor-http.yaml -n camerasensor-tv -d "camera frames via http" -p '{"buffersize":30}' -z default
+```
+
+Also, please run a ``set-endpooint`` VirIoT command on the "sensor" vThing of the CameraSensor TV, to make the HTTP Data Distribution able to proxy the ``/framesinput`` and ``/bufferedframes`` APIs by simply using the name of the vThing. This way, the FaceRecognition TV (and other ThingVisors as well) can GET video frames using the CameraSensor TV's service name, globally within VirIoT, exploiting efficient caching and multicast distribution of the video frames.
 ```bash
 $ f4i.py set-vthing-endpoint -v camerasensor-tv/sensor -e http://127.0.0.1:5000
 ```
 
+
+### Running the Camera System
+The next step is to run the camera system, which sends video frames to the CameraSensor TV's HTTP interface. Thus, we need to know public IP address to access the services running inside the VirIoT cluster and, most important, the external port that maps to the internal port 5000 of the CameraSensor TV. This can be accomplished by inspecting the thingvisor via a VirIoT ``inspect-thingvisor`` command:
+```bash
+$ f4i.py inspect-thingvisor -v camerasensor-tv | grep 5000/tcp
+```
+
+The Camera System that we have developed for testing purposes runs on a Jetson Nano. It can be found in the jetbot_scripts folder of the CameraSensorn ThingVisor and is called [camerasensor-to-http.py](../ThingVisor_CameraSensor/jetbot_scripts/camerasensor-to-http.py). It, in turn, imports a python module, which is responsible for video capture, and is called [camera_mod.py](../ThingVisor_CameraSensor/jetbot_scripts/camera_mod.py). Both can be found in the jetbot_scripts folder of the CameraSensor TV.
+
+Some pre-requisites are needed:
+```bash
+$ pip3 install requests
+$ pip3 install traitlets
+$ pip3 install opencv-python
+```
+
+Assuming that <PORT_MAPPED_TO_5000> is the output of the ``inspect-thingvisor`` VirIoT command above, it is executed simply as follows, i.e. by specifying the base URL of the CameraSensor TV's API:
+```
+$ python3 ./camerasensor-to-http.py http://<CAMERASENSORTV_PUBLIC_IP>:<PORT_MAPPED_TO_5000>
+```
+
+
+
 ### Running the FaceRecognition ThingVisor
-Run a ``set-endpooint`` VirIoT command on the FaceRecognition TV, to make the HTTP Data Distribution able to proxy the /targetfaces and /media APIs.
+```bash
+$ f4i.py add-thingvisor -y ../yaml/thingVisor-faceRecognition.yaml -n "facerecognition-tv" -d "recognizes faces" -p '{"fps":12, "upstream_vthingid":"camerasensor-tv/sensor"}' -z default
+```
+
+Run a ``set-endpooint`` VirIoT command on the "detector" vThing of the FaceRecognition TV, to make the HTTP Data Distribution able to proxy the ``/targetfaces`` and ``/media`` APIs.
 ```bash
 $ f4i.py set-vthing-endpoint -v facerecognition-tv/detector -e http://127.0.0.1:5000
 ```
+
+### Run a vSilo
+At this point, Users can run their favourite vSilo and add the "detector" vThing to it, as explained in the WORKFLOW section above, to control the face recognition process.

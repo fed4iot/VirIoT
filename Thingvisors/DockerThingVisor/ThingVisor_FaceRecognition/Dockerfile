@@ -1,6 +1,6 @@
  # specify the node base image with your desired version node:<version>
 
-FROM python:3.6-slim
+FROM python:3.6-slim-stretch
 
 RUN apt update
 RUN apt -y install screen

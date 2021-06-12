@@ -59,12 +59,12 @@ def GET_current_frame():
     return Response(data, mimetype='image/jpeg')
 
 
-@app.route('/currentframe/<randomid>')
-def GET_current_frame_by_id(randomid):
+@app.route('/bufferedframes/<frameidentifier>')
+def GET_current_frame_by_id(frameidentifier):
     ### i could offer the img_str buffer via HTTP at this point
     try:
-        # get from the redis stream named "buffername" just 1 item (from randomid to randomid)
-        list_of_matching_results = rdis.xrange(buffername,randomid,randomid)
+        # get from the redis stream named "buffername" just 1 item (from frameidentifier to frameidentifier)
+        list_of_matching_results = rdis.xrange(buffername, frameidentifier, frameidentifier)
         # we get back a list of results (with only 1 result). we pick it
         first_result = list_of_matching_results[0]
         # each result is a tuple where first element [0] is the id (key),

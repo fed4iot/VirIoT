@@ -42,8 +42,8 @@ import numpy as np
 # This endpoint is named targetfaces/
 
 # The CameraSensor TV (hosting the sensor vthing) needs a sidecar-tv so that downstream
-# clients can ask for TV_IP:TV_PORT_80/sensor/currentframe/xxx
-# The FaceRecognition TV needs a sidecar-flavour so that the above TV_IP:TV_PORT_80/sensor/currentframe/xxx is
+# clients can ask for TV_IP:TV_PORT_80/sensor/bufferedframes/xxx
+# The FaceRecognition TV needs a sidecar-flavour so that the above TV_IP:TV_PORT_80/sensor/bufferedframes/xxx is
 # proxied everywhere in the platform
 
 
@@ -110,8 +110,8 @@ def periodically_every_fps():
     if len(thingvisor.upstream_entities) != 0:
         upstream_vthing = thingvisor.params['upstream_vthingid'].split('/',1)[1] # second element of the split
         id = thingvisor.upstream_entities[0]["frameIdentifier"]["value"]
-        # we construct the URL THINGVISOR/sensor/currentframe/djvn5jntvG
-        frame_url = "/" + upstream_vthing + "/currentframe/" + id
+        # we construct the URL THINGVISOR/sensor/bufferedframes/djvn5jntvG
+        frame_url = "/" + upstream_vthing + "/bufferedframes/" + id
         url = "http://" + thingvisor.upstream_tv_http_service + frame_url
         r = requests.get(url, proxies=proxies)
         if r.status_code == 200:

@@ -279,7 +279,7 @@ As explained above, the FaceRecognition ThingVisor gets video frames from an ups
 $ f4i.py add-thingvisor -y ../yaml/thingVisor-cameraSensor-http.yaml -n camerasensor-tv -d "camera frames via http" -p '{"buffersize":30}' -z default
 ```
 
-Also, please run a ``set-endpooint`` VirIoT command on the "sensor" vThing of the CameraSensor TV, to make the HTTP Data Distribution able to proxy the ``/framesinput`` and ``/bufferedframes`` APIs by simply using the name of the vThing. This way, the FaceRecognition TV (and other ThingVisors as well) can GET video frames using the CameraSensor TV's service name, globally within VirIoT, exploiting efficient caching and multicast distribution of the video frames.
+Also, please run a ``set-endpoint`` VirIoT command on the "sensor" vThing of the CameraSensor TV, to make the HTTP Data Distribution able to proxy the ``/framesinput`` and ``/bufferedframes`` APIs by simply using the name of the vThing. This way, the FaceRecognition TV (and other ThingVisors as well) can GET video frames using the CameraSensor TV's service name, globally within VirIoT, exploiting efficient caching and multicast distribution of the video frames.
 ```bash
 $ f4i.py set-vthing-endpoint -v camerasensor-tv/sensor -e http://127.0.0.1:5000
 ```
@@ -308,14 +308,16 @@ $ python3 ./camerasensor-to-http.py http://<CAMERASENSORTV_PUBLIC_IP>:<PORT_MAPP
 
 
 ### Running the FaceRecognition ThingVisor
+Is is now possible to run the FaceRecognition ThingVisor, specifying the name of its upstream CameraSensor TV, which we had created above:
 ```bash
-$ f4i.py add-thingvisor -y ../yaml/thingVisor-faceRecognition.yaml -n "facerecognition-tv" -d "recognizes faces" -p '{"fps":12, "upstream_vthingid":"camerasensor-tv/sensor"}' -z default
+$ f4i.py add-thingvisor -y ../yaml/thingVisor-faceRecognition.yaml -n "facerecognition-tv" -d "recognizes faces" -p '{"fps":4, "upstream_vthingid":"camerasensor-tv/sensor"}' -z default
 ```
 
-Run a ``set-endpooint`` VirIoT command on the "detector" vThing of the FaceRecognition TV, to make the HTTP Data Distribution able to proxy the ``/targetfaces`` and ``/media`` APIs.
+Also, please run a ``set-endpoint`` VirIoT command on the "detector" vThing of the FaceRecognition TV, to make the HTTP Data Distribution able to proxy the ``/targetfaces`` and ``/media`` APIs.
 ```bash
 $ f4i.py set-vthing-endpoint -v facerecognition-tv/detector -e http://127.0.0.1:5000
 ```
+
 
 ### Run a vSilo
 At this point, Users can run their favourite vSilo and add the "detector" vThing to it, as explained in the WORKFLOW section above, to control the face recognition process.

@@ -1,3 +1,6 @@
+# How it works
+Please refer to section 3.3.12 of [Deliverable D3.2](../../../Doc/Fed4IoT-Deliverable-D3.2.pdf) document.
+
 # Build docker image
 
 docker build -t camerabot-tv .

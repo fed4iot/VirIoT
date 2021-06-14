@@ -97,7 +97,7 @@ def POST_frames():
 
 # main
 if __name__ == '__main__':
-    thingvisor.initialize_thingvisor()
+    thingvisor.initialize_thingvisor("thingVisor_camerasensor")
     # create the detector vThing: name, type, description, array of commands
     thingvisor.initialize_vthing("sensor","NewFrameEvent","camera sensor to distribute frames",[])
     print("All vthings initialized")

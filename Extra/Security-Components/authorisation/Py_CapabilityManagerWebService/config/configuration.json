@@ -1,0 +1,10 @@
+{
+	"DOMAIN":"@odins.es",
+	"CREDENTIAL_INFO":[{
+		"KEY_STORE_LOCATION"	:"local_dependencies/certs/smartieCapManager.jks",
+		"KEY_STORE_PASSWORD"	:"smartie",
+		"TRUST_STORE_LOCATION"	:"local_dependencies/certs/trustStore.jks",
+		"TRUST_STORE_PASSWORD"	:"rootPass"
+		}]
+}
+

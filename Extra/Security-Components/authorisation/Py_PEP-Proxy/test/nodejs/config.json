@@ -1,0 +1,20 @@
+{
+    "keyrock_protocol": "https",
+    "keyrock_host": "<specify IdM Public IP address>",
+    "keyrock_port": 443,
+    "keyrock_user_mail": "<specify IdM user mail>",
+    "keyrock_usep_pass": "<specify IdM user password>",
+
+    "capman_protocol": "https",
+    "capman_host": "<specify Capability Manager Public IP address>",
+    "capman_port": 3030,
+
+    "policy_action": "GET",
+    "policy_device": "<specify PEP-Proxy Public address, format: https://<PEP-IP>:<PEP-PORT>> ex: https://123.123.123.123:1027",
+    "policy_resource": "<specify resource to access. ex: /api/v1/resources",
+    
+    "pepproxy_protocol": "https",
+    "pepproxy_host": "<specify PEP-Proxy Public IP address>",
+    "pepproxy_port": 1027,
+    "pepproxy_targetRequestHeaders": {"Accept": "application/json"}
+}

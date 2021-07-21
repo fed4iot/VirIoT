@@ -1,0 +1,48 @@
+#
+#Copyright Odin Solutions S.L. All Rights Reserved.
+#
+#SPDX-License-Identifier: Apache-2.0
+#
+
+version: '3.1'
+
+services:
+  xacml:
+    build: ./
+    image: fed4iot/pap-pdp
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    ports:
+        - '8080:8080'
+#        - '8443:8443'
+    restart: unless-stopped
+
+    # ALL environment variables are optionals.
+    # BlockChain_integration to indicate if blockchain integration is considered or not.
+    # The rest of BlockChain_* variables are used if blockchain integration is considered.
+    environment:
+
+        #BlockChain_integration : admittable values:
+        # 0-No integration with blockchain
+        # 1-Integration with blockchain
+        # Default value : 0 
+        - BlockChain_integration=1
+
+        #BlockChain_configuration : admittable values:
+        # 0-Uses configuration from blockchain.conf file.
+        # 1-Uses configuration from folling environment variables.
+        - BlockChain_configuration=0 # Optional: Default value : 0
+
+        #Environment variables are considered only if BlockChain_integration=1
+        - BlockChain_protocol=http # Optional: Default value : http
+        - BlockChain_domain=<specify Blockchain domain> # Required 
+        - BlockChain_IP=<specify Blockchain endpoint IP address> # Required
+        - BlockChain_port=8000 # Optional Default value : 8000
+
+        - BlockChain_get_resource=/policy/<specify Blockchain domain> # Optional : Default value : /policy/<BlockChain_domain>
+        - BlockChain_post_resource=/policy/register # Optional : Default value : /policy/register
+        - BlockChain_update_resource=/policy/update # Optional : Default value : /policy/update   
+

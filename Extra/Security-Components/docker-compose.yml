@@ -1,0 +1,207 @@
+#
+#Copyright Odin Solutions S.L. All Rights Reserved.
+#
+#SPDX-License-Identifier: Apache-2.0
+#
+
+version: "3.5"
+services:
+
+  keyrock:
+    #build: ./authentication/
+    restart: always
+    image: fiware/idm:7.8.0
+    #container_name: fiware-keyrock
+    #hostname: keyrock
+    #networks:
+    #  default:
+    #    ipv4_address: 172.18.1.5
+    depends_on:
+      - mysql-db
+    ports:
+      - "3000:3000"
+      - "443:443"
+    #Need for HTTPS      
+    volumes:
+      - ./authentication/certs/idm-2018-cert.pem:/opt/fiware-idm/certs/idm-2018-cert.pem
+      - ./authentication/certs/idm-2018-key.pem:/opt/fiware-idm/certs/idm-2018-key.pem  
+    environment:
+      - DEBUG=idm:*
+      - IDM_DB_HOST=mysql-db
+    #  - IDM_HOST=http://localhost:3000
+      - IDM_HOST=http://keyrock:3000
+      - IDM_PORT=3000
+      # Development use only 
+      # Use Docker Secrets for Sensitive Data
+      - IDM_DB_PASS=secret 
+      - IDM_DB_USER=root
+      - IDM_ADMIN_USER=admin
+      - IDM_ADMIN_EMAIL=admin@test.com
+      - IDM_ADMIN_PASS=1234
+      #Need for HTTPS
+      - "IDM_HTTPS_ENABLED=true"
+      - "IDM_HTTPS_PORT=443"
+
+  ######
+  ### MySQL
+  ######
+  mysql-db:
+    restart: always
+    image: mysql:5.7
+    #hostname: mysql-db
+    #container_name: db-mysql
+    expose:
+      - "3306"
+    ports:
+      - "3306:3306"
+    #networks:
+    #  default:
+    #    ipv4_address: 172.18.1.6
+    environment:
+      # Development use only 
+      # Use Docker Secrets for Sensitive Data
+      - "MYSQL_ROOT_PASSWORD=secret"
+    #  - "MYSQL_ROOT_HOST=172.18.1.5"
+      - "MYSQL_ROOT_HOST=%"
+    volumes:
+      - mysql-db:/var/lib/mysql
+
+  ######
+  ### XACML
+  ######
+  xacml:
+    build: ./authorisation/XACML_PAP_PDP/
+    image: fed4iot/pap-pdp
+    expose:
+      - "8080"
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+    # ALL environment variables are optionals.
+    # BlockChain_integration to indicate if blockchain integration is considered or not.
+    # The rest of BlockChain_* variables are used if blockchain integration is considered.
+    environment:
+
+        #BlockChain_integration : admittable values:
+        # 0-No integration with blockchain
+        # 1-Integration with blockchain
+        # Default value : 0 
+        - BlockChain_integration=0
+
+        #BlockChain_configuration : admittable values:
+        # 0-Uses configuration from blockchain.conf file.
+        # 1-Uses configuration from folling environment variables.
+        - BlockChain_configuration=0 # Optional: Default value : 0
+
+        #Environment variables are considered only if BlockChain_integration=1
+        - BlockChain_protocol=http # Optional: Default value : http
+        - BlockChain_domain=domaintest #<specify Blockchain dommain> # Required 
+        - BlockChain_IP=localhost #<specify Blockchain endpoint IP address> # Required
+        - BlockChain_port=8000 # Optional Default value : 8000
+
+        - BlockChain_get_resource=/policy/domaintest # Optional : Default value : /policy/<BlockChain_domain>
+        - BlockChain_post_resource=/policy/register # Optional : Default value : /policy/register
+        - BlockChain_update_resource=/policy/update # Optional : Default value : /policy/update  
+
+  ######
+  ### CapabilityManager
+  ######
+  capabilitymanager:
+    build: ./authorisation/Py_CapabilityManagerWebService/
+    image: fed4iot/capability-manager
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    ports:
+        - "3040:3030"
+    restart: unless-stopped
+    volumes:
+      - ./authentication/certs/idm-2018-cert.pem:/opt/API-CM/certs/server-public-cert.pem  # volumes to import certificates to container
+      - ./authentication/certs/idm-2018-key.pem:/opt/API-CM/certs/server-priv-rsa.pem
+    environment:
+        #- capman_protocol=http #(OPTIONAL default https)
+        - keyrock_protocol=https
+        - keyrock_host=155.54.99.253 #<specify IdM Public IP address>
+        - keyrock_port=443
+        - keyrock_admin_email=admin@test.com
+        - keyrock_admin_pass=1234
+
+        #Validate Capability token using blockchain: Admitted values: "0: No use; 1:Use"
+        - blockchain_usevalidation=0
+
+        #Environment variables are considered only if blockchain_usevalidation=1
+        #BlockChain protocol. Admitted values: "http","https"
+        - blockchain_protocol=http
+        #BlockChain host.
+        - blockchain_host=localhost
+        - blockchain_port=8000
+
+        # PDP_URL format: https://<XACML-PDP-IP>:<XACML-PDP-PORT><XACML-PDP-SERVICE>
+        - PDP_URL=http://155.54.99.253:8080/XACMLServletPDP/ #<specify XACML-PDP Public address (including service)>
+
+  ######
+  ### PEP-Proxy
+  ######
+  pepproxy:
+    build: ./authorisation/Py_PEP-Proxy
+    image: fed4iot/pep-proxy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    ports:
+        - "1040:1027"
+    restart: unless-stopped
+    volumes:
+      - ./authentication/certs/idm-2018-cert.pem:/opt/PEP-Proxy/certs/server-public-cert.pem  # volumes to import certificates to container
+      - ./authentication/certs/idm-2018-key.pem:/opt/PEP-Proxy/certs/server-priv-rsa.pem
+    environment:
+        #API protocol. Admitted values: "http","https"
+        - target_protocol=http
+        #API host.
+        - target_host=13.80.153.4 #<specify API Public IP address>
+        - target_port=8090
+        #Broker API. Admitted values: "NGSIv1","NGSIv2","NGSILDv1","GenericAPI", "Fed4IoTMC"
+        - target_API=Fed4IoTMC #<specify Broker API type
+
+        #Validate Capability token using blockchain: Admitted values: "0: No use; 1:Use"
+        - blockchain_usevalidation=0
+
+        #Environment variables are considered only if blockchain_usevalidation=1
+        #BlockChain protocol. Admitted values: "http","https"
+        - blockchain_protocol=http
+        #BlockChain host.
+        - blockchain_host=localhost #<specify BlockChain Public IP address>
+        - blockchain_port=8000
+
+        # PEP proxy endpoint: protocol+ip+port
+        # HOST NO admitted: 0.0.0.0, localhost, 127.0.0.1
+        - PEP_ENDPOINT=https://localhost:1040 #<specify PEP-Proxy Public address ex: https://<PEP-IP>:<PEP-PORT>>
+
+        #Fed4IoT Master Controller protocol. Admitted values: "http","https"
+        - fed4iotmc_protocol=http
+        #Fed4IoT Master Controller host.
+        - fed4iotmc_host=13.80.153.4 #<specify Fed4IoT Master Controller Public IP address>
+        #Fed4IoT Master Controller Port.
+        - fed4iotmc_port=8090
+        - fed4iotmc_authz_testpath=/listFlavours # to obtain if it using JWT token has authorisation 
+        - fed4iotmc_login_path=/login
+        - fed4iotmc_login_userID=admin
+        - fed4iotmc_login_password=passw0rd
+
+######
+### Other Configuration
+######
+
+#networks:
+#  default:
+#    ipam:
+#      config:
+#        - subnet: 172.18.1.0/24
+
+volumes:
+  mysql-db: ~

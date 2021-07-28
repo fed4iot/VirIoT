@@ -153,7 +153,7 @@ From the User's perspective, this is the typical workflow to operate the face re
    ```bash
    $ curl http://<VSILO_PUBLIC_IP>:<PORT_MAPPED_TO_1026>/ngsi-ld/v1/entities/urn:ngsi-ld:facerecognition-tv:detector | jq
    ```
-   Resulting in the following NGSI-LD Entity, where we see the list of available commands, and the empty command, command-status and command-result properties created in the Broker to implement the actuation. We also see the ``generatedByVThing`` property that keeps track of the vThing that created the Entity (not relevant to this workflow).
+   Resulting in the following NGSI-LD Entity, where we see the list of available commands, and the empty ``commands``, ``command-status`` and ``command-result`` properties created in the Broker to implement the actuation. We also see the ``generatedByVThing`` property that keeps track of the vThing that created the Entity (not relevant to this workflow).
    ```JSON
    {
      "id": "urn:ngsi-ld:facerecognition-tv:detector",
@@ -200,7 +200,7 @@ From the User's perspective, this is the typical workflow to operate the face re
    The ``123456`` job identifier serves the purpose of a "secret link" able to protect and isolate the various jobs that different Users of different vSilos are sending to the FaceRecognition's "detector" in parallel.
 
    ```bash
-   % curl -X POST -F "pic=@bio.jpg" http://<VSILO_PUBLIC_IP>:<PORT_MAPPED_TO_80>/vstream/facerecognition-tv/detector/targetfaces/123456/Andrea
+   $ curl -X POST -F "pic=@bio.jpg" http://<VSILO_PUBLIC_IP>:<PORT_MAPPED_TO_80>/vstream/facerecognition-tv/detector/targetfaces/123456/Andrea
    ```
 
 4) Send a ``startjob`` command to the detector with the job identifier we want to start:

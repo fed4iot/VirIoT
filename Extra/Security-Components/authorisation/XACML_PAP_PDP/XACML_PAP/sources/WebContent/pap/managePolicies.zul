@@ -1,0 +1,238 @@
+<!-- 
+    Copyright (C) 2012, 2013 Universidad de Murcia
+    
+    Authors:
+    Ginés Dólera Tormo <ginesdt@um.es>
+    Juan M. Marín Pérez <juanmanuel@um.es>
+    Jorge Bernal Bernabé <jorgebernal@um.es>
+    Gregorio Martínez Pérez <gregorio@um.es>
+    Antonio F. Skarmeta Gómez <skarmeta@um.es>
+    
+    This file is part of XACML Web Policy Administration Point (XACML-WebPAP).
+    
+    XACML-WebPAP is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+    
+    XACML-WebPAP is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+    
+    You should have received a copy of the GNU Lesser General Public License
+    along with XACML-WebPAP. If not, see <http://www.gnu.org/licenses/>.
+-->
+<zk>
+    <window id="principal" title="Policy Administration Point"
+        style="text-align:center;" width="100%" height="100%" border="normal"
+        apply="umu.xacml.webpap.EventControllerPolicies">
+
+        <menupopup id="policyPopup">
+            <menuitem id="popupObligations" label="Define Obligations" />
+            <menuitem id="popupRename" label="Rename" />
+            <menuitem id="popupExport" label="Export" />
+        </menupopup>
+
+        <borderlayout height="100%" width="100%">
+            <north size="20%" border="none">
+                <borderlayout>
+                    <west size="25%" border="none"></west>
+                    <center border="none">
+                        <div align="center">
+                            <space height="85px" />
+                            <label value="Policy Administration Point"
+                                style="font-size:30px" />
+                        </div>
+                    </center>
+                    <east size="25%" border="none"></east>
+                </borderlayout>
+            </north>
+            <center border="none" flex="true">
+                <borderlayout>
+                    <center style="text-align:center;" flex="true"
+                        title="Policies Management" border="none">
+                        <borderlayout>
+                            <west size="210px">
+                                <borderlayout>
+                                    <north id="policies"
+                                        title="Policies" size="50%">
+                                        <borderlayout>
+                                            <center>
+                                                <listbox id="policyList_GUI"
+                                                    height="100%" vflex="true" style="text-align:left;"
+                                                    multiple="true">
+                                                </listbox>
+                                            </center>
+                                            <south height="28px">
+                                                <hbox>
+                                                    <button
+                                                        id="btNewPolicy" label="New" image="../img/table_add.png" />
+                                                    <button
+                                                        id="btDeletePolicy" label="Del"
+                                                        image="../img/table_delete.png" />
+                                                    <button
+                                                        id="btRenamePolicy" label="Rename"
+                                                        image="../img/script_edit.png" />
+                                                </hbox>
+                                            </south>
+                                        </borderlayout>
+                                    </north>
+                                    <south title="Rules" size="50%">
+                                        <borderlayout>
+                                            <center>
+                                                <listbox id="ruleList_GUI"
+                                                    style="text-align:left;" height="100%" vflex="true"
+                                                    multiple="true">
+                                                </listbox>
+                                            </center>
+                                            <south height="50px">
+                                                <borderlayout>
+                                                    <north
+                                                        border="none">
+                                                        <hbox>
+                                                            <button
+                                                                id="btNewRule" label="New" image="../img/table_add.png"
+                                                                width="80px" />
+                                                            <button
+                                                                id="btDelRule" label="Del"
+                                                                image="../img/table_delete.png" width="80px" />
+                                                            <button
+                                                                id="btRuleUP" label="" image="../img/arrow_up.gif" />
+                                                        </hbox>
+                                                    </north>
+                                                    <south
+                                                        border="none">
+                                                        <hbox>
+                                                            <button
+                                                                width="165px" id="btApply" label="Apply"
+                                                                image="../img/table_save.png" />
+                                                            <button
+                                                                id="btRuleDOWN" label="" image="../img/arrow_down.gif" />
+                                                        </hbox>
+                                                    </south>
+                                                </borderlayout>
+                                            </south>
+                                        </borderlayout>
+                                    </south>
+                                </borderlayout>
+                            </west>
+                            <center>
+                                <borderlayout>
+                                    <north id="north" size="93%"
+                                        flex="false" minsize="135" splittable="true">
+                                        <borderlayout>
+                                            <center>
+                                                <borderlayout>
+                                                    <west size="32%">
+                                                        <borderlayout>
+                                                            <center
+                                                                title="Resources">
+                                                                <listbox
+                                                                    width="100%" multiple="true" checkmark="true"
+                                                                    id="resourceList_GUI" height="100%" vflex="true"
+                                                                    style="text-align:left;">
+                                                                </listbox>
+                                                            </center>
+                                                            <south>
+                                                                <checkbox
+                                                                    id="chBAllResources" label="All">
+                                                                </checkbox>
+                                                            </south>
+                                                        </borderlayout>
+                                                    </west>
+                                                    <center>
+                                                        <borderlayout>
+                                                            <center
+                                                                title="Subjects">
+                                                                 <listbox
+                                                                    width="100%" multiple="true" checkmark="true"
+                                                                    id="subjectList_GUI" height="100%" vflex="true"
+                                                                    style="text-align:left;">
+                                                                </listbox>
+                                                            </center>
+                                                            <south>
+                                                                <checkbox
+                                                                    id="chBAllSubjects" label="All">
+                                                                </checkbox>
+                                                            </south>
+                                                        </borderlayout>
+                                                    </center>
+                                                    <east width="34%">
+                                                        <borderlayout>
+                                                            <center
+                                                                title="Actions">
+                                                                <listbox
+                                                                    id="actionList_GUI" multiple="true" checkmark="true"
+                                                                    height="100%" vflex="true" style="text-align:left;">
+                                                                </listbox>
+                                                            </center>
+                                                            <south>
+                                                                <checkbox
+                                                                    id="chBAllActions" label="All">
+                                                                </checkbox>
+                                                            </south>
+                                                        </borderlayout>
+                                                    </east>
+                                                </borderlayout>
+                                            </center>
+
+                                        </borderlayout>
+                                    </north>
+                                    <south height="25px">
+                                        <borderlayout>
+                                            <west size="45%"
+                                                border="none">
+                                              <hbox align="center">
+                                                    <label
+                                                        value="Rule CA" />
+                                                    <listbox
+                                                        id="cbRuleCA" mold="select">
+                                                        <listitem>
+                                                            <listcell
+                                                                label="urn:oasis:names:tc:xacml:1.0:rule-combining-algorithm:first-applicable" />
+                                                        </listitem>
+                                                    </listbox>
+                                                </hbox>
+                                            </west>
+                                            <east border="none">
+                                                <hbox align="center">
+                                                    <label
+                                                        value="Rule" />
+                                                    <listbox
+                                                        id="cbRule" mold="select">
+                                                        <listitem>
+                                                            <listcell
+                                                                label="Permit" />
+                                                        </listitem>
+                                                        <listitem>
+                                                            <listcell
+                                                                label="Deny" />
+                                                        </listitem>
+                                                    </listbox>
+                                                </hbox>
+                                            </east>
+                                        </borderlayout>
+
+                                    </south>
+                                </borderlayout>
+                            </center>
+                        </borderlayout>
+                    </center>
+                </borderlayout>
+            </center>
+            <south size="20%" border="none" splittable="true"
+                flex="true">
+                <div align="center">
+                    <separator height="30px" bar="false" />
+                    <button id="back" image="../img/arrow_left.png"
+                        height="70px" width="100px" label="Back" />
+                    <separator width="30px" bar="false"
+                        orient="vertical" />
+                    <button id="begin" image="../img/door_in.png"
+                        height="70px" width="100px" label="Exit" />
+                </div>
+            </south>
+        </borderlayout>
+    </window>
+</zk>

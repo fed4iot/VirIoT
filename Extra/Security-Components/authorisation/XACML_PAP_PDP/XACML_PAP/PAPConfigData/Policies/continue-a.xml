@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PolicySet xmlns="urn:oasis:names:tc:xacml:2.0:policy:schema:os" PolicyCombiningAlgId="urn:oasis:names:tc:xacml:1.0:policy-combining-algorithm:first-applicable" PolicySetId="POLICY_SET">
+  <Target />
+  <Policy PolicyId="DemoPolicy" RuleCombiningAlgId="urn:oasis:names:tc:xacml:1.0:rule-combining-algorithm:first-applicable">
+    <Target />
+    <Rule Effect="Permit" RuleId="RuleAdmin">
+      <Target>
+        <Subjects>
+          <Subject>
+            <SubjectMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+              <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">jamartinez</AttributeValue>
+              <SubjectAttributeDesignator AttributeId="urn:ietf:params:scim:schemas:core:2.0:username" DataType="http://www.w3.org/2001/XMLSchema#string" />
+            </SubjectMatch>
+          </Subject>
+        </Subjects>
+        <Resources>
+          <Resource>
+            <ResourceMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+              <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">https://localhost:1040/deleteVThing</AttributeValue>
+              <ResourceAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" DataType="http://www.w3.org/2001/XMLSchema#string" />
+            </ResourceMatch>
+          </Resource>
+          <Resource>
+            <ResourceMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+              <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">https://localhost:1040/addThingVisor</AttributeValue>
+              <ResourceAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" DataType="http://www.w3.org/2001/XMLSchema#string" />
+            </ResourceMatch>
+          </Resource>
+          <Resource>
+            <ResourceMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+              <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">https://localhost:1040/listThingVisors</AttributeValue>
+              <ResourceAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" DataType="http://www.w3.org/2001/XMLSchema#string" />
+            </ResourceMatch>
+          </Resource>
+          <Resource>
+            <ResourceMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+              <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">https://localhost:1040/deleteFlavour</AttributeValue>
+              <ResourceAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" DataType="http://www.w3.org/2001/XMLSchema#string" />
+            </ResourceMatch>
+          </Resource>
+          <Resource>
+            <ResourceMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+              <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">https://localhost:1040/siloCreate</AttributeValue>
+              <ResourceAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" DataType="http://www.w3.org/2001/XMLSchema#string" />
+            </ResourceMatch>
+          </Resource>
+          <Resource>
+            <ResourceMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+              <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">https://localhost:1040/siloDestroy</AttributeValue>
+              <ResourceAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" DataType="http://www.w3.org/2001/XMLSchema#string" />
+            </ResourceMatch>
+          </Resource>
+          <Resource>
+            <ResourceMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+              <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">https://localhost:1040/deleteThingVisor</AttributeValue>
+              <ResourceAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" DataType="http://www.w3.org/2001/XMLSchema#string" />
+            </ResourceMatch>
+          </Resource>
+          <Resource>
+            <ResourceMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+              <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">https://localhost:1040/addFlavour</AttributeValue>
+              <ResourceAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" DataType="http://www.w3.org/2001/XMLSchema#string" />
+            </ResourceMatch>
+          </Resource>
+          <Resource>
+            <ResourceMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+              <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">https://localhost:1040/listVirtualSilos</AttributeValue>
+              <ResourceAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" DataType="http://www.w3.org/2001/XMLSchema#string" />
+            </ResourceMatch>
+          </Resource>
+          <Resource>
+            <ResourceMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+              <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">https://localhost:1040/listFlavours</AttributeValue>
+              <ResourceAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" DataType="http://www.w3.org/2001/XMLSchema#string" />
+            </ResourceMatch>
+          </Resource>
+          <Resource>
+            <ResourceMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+              <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">https://localhost:1040/addVThing</AttributeValue>
+              <ResourceAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" DataType="http://www.w3.org/2001/XMLSchema#string" />
+            </ResourceMatch>
+          </Resource>
+        </Resources>
+        <Actions>
+          <Action>
+            <ActionMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+              <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">POST</AttributeValue>
+              <ActionAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:action:action-id" DataType="http://www.w3.org/2001/XMLSchema#string" />
+            </ActionMatch>
+          </Action>
+          <Action>
+            <ActionMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+              <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">GET</AttributeValue>
+              <ActionAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:action:action-id" DataType="http://www.w3.org/2001/XMLSchema#string" />
+            </ActionMatch>
+          </Action>
+        </Actions>
+      </Target>
+    </Rule>
+    <Rule Effect="Permit" RuleId="RuleUser">
+      <Target>
+        <Subjects>
+          <Subject>
+            <SubjectMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+              <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">jasanchez</AttributeValue>
+              <SubjectAttributeDesignator AttributeId="urn:ietf:params:scim:schemas:core:2.0:username" DataType="http://www.w3.org/2001/XMLSchema#string" />
+            </SubjectMatch>
+          </Subject>
+        </Subjects>
+        <Resources>
+          <Resource>
+            <ResourceMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+              <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">https://localhost:1040/deleteVThing</AttributeValue>
+              <ResourceAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" DataType="http://www.w3.org/2001/XMLSchema#string" />
+            </ResourceMatch>
+          </Resource>
+          <Resource>
+            <ResourceMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+              <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">https://localhost:1040/deleteFlavour</AttributeValue>
+              <ResourceAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" DataType="http://www.w3.org/2001/XMLSchema#string" />
+            </ResourceMatch>
+          </Resource>
+          <Resource>
+            <ResourceMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+              <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">https://localhost:1040/siloCreate</AttributeValue>
+              <ResourceAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" DataType="http://www.w3.org/2001/XMLSchema#string" />
+            </ResourceMatch>
+          </Resource>
+          <Resource>
+            <ResourceMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+              <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">https://localhost:1040/siloDestroy</AttributeValue>
+              <ResourceAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" DataType="http://www.w3.org/2001/XMLSchema#string" />
+            </ResourceMatch>
+          </Resource>
+          <Resource>
+            <ResourceMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+              <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">https://localhost:1040/addFlavour</AttributeValue>
+              <ResourceAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" DataType="http://www.w3.org/2001/XMLSchema#string" />
+            </ResourceMatch>
+          </Resource>
+          <Resource>
+            <ResourceMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+              <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">https://localhost:1040/listVirtualSilos</AttributeValue>
+              <ResourceAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" DataType="http://www.w3.org/2001/XMLSchema#string" />
+            </ResourceMatch>
+          </Resource>
+          <Resource>
+            <ResourceMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+              <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">https://localhost:1040/listFlavours</AttributeValue>
+              <ResourceAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" DataType="http://www.w3.org/2001/XMLSchema#string" />
+            </ResourceMatch>
+          </Resource>
+          <Resource>
+            <ResourceMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+              <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">https://localhost:1040/addVThing</AttributeValue>
+              <ResourceAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" DataType="http://www.w3.org/2001/XMLSchema#string" />
+            </ResourceMatch>
+          </Resource>
+        </Resources>
+        <Actions>
+          <Action>
+            <ActionMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+              <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">POST</AttributeValue>
+              <ActionAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:action:action-id" DataType="http://www.w3.org/2001/XMLSchema#string" />
+            </ActionMatch>
+          </Action>
+          <Action>
+            <ActionMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+              <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">GET</AttributeValue>
+              <ActionAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:action:action-id" DataType="http://www.w3.org/2001/XMLSchema#string" />
+            </ActionMatch>
+          </Action>
+        </Actions>
+      </Target>
+    </Rule>
+  </Policy>
+</PolicySet>
+

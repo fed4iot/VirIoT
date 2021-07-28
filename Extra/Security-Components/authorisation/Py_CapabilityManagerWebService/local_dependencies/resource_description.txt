@@ -1,0 +1,1 @@
+<https://smartieplatform.com/api/message/temperature>;title="Temp sensor";if="pubInterface"; rt="temp";tag="roomC201";uid="resID"

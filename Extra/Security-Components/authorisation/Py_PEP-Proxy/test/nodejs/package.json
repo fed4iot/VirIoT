@@ -1,0 +1,15 @@
+{
+  "name": "pepproxyconnector",
+  "version": "1.0.0",
+  "description": "pepproxyconnector.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Juan Andrés Sánchez Segado (jasanchez@odins.es)",
+  "license": "MIT",
+  "dependencies": {
+    "request": "^2.88.0"
+  }
+}

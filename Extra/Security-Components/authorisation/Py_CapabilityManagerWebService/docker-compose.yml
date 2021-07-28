@@ -1,0 +1,45 @@
+#
+#Copyright Odin Solutions S.L. All Rights Reserved.
+#
+#SPDX-License-Identifier: Apache-2.0
+#
+
+version: '3.1'
+
+services:
+  capabilitymanager:
+    build: ./
+    image: fed4iot/capability-manager
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    ports:
+        - "3040:3030"
+    restart: unless-stopped
+    volumes:
+        #- ./certs/fullchain.pem:/opt/API-CM/certs/server-public-cert.pem  # volumes to import certificates to container
+        #- ./certs/privkey.pem:/opt/API-CM/certs/server-priv-rsa.pem
+        - ./certs/server-public-cert.pem:/opt/API-CM/certs/server-public-cert.pem  # volumes to import certificates to container
+        - ./certs/server-priv-rsa.pem:/opt/API-CM/certs/server-priv-rsa.pem
+    environment:
+        #- capman_protocol=http #(OPTIONAL default https)
+        - keyrock_protocol=https
+        - keyrock_host=<specify IdM Public IP address>
+        - keyrock_port=443
+        - keyrock_admin_email=admin@test.com
+        - keyrock_admin_pass=1234
+
+        #Validate Capability token using blockchain: Admitted values: "0: No use; 1:Use"
+        - blockchain_usevalidation=0
+
+        #Environment variables are considered only if blockchain_usevalidation=1
+        #BlockChain protocol. Admitted values: "http","https"
+        - blockchain_protocol=http
+        #BlockChain host.
+        - blockchain_host=<specify Blockchain endpoint IP address> #<specify Blockchain endpoint IP address> # Required
+        - blockchain_port=8000
+
+        # PDP_URL format: https://<XACML-PDP-IP>:<XACML-PDP-PORT><XACML-PDP-SERVICE>
+        - PDP_URL=<specify XACML-PDP Public address (including service)>

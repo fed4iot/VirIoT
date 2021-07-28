@@ -8,7 +8,7 @@ The following picture shows the face recognition architecture, which comprises t
 
 Overall, the Camera System sends to the CameraSensor TV every new video frame it captures from the Camera. The CameraSensor TV buffers the video frames and gives them unique identifiers. Whenever the FaceRecognition TV is ready to process a new video frame, it gets it by name, asking it to the CameraSensor TV. The FaceRecognition TV processes the frame by comparing it to a target picture of a person. If a match is found, an event is sent from the FaceRecognition TV to a vSilo (that hosts the IoT Broker and talks to an external Application).
 
-Users do not interact directly with the FaceRecognition ThingVisor. The whole process is driven via the User's vSilo, instead, as usual in VirIoT. Users POST target faces (to be matched) to the HTTP Broker running inside the vSilo. Moreover, they can act (using the usual VirIoT's actuation workflow) upon the face recognition process by starting (or deleting) a specific job recognition process, identifying it by name (of a target person, for example, or whatever name they assign to the job, "Andrea" in the picture below).
+Users do not interact directly with the FaceRecognition ThingVisor. The whole process is driven via the User's vSilo, instead, as usual in VirIoT. Users POST target faces (to be matched) to the HTTP Broker running inside the vSilo. Moreover, they can act (using the usual VirIoT's actuation workflow) upon the face recognition process by starting (or deleting) a specific job recognition process, identifying it by a unique identifier of the job and the name of a target person (for example "123456/Andrea" in the picture below).
 
 ![Face Recognition architecture](facerec.jpg)
 

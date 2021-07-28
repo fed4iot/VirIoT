@@ -1,0 +1,89 @@
+<!-- 
+    Copyright (C) 2012, 2013 Universidad de Murcia
+
+    Authors:
+        Ginés Dólera Tormo <ginesdt@um.es>
+        Juan M. Marín Pérez <juanmanuel@um.es>
+        Jorge Bernal Bernabé <jorgebernal@um.es>
+        Gregorio Martínez Pérez <gregorio@um.es>
+        Antonio F. Skarmeta Gómez <skarmeta@um.es>
+
+    This file is part of XACML Web Policy Administration Point (XACML-WebPAP).
+
+    XACML-WebPAP is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    XACML-WebPAP is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with XACML-WebPAP. If not, see <http://www.gnu.org/licenses/>.
+-->
+<zk>
+<window id="principal" title="Policy Administration Point" style="text-align:center;" width="100%"
+	height="100%" border="normal" apply="umu.xacml.webpap.EventControllerConfiguration" >
+
+	<borderlayout height="100%" width="100%">
+		<north size="20%" border="none">
+			<borderlayout>
+                                <west size="25%" border="none">
+				</west>
+				<center border="none">
+					<div align="center">
+						<space height="85px" />
+						<label value="Policy Administration Point" style="font-size:30px" />
+					</div>
+				</center>
+				<east size="25%" border="none">
+				</east>
+			</borderlayout>
+		</north>
+		<center border="none" flex="true">
+			<borderlayout>
+				<center style="text-align:center;" flex="true"
+					title="Configuration" border="none">
+					<borderlayout>
+						<north size="25px">
+                                                    <div align="left">                                                        
+                                                        <label value="Select the PAP connector: " style="font-size:14px" />
+                                                        <radiogroup id="rg1" />
+                                                        <radio id="rbDisk" label="Disk Connector" radiogroup="rg1" />
+                                                        <radio id="rbExist" label="eXist-db Connector" radiogroup="rg1" />
+                                                    </div>
+                                                </north>
+                                                <center>
+                                                    <grid fixedLayout="true" id="parameterGrid">
+                                                        <columns>
+                                                            <column label="Parameter" width="30%" />
+                                                            <column label="Value" />                                                            
+                                                        </columns>
+                                                        <rows id="parameterRows">                                                            
+                                                        </rows>
+                                                    </grid>
+                                                </center>
+                                                <south size="25px">
+                                                    <div align="right">
+                                                        <button id="btSave" image="../img/script_edit.png" label="Save" width="100px" />
+                                                    </div>
+                                                </south>
+					</borderlayout>
+				</center>
+			</borderlayout>
+		</center>
+		<south size="20%" border="none" splittable="true" flex="true">
+			<div align="center">				
+				<separator height="30px" bar="false" />
+				<button id="back" image="../img/arrow_left.png" height="70px" width="100px"
+					label="Back"  />
+				<separator width="30px" bar="false" orient="vertical" />
+				<button id="begin" image="../img/door_in.png" height="70px" width="100px"
+					label="Exit"  />
+			</div>
+		</south>
+	</borderlayout>
+</window>
+</zk>

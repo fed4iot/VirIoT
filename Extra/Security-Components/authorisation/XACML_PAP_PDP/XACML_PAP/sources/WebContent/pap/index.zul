@@ -1,0 +1,81 @@
+<!-- 
+    Copyright (C) 2012, 2013 Universidad de Murcia
+
+    Authors:
+        Ginés Dólera Tormo <ginesdt@um.es>
+        Juan M. Marín Pérez <juanmanuel@um.es>
+        Jorge Bernal Bernabé <jorgebernal@um.es>
+        Gregorio Martínez Pérez <gregorio@um.es>
+        Antonio F. Skarmeta Gómez <skarmeta@um.es>
+
+    This file is part of XACML Web Policy Administration Point (XACML-WebPAP).
+
+    XACML-WebPAP is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    XACML-WebPAP is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with XACML-WebPAP. If not, see <http://www.gnu.org/licenses/>.
+-->
+
+<window id="index" title="Policy Administration Point"
+	style="text-align:center;" width="100%" height="100%" border="normal"
+	apply="umu.xacml.webpap.EventController">
+	<borderlayout height="100%" width="100%">
+		<north size="20%" border="none">
+			<borderlayout>
+				<west size="25%" border="none"></west>
+				<center border="none">
+					<div align="center">
+						<space height="85px" />
+						<label value="Policy Administration Point"
+							style="font-size:30px" />
+					</div>
+				</center>
+				<east size="25%" border="none"></east>
+			</borderlayout>
+		</north>
+		<center flex="true">
+			<borderlayout>
+				<west size="0%"></west>
+				<center style="text-align:center;"
+					title="Administration">
+					<div align="center">
+						<separator height="75px" bar="false" />
+						<button image="../img/lock_edit.png" width="80%"
+							style="font-size:15px" label="Manage Policies"
+							id="managePolicies" />
+						<separator height="15px" bar="false" />
+						<button image="../img/table_multiple.png"
+							width="80%" style="font-size:15px" label="Manage Attributes"
+							id="manageResources" />
+						<separator height="15px" bar="false" />
+					</div>
+				</center>
+				<east style="text-align:center;" flex="true"
+					title="Configuration" size="50%">
+					<div align="center">
+						<separator height="75px" bar="false" />
+						<button image="../img/script_edit.png"
+							width="80%" style="font-size:15px" label="PAP Configuration"
+							id="configuration" />
+						<separator height="15px" bar="false" />
+					</div>
+				</east>
+			</borderlayout>
+		</center>
+		<south size="20%" border="none" splittable="true" flex="true">
+			<div align="center">
+				<separator height="30px" bar="false" />
+				<button image="../img/door_in.png" height="70px"
+					width="100px" label="Exit" id="exit" />
+			</div>
+		</south>
+	</borderlayout>
+</window>

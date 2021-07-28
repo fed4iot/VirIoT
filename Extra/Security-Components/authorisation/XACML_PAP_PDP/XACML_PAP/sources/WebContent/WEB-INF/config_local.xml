@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+        <comment>PAP Configuration File</comment>
+        <entry key="CONNECTOR">DISK_CONNECTOR</entry>
+        <entry key="DISK_CONNECTOR_CONFIG_PATH">/Users/dangarcia/gitKraken_Projects/XACML/tst/XACML_PAP/PAPConfigData/Connectors/diskConnectorConfig.xml  </entry>
+        <entry key="EXIST_CONNECTOR_CONFIG_PATH">/Users/dangarcia/gitKraken_Projects/XACML/tst/XACML_PAP/PAPConfigData/Connectors/existConnectorConfig.xml </entry>
+</properties>

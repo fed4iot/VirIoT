@@ -4,7 +4,7 @@
 Optionally, they can be built locally. See [here](Optional%20docker%20build.md) for instructions).
 
 
-### Kubernetes cluster setup  
+### Kubernetes (v1.18) cluster setup  
 
 To properly setup a multi-node Kubernetes cluster, see the Kubernetes documentation: <https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/>.  
 

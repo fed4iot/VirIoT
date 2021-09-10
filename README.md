@@ -1,5 +1,3 @@
-![k8s CI](https://github.com/fed4iot/VirIoT/workflows/k8s%20CI/badge.svg)
-![docker CI](https://github.com/fed4iot/VirIoT/workflows/docker%20CI/badge.svg)
   
 # VirIoT
 ![VirIoT](Extra/cloud-icon.png)

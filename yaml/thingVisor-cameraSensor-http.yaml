@@ -1,0 +1,56 @@
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: f4i-tv-camerasensor
+spec:
+  selector:
+    matchLabels:
+      app: f4i-camerasensor
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: f4i-camerasensor
+    spec:
+      containers:
+      - name: f4i-camerasensor
+        image: fed4iot/camerasensor-tv:latest
+        ports:
+        - containerPort: 5000
+        volumeMounts:
+        - name: shared-ram-disk
+          mountPath: "/app/redis"
+      - name: redis-for-camerasensor
+        image: redis:alpine
+        volumeMounts:
+        - name: shared-ram-disk
+          mountPath: "/tmp"
+        command: ["redis-server"]
+        # port 0 disables TCP
+        args: ["--unixsocket /tmp/redis.sock ", "--unixsocketperm 666", "--port 0"]
+      - name: f4i-http-sidecar
+        image: fed4iot/http-sidecar-tv
+        ports:
+        - containerPort: 5001
+      volumes:
+      - name: shared-ram-disk
+        emptyDir:
+          medium: "Memory"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: f4i-camerasensor-tv-svc
+  labels:
+    app: f4i-camerasensor
+spec:
+  type: NodePort
+  selector:
+    app: f4i-camerasensor
+  ports:
+  - port: 5000
+    nodePort:
+    name: port5000 
+  - port: 80
+    targetPort: 5001
+    name: http

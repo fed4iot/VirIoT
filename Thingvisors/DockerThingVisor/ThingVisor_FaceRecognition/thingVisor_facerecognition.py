@@ -11,761 +11,252 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Fed4IoT Thing ThingVisor hello world
+# This is a Fed4IoT ThingVisor for Face Recognition
 
-import time
-import os
-import random
-import json
-import base64
-import traceback
-import paho.mqtt.client as mqtt
-from threading import Thread
-from pymongo import MongoClient
-from context import Context
+import thingVisor_generic_module as thingvisor
 
-from concurrent.futures import ThreadPoolExecutor
-
-from eve import Eve
-from flask import request, Response
-
-from eve.io.base import BaseJSONEncoder
-from eve.io.mongo import Validator
-from eve.methods.post import post_internal
-from eve.methods.delete import deleteitem_internal
-
-import constants
-
+import copy
 import requests
-import uuid
-import magic
-
-import master_controller_invoke_REST as rest
+import json
+import traceback
+from threading import Timer, Lock
+from eve import Eve
+from eve.methods.post import post_internal
+from flask import request, Response
+from bson.objectid import ObjectId
+import face_recognition
+import cv2
+import numpy as np
 
 # -*- coding: utf-8 -*-
 
-# validator for custom uuid type
-# in this case, it's an integer representing the camera number
-class UUIDValidator(Validator):
-    """
-    Extends the base mongo validator adding support for the uuid data-type
-    """
-    def _validate_type_uuid(self, value):
-        if isinstance(value,int):
-            if value>=0:
-                return True
 
-app = Eve(validator=UUIDValidator)
+# This TV creates just one vthing hardcoded name "detector". If the TV is named "facerec-tv", then:
+# the vthing ID is: facerec-tv/detector, and the vthing produces a stream of one NGSI-LD entity,
+# which has NGSI-LD identifier: urn:ngsi-ld:facerec-tv:detector, and the NGSI-LD type of the
+# produced entity is hardcoded to: FaceDetector
+# The vthing supports the following commands: ["startjob","deletejob"].
+# Users interact with the vthing by actuating it, i.e. sending commands.
+# A target face to be recognized cannot be embedded into a command, but a dedicated HTTP endpoint
+# is offered by this TV, so that users can PUT/POST to it to accumulate target pictures
+# This endpoint is named targetfaces/
 
-@app.route('/genericFaceInput/<name>', methods=['POST'])
-def post_by_name(name):
-    # check if person exists
-    if name not in image_count:
-        return("The name "+name+" doesn't exist.")
+# The CameraSensor TV (hosting the sensor vthing) needs a sidecar-tv so that downstream
+# clients can ask for TV_IP:TV_PORT_80/sensor/bufferedframes/xxx
+# The FaceRecognition TV needs a sidecar-flavour so that the above TV_IP:TV_PORT_80/sensor/bufferedframes/xxx is
+# proxied everywhere in the platform
 
-    # make empty element
-    id=str(uuid.uuid4())
-    with app.app_context():
-        with app.test_request_context():
-            post_internal('faceInput', {"_id": id})
 
-    # insert into arrays
-    image_to_name_mapping[id]=name
-    if name not in image_count:
-        image_count[name]=1
-    else:
-        image_count[name]+=1
-
-    print("")
-    print("genericFaceInput: created new item for person "+name)
-    print("Current status:")
-    print(image_to_name_mapping)
-    print(image_count)
-    print("")
-
-    # send image
-    files={'image': request.files['image']}
-    res=requests.patch("http://localhost:5000/faceInput/"+id, files=files)
-
-    # check response
-    if res.status_code>=400:
-        return str(res.status_code)
-    
-    return("OK")
-
-@app.route('/faceInput/<id>/image')
-def get_input_image(id):
-    faceInput = app.data.driver.db['faceInput']
-    a = faceInput.find_one({'_id':id})
-    b=app.media.get(a['image'])
-    c=b.read()
-
-    mm = magic.Magic(mime=True)
-    mime=mm.from_buffer(c)
-
-    headers={"Content-disposition": "attachment"}
-    headers["Cache-Control"]="no-cache"
-
-    return Response(
-        c,
-        mimetype=mime,
-        headers=headers)
-
-@app.route('/faceOutput/<id>/image')
-def get_output_image(id):
-    faceOutput = app.data.driver.db['faceOutput']
-    a = faceOutput.find_one({'_id':id})
-    b=app.media.get(a['image'])
-    c=b.read()
-
-    mm = magic.Magic(mime=True)
-    mime=mm.from_buffer(c)
-
-    headers={"Content-disposition": "attachment"}
-    headers["Cache-Control"]="no-cache"
-
-    return Response(
-        c,
-        mimetype=mime,
-        headers=headers)
-
-def on_post_PATCH_faceInput(request,lookup):
-    try:
-        data=json.loads(lookup.get_data())
-
-        if '_id' in data:
-            id=data['_id']
-            name=image_to_name_mapping[id]
-
-            print("")
-            print("Image patched on "+id)
-            print("")
-
-            # get image
-            faceInput = app.data.driver.db['faceInput']
-            a = faceInput.find_one({'_id':id})
-            image=app.media.get(a['image'])
-
-            # send all data to the robot
-            _robot_ip, _robot_port=get_robot_ip_port()
-            payload = {'name':name,'id':id}
-            files={'image':image}
-            res=requests.post("http://"+_robot_ip+':'+_robot_port+'/images', data=payload, files=files)
-
-            # check response
-            if res.status_code>=400:
-                print("Error when posting to the JetBot: "+str(res.status_code))
-                return 
-    except:
-        traceback.print_exc()
-
-def on_post_POST_faceOutput(request,lookup):
-    try:
-        data=json.loads(lookup.get_data())
-
-        if '_id' in data:
-            id=request.form['id']
-            name=image_to_name_mapping[id]
-
-            print("")
-            print("Status changed for person "+name)
-            print("New status: "+str(request.form['result']))
-            print("")
-
-            # send new command status
-            # to inform that the person status has changed
-            payload={
-                "status": request.form['result'],
-                "name": name,
-                "count": image_count[name],
-                "timestamp": request.form['timestamp'],
-                "link_to_base_image": "/faceInput/"+id+"/image",
-                "link_to_current_image": "/faceOutput/"+data['_id']+"/image"
-            }
-
-            mqtt_data_thread.send_commandStatus(
-                command_data[id]['cmd_name'],
-                command_data[id]['cmd_info'],
-                command_data[id]['id_LD'],
-                payload
-            )
-    except:
-        traceback.print_exc()
-
-def send_message(message, n):
-    print("topic name: " + v_things[n]['topic'] + '/' + v_thing_data_suffix + ", message: " + json.dumps(message))
-    mqtt_data_client.publish(v_things[n]['topic'] + '/' + v_thing_data_suffix,
-                                json.dumps(message))  # publish received data to data topic by using neutral format
-
-def create_vthing(n, type, commands):
-    v_things[n]={}
-
-    v_things[n]['name']=n
-    v_things[n]['type_attr']=type
-    v_things[n]['ID']=thing_visor_ID + "/" + n
-    v_things[n]['label']=n
-    v_things[n]['description']="faceRecognition virtual thing"
-    v_things[n]['v_thing']={
-        "label": v_things[n]['label'],
-        "id": v_things[n]['ID'],
-        "description": v_things[n]['description']
-    }
-    v_things[n]['caching']=False
-
-    v_things[n]['ID_LD']="urn:ngsi-ld:"+thing_visor_ID+":" + v_things[n]['name']
-
-    # Context is a "map" of current virtual thing state
-    # create and save the Context for the new vThing
-    v_things[n]['context']=Context()
-
-    # set topic the name of mqtt topic on witch publish vThing data
-    # e.g vThing/helloWorld/hello
-    v_things[n]['topic']=v_thing_prefix + "/" + v_things[n]['ID']
-
-    # set the commands array for the vThing
-    v_things[n]['commands']=commands
-
-    # control
-    mqtt_control_thread.create_vthing(n)
-
-    # data
-    mqtt_data_thread.create_vthing(n)
-
-    return n
-
-def destroy_vthing(n):
-    mqtt_control_thread.send_destroy_v_thing_message(n)
-    delete_endpoint(n)
-    del v_things[n]
-
-def create_endpoint(n):
-    time.sleep(6)
-    # create vthings endpoint through REST
-    print("Creating endpoint for "+n)
-    rest.set_vthing_endpoint(controller_url, v_things[n]['ID'], "http://localhost:5000/public", tenant_id, admin_psw)
-
-def delete_endpoint(n):
-    # delete vthings endpoint through REST
-    print("Destroying endpoint for "+n)
-    rest.del_vthing_endpoint(controller_url, v_things[n]['ID'], tenant_id, admin_psw)
-
-def get_robot_ip_port():
-    #global robot_ip,robot_port
-    if robot_ip==None or robot_port==None:
-        with app.app_context():
-            robots = app.data.driver.db['robots']
-            a = robots.find_one({'_id':0})
-            return a['ip'], a['port']
-    else:
-        return robot_ip, robot_port
-
-def get_vthing_name(name):
-    name=name.split(':')[-1]
-    return name
-
-def get_silo_name(nuri):
-    return nuri.split('/')[-2]
-
-class mqttDataThread(Thread):
-    # Class used to:
-    # 1) handle actuation command workflow
-    # 2) publish actuator status when it changes
-    global mqtt_data_client, context_list, executor, commands
-
-    def send_commandResult(self, cmd_name, cmd_info, id_LD, result_code):
-        try:  
-            n=get_vthing_name(id_LD)
-
-            pname = cmd_name+"-result"
-            pvalue = cmd_info.copy()
-            pvalue['cmd-result'] = result_code
-            ngsiLdEntityResult = {"id": id_LD,
-                                    "type": v_things[n]['type_attr'],
-                                    pname: {"type": "Property", "value": pvalue},
-                                    "@context": [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]
-                                    }
-            data = [ngsiLdEntityResult]
-            # LampActuatorContext.update(data)
-            
-            message = {"data": data, "meta": {
-                "vThingID": v_things[n]['ID']}}  # neutral-format message
-            if "cmd-nuri" in cmd_info:
-                if cmd_info['cmd-nuri'].startswith("viriot://"):
-                    topic = cmd_info['cmd-nuri'][len("viriot://"):]
-                    self.publish(message, topic)
-                else:
-                    self.publish(message, v_things[n]['topic'])
+# to actuate this detector, use your Broker to channge the "startjob" Property, as follows:
+# startjob : {
+#   type : Property
+#   value : {
+#     cmd-value : {"job":"dsfsdfdsf234"}
+#     cmd-qos : 2
+#   }
+# }
+def process_job_command(cmd_name, cmd_info, id_LD, jobtype):
+    # the important information is within "cmd-value" of cmd_info
+    if "cmd-value" in cmd_info:
+        if "job" in cmd_info["cmd-value"]:
+            job = cmd_info["cmd-value"]["job"]
+            # protect the pending_commands from other threads using it
+            # while we insert/delete a new job
+            known_encodings_lock.acquire()
+            if jobtype == "START":
+                pending_commands[job] = {'cmd_name':cmd_name,'cmd_info':cmd_info,'id_LD':id_LD}
+            elif jobtype == "DELETE":
+                pending_commands.pop(job, "NOT FOUND")
+                #TODO
+                #TODO REMOVE PICTURES OF THE JOB------------------------------
+                #TODO
             else:
-                self.publish(message, v_things[n]['topic'])
-        except:
-            traceback.print_exc()
-
-    def send_commandStatus(self, cmd_name, cmd_info, id_LD, status_code):
-        try:  
-            n=get_vthing_name(id_LD)
-
-            pname = cmd_name+"-status"
-            pvalue = cmd_info.copy()
-            pvalue['cmd-status'] = status_code
-            ngsiLdEntityStatus = {"id": id_LD,
-                                    "type": v_things[n]['type_attr'],
-                                    pname: {"type": "Property", "value": pvalue},
-                                    "@context": [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]
-                                    }
-            data = [ngsiLdEntityStatus]
-            
-            message = {"data": data, "meta": {
-                "vThingID": v_things[n]['ID']}}  # neutral-format message
-            if "cmd-nuri" in cmd_info:
-                if cmd_info['cmd-nuri'].startswith("viriot://"):
-                    topic = cmd_info['cmd-nuri'][len("viriot://"):]
-                    self.publish(message, topic)
-                else:
-                    self.publish(message, v_things[n]['topic'])
-            else:
-                self.publish(message, v_things[n]['topic'])
-        except:
-            traceback.print_exc()
-
-    def receive_commandRequest(self, cmd_entity):
-        try:
-            #jsonschema.validate(data, commandRequestSchema)
-            id_LD = cmd_entity["id"]
-            n=get_vthing_name(id_LD)
-            for cmd_name in v_things[n]['commands']:
-                if cmd_name in cmd_entity:
-                    cmd_info = cmd_entity[cmd_name]['value']
-                    fname = cmd_name.replace('-','_')
-                    fname = "on_"+fname
-                    f=getattr(self,fname)
-                    if "cmd-qos" in cmd_info:
-                        if int(cmd_info['cmd-qos']) == 2:
-                            self.send_commandStatus(cmd_name, cmd_info, id_LD, "PENDING")
-                    future = executor.submit(f, cmd_name, cmd_info, id_LD, self)
-                    
-
-        #except jsonschema.exceptions.ValidationError as e:
-            #print("received commandRequest got a schema validation error: ", e)
-        #except jsonschema.exceptions.SchemaError as e:
-            #print("commandRequest schema not valid:", e)
-        except:
-            traceback.print_exc()
-
-    # def on_set_caching(self, cmd_name, cmd_info, id_LD, actuatorThread):
-    #     global caching
-
-    #     n=get_vthing_name(id_LD)
-
-    #     print("Setting caching for "+n+" to "+str(cmd_info['cmd-value']))
-    #     v_things[n]['caching']=cmd_info['cmd-value']
-
-    #     if "cmd-qos" in cmd_info:
-    #         if int(cmd_info['cmd-qos']) > 0:
-    #             self.send_commandResult(cmd_name, cmd_info, id_LD, "OK")
-
-
-    def on_start(self, cmd_name, cmd_info, id_LD, actuatorThread):
-        print("Sending start command to robot")
-
-        _robot_ip, _robot_port=get_robot_ip_port()
-        res=requests.get("http://"+_robot_ip+':'+_robot_port+'/start')
-
-        # publish command result
-        if "cmd-qos" in cmd_info:
-            if int(cmd_info['cmd-qos']) > 0:
-                self.send_commandResult(cmd_name, cmd_info, id_LD, res.status_code)
-    
-    def on_stop(self, cmd_name, cmd_info, id_LD, actuatorThread):
-        print("Sending stop command to robot")
-
-        _robot_ip, _robot_port=get_robot_ip_port()
-        res=requests.get("http://"+_robot_ip+':'+_robot_port+'/stop')
-        
-        # publish command result
-        if "cmd-qos" in cmd_info:
-            if int(cmd_info['cmd-qos']) > 0:
-                self.send_commandResult(cmd_name, cmd_info, id_LD, res.status_code)
-
-    def on_set_face_feature(self, cmd_name, cmd_info, id_LD, actuatorThread):
-        try:
-            if "cmd-qos" not in cmd_info or int(cmd_info['cmd-qos']) != 2:
-                self.send_commandResult(cmd_name, cmd_info, id_LD, "Error: cmd-qos must be 2.")
-                return
-            
-            n=get_vthing_name(id_LD)
-
-            # make empty element
-            id=str(uuid.uuid4())
-            with app.app_context():
-                with app.test_request_context():
-                    post_internal('faceInput', {"_id": id})
-
-            # Make full name (nuri+name)
-            nuri=get_silo_name(cmd_info['cmd-nuri'])
-            name=nuri+"_"+cmd_info['cmd-value']['name']
-
-            # insert into arrays
-            image_to_name_mapping[id]=name
-            if name not in image_count:
-                image_count[name]=1
-            else:
-                image_count[name]+=1
-            
-            print("")
-            print("on_set_face_feature: created new item for person "+name)
-            print("Current status:")
-            print(image_to_name_mapping)
-            print(image_count)
-            print("")
-
-            # collect command data
-            command_data[id]={'cmd_name':cmd_name,'cmd_info':cmd_info,'id_LD':id_LD}
-
-            # send URL where the user can PATCH
-            payload={'message': "You can PATCH here.", 'url': "/vstream/"+thing_visor_ID+"/"+v_things[n]['name']+"/faceInput/"+id}
-            self.send_commandStatus(cmd_name, cmd_info, id_LD, payload)
-        except:
-            traceback.print_exc()
-
-        # # update the Context, publish new actuator status on data_out, send result
-        # ngsiLdEntity = {"id": id_LD,
-        #                 "type": v_things[n]['type_attr'],
-        #                 "@context": [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]
-        #                 }
-        # data = [ngsiLdEntity]
-        # v_things[n]['context'].update(data)
-        
-        # # publish changed status
-        # message = {"data": data, "meta": {
-        #     "vThingID": v_things[n]['ID']}}  # neutral-format
-        # self.publish(message, v_things[n]['topic'])
-    
-    def on_delete_by_name(self, cmd_name, cmd_info, id_LD, actuatorThread):
-        try:
-            if "cmd-qos" in cmd_info and int(cmd_info['cmd-qos']) == 2:
-                self.send_commandResult(cmd_name, cmd_info, id_LD, "Error: cmd-qos must be 0 or 1.")
-                return
-            
-            # get the name of the person to delete
-            nuri=get_silo_name(cmd_info['cmd-nuri'])
-            name=nuri+"_"+cmd_info['cmd-value']['name']
-
-            # check if this name is registered
-            if name not in image_count:
+                print("unrecognized jobtype"+jobtype)
+            print(jobtype+" command for job " + job + " so we have " + str(len(pending_commands))+ " jobs")
+            # un protect the pending_commands from other threads using it
+            # while we insert/delete a new job
+            known_encodings_lock.release()
+            # give status update that we have started/deleted
+            if jobtype == "START" or jobtype == "DELETE":
                 if "cmd-qos" in cmd_info:
                     if int(cmd_info['cmd-qos']) > 0:
-                        self.send_commandResult(cmd_name, cmd_info, id_LD, "The name "+name+" doesn't exist.")
-                return
-            
-            # send to the robot the deletion request
-            _robot_ip, _robot_port=get_robot_ip_port()
-            res=requests.delete("http://"+_robot_ip+':'+_robot_port+'/people/'+name)
-
-            # check response
-            if res.status_code>=400:
-                if "cmd-qos" in cmd_info:
-                    if int(cmd_info['cmd-qos']) > 0:
-                        self.send_commandResult(cmd_name, cmd_info, id_LD, res.status_code)
-                return
-
-            # find all ids of images to delete
-            temp=[]
-            for x in image_to_name_mapping:
-                if image_to_name_mapping[x]==name:
-                    temp.append(x)
-            
-            # delete images
-            with app.app_context():
-                with app.test_request_context():
-                    for x in temp:
-                        #deleteitem_internal('faceInput', {"_id": x})
-                        del image_to_name_mapping[x]
-            del image_count[name]
-
-            print("")
-            print("Deleted person "+name)
-            print("Current status:")
-            print(image_to_name_mapping)
-            print(image_count)
-            print("")
-
-            if "cmd-qos" in cmd_info:
-                if int(cmd_info['cmd-qos']) > 0:
-                    self.send_commandResult(cmd_name, cmd_info, id_LD, "OK")
-        except:
-            traceback.print_exc()
-    
-    def publish(self, message, out_topic):
-        msg=json.dumps(message)
-        #msg = str(message).replace("\'", "\"")
-        print("Message sent on "+out_topic + "\n" + msg+"\n")
-        # publish data to out_topic
-        mqtt_data_client.publish(out_topic, msg)
-
-    def on_message_data_in_vThing(self, mosq, obj, msg):
-        payload = msg.payload.decode("utf-8", "ignore")
-        print("Message received on "+msg.topic + "\n" + payload+"\n")
-        jres = json.loads(payload.replace("\'", "\""))
-        try:
-            data = jres["data"]
-            for entity in data:
-                id_LD = entity["id"]
-                #if id_LD != ID_LD[-1]:
-                #    print("Entity not handled by the Thingvisor, message dropped")
-                #    continue
-                n=get_vthing_name(id_LD)
-                for cmd in v_things[n]['commands']:
-                    if cmd in entity:
-                        self.receive_commandRequest(entity)
-                        continue
-        except:
-            traceback.print_exc()
+                        thingvisor.publish_actuation_response_message(cmd_name, cmd_info, id_LD, "Just received "+jobtype+" job: "+job, "status")
+        else:
+            print("no job in command "+jobtype)
+    else:
+        print("no cmd-value for command "+jobtype)
 
 
-    # mqtt client for sending data
-    def __init__(self):
-        Thread.__init__(self)
-
-    def run(self):
-        print("Thread mqtt data started")
-        global mqtt_data_client
-        #mqtt_data_client.connect(MQTT_data_broker_IP, MQTT_data_broker_port, 30)
-
-        # HERE vThings are processed in cameraBot TV
-
-        mqtt_data_client.loop_forever()
-        print("Thread '" + self.name + "' terminated")
-
-    def create_vthing(self,n):
-        # Subscribe mqtt_data_client to the vThing topic
-
-        ngsiLdEntity = {"id": v_things[n]['ID_LD'],
-                    "type": v_things[n]['type_attr'],
-                    "commands": {"type": "Property", "value": v_things[n]['commands']},
-                    "@context": [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]
-                    }
-        data = [ngsiLdEntity]
-        v_things[n]['context'].set_all(data)
-
-        mqtt_data_client.message_callback_add(v_things[n]['topic'] + "/" + in_data_suffix,
-                                            self.on_message_data_in_vThing)
-        mqtt_data_client.subscribe(
-            v_things[n]['topic'] + "/" + in_data_suffix)
+def on_startjob(cmd_name, cmd_info, id_LD):
+    process_job_command(cmd_name, cmd_info, id_LD, "START")
 
 
-class MqttControlThread(Thread):
-    def on_message_get_thing_context(self, jres,n):
-        silo_id = jres["vSiloID"]
-        message = {"command": "getContextResponse", "data": v_things[n]['context'].get_all(), "meta": {"vThingID": v_things[n]['ID']}}
-        mqtt_control_client.publish(v_silo_prefix + "/" + silo_id + "/" + in_control_suffix, json.dumps(message))
+def on_deletejob(cmd_name, cmd_info, id_LD):
+    process_job_command(cmd_name, cmd_info, id_LD, "DELETE")
 
-    def send_destroy_v_thing_message(self,n):
-        msg = {"command": "deleteVThing", "vThingID": v_things[n]['ID'], "vSiloID": "ALL"}
-        mqtt_control_client.publish(v_thing_prefix + "/" + v_things[n]['ID'] + "/" + out_control_suffix, json.dumps(msg))
 
-    def send_destroy_thing_visor_ack_message(self):
-        msg = {"command": "destroyTVAck", "thingVisorID": thing_visor_ID}
-        mqtt_control_client.publish(tv_control_prefix + "/" + thing_visor_ID + "/" + out_control_suffix, json.dumps(msg))
+def periodically_every_fps():
+    # use current frame name to GET it from upstream camera sensor
+    # See if we have a new frame in upstream TV that sends
+    # neutral format as follows:
+    # {
+    #    id : urn:ngsi-ld:camerasensor-tv:sensor
+    #    type : NewFrameEvent
+    #    frameIdentifier : {
+    #        type : Property
+    #        value : "djvn5jntvG"
+    #    }
+    # }
+    if len(thingvisor.upstream_entities) != 0:
+        upstream_vthing = thingvisor.params['upstream_vthingid'].split('/',1)[1] # second element of the split
+        id = thingvisor.upstream_entities[0]["frameIdentifier"]["value"]
+        # we construct the URL THINGVISOR/sensor/bufferedframes/djvn5jntvG
+        frame_url = "/" + upstream_vthing + "/bufferedframes/" + id
+        url = "http://" + thingvisor.upstream_tv_http_service + frame_url
+        r = requests.get(url, proxies=proxies)
+        if r.status_code == 200:
+            image_bytes=r.content
+            decoded_image = cv2.imdecode(np.frombuffer(image_bytes, np.uint8), -1)
+            # Find all the faces and face encodings in the current frame of video
+            face_locations = face_recognition.face_locations(decoded_image)
+            if len(face_locations) > 0:
+                print("A face appeared")
+                face_encodings = face_recognition.face_encodings(decoded_image, face_locations)
+                principal_encoding = face_encodings[0]
+                # protect the arrays from other threads inserting or deleting faces
+                # while we run the recognition for the current frame
+                known_encodings_lock.acquire()
+                # See if the face is a match for the known face(s)
+                matches = face_recognition.compare_faces(known_encodings, principal_encoding)
+                print("MATCH: "+str(matches))
+                matching_responses = []
+                # go through metadata and consider only those in active jobs (that have matched!)
+                # metadata is in the form {"job":job, "name":name, "original-uri":"/media/BLABLA"}
+                for index, metadata in enumerate(known_metadata):
+                    if matches[index]: #if the element at position 'index' in 'matches' array is True
+                        print("M"+str(index)+" "+metadata["job"]+" "+str(len(pending_commands)))
+                        # if pending_commands contains a key for the string representing
+                        # the "job" field of the current metadata of the loop
+                        if metadata["job"] in pending_commands.keys():
+                            job = metadata["job"]
+                            #TODO accumulate metainfo for every match into an array so that
+                            # when i exit the loop i can send them
+                            # via a future executor.submit that takes whatever time it needs
+                            # I (deep)copy them because when i exit the lock somebody can remove them
+                            matching_responses.append({
+                                "job":job,
+                                "name":metadata["name"],
+                                "cmd_name":pending_commands[job]["cmd_name"],
+                                "cmd_info":copy.deepcopy(pending_commands[job]["cmd_info"]),
+                                "id_LD":pending_commands[job]["id_LD"],
+                                "payload":copy.deepcopy(metadata)
+                            })
+                            print("CHECK YOUR BROKER: " + str(metadata))
+                # un protect the arrays from other threads inserting or deleting faces
+                # while we run the recognition for the current frame
+                known_encodings_lock.release()
+                future = thingvisor.executor.submit(insert_matching_face_and_send_responses, image_bytes, matching_responses)
+                print("processed recognition with errors: "+f'{future.result()}')
+        else:
+            print("i got error " + str(r.status_code) + " when going to " + url)
+    Timer(1/thingvisor.params['fps'], periodically_every_fps).start()
 
-    def on_message_destroy_thing_visor(self, jres):
-        global db_client
-        db_client.close()
-        for n in v_things:
-            self.send_destroy_v_thing_message(n)
-        self.send_destroy_thing_visor_ack_message()
-        print("Shutdown completed")
 
-    def on_message_update_thing_visor(self, jres):
-        global robot_ip, robot_port
+def insert_matching_face_and_send_responses(image_bytes, matching_responses):
+    for matching_response in matching_responses:
+        job = matching_response["job"]
+        name = matching_response["name"]
+        # store the face that matches into the local storage under job and name
+        # If you want to use the post_internal to avoid HTTP on localhost, see:
+        # https://stackoverflow.com/questions/30333992/use-put-internal-to-upload-file-using-python-eve
+        url_of_recognized_face = ""
+        recognized_face_payload = {
+            "job": job,
+            "name": name
+        }
+        recognizedface = requests.post('http://localhost:5000/recognizedfaces', data=recognized_face_payload, files={"pic":("recognized.jpeg", image_bytes, 'image/jpeg')})
+        response_data = recognizedface.json()
+        if '_id' in response_data:
+            id_of_recognized_face = response_data["_id"]
+            url_of_recognized_face = "/media/" + id_of_recognized_face
+            print(" recognized face at URL "+str(url_of_recognized_face))
+            cmd_name = matching_response["cmd_name"]
+            cmd_info = matching_response["cmd_info"]
+            id_LD = matching_response["id_LD"]
+            payload = matching_response["payload"]
+            payload["recognized-uri"] = url_of_recognized_face
+            type_of_message = "status"
+            thingvisor.publish_actuation_response_message(cmd_name, cmd_info, id_LD, payload, type_of_message)
 
-        print("Print update_info:", jres['update_info'])
-        if 'robot_ip' in jres['params']:
-            robot_ip=jres['params']['robot_ip']
-        if 'robot_port' in jres['params']:
-            robot_port=jres['params']['robot_port']
 
-    # handler for mqtt control topics
-    def __init__(self):
-        Thread.__init__(self)
+def encode_target_face_callback(request, response):
+    thingvisor.executor.submit(encode_target_face_processor, response)
+def encode_target_face_process(request, response):
+    data = json.loads(response.get_data())
+    if '_id' in data:
+        stringid = data["_id"]
+        print("Image POSTed on " + stringid)
+        # get image record from the collection. collection name is the EVE DOMAIN variable in settings.py
+        targetface_collection = app.data.driver.db['targetfacesAPI']
+        print(str(targetface_collection))
+        # need to convert to ObjectId, string not possible directly
+        targetface_record = targetface_collection.find_one({'_id':ObjectId(stringid)})
+        print(str(targetface_record))
+        job = targetface_record["job"]
+        name = targetface_record["name"]
+        print("JOB " + job + "NAME " + name)
+        image_bytes = app.media.get(targetface_record['pic']).read()
+        decoded_image = cv2.imdecode(np.frombuffer(image_bytes, np.uint8), -1)
+        # Find all the faces and face encodings in the current frame of video
+        face_locations = face_recognition.face_locations(decoded_image)
+        face_encodings = face_recognition.face_encodings(decoded_image, face_locations)
+        # protect the known_encodings and _metadata arrays from the recognition
+        # thread running in parallel while we modify them , because recognition
+        # could fail simply because the _encodings and _metadata got out of sync
+        # in terms of indexes not being aligned anymore
+        known_encodings_lock.acquire()
+        for face_encoding in face_encodings:
+            known_encodings.append(face_encoding)
+            # for "original-uri" i convert the mongo objectid of the media pic to a string
+            known_metadata.append({"job":job, "name":name, "original-uri":"/media/"+str(targetface_record['pic'])})
+        # un protect the known_encodings and _metadata arrays from the recognition
+        # thread running in parallel while we modify them
+        known_encodings_lock.release()
+    else:
+        print("The POST of the target picture went wrong")
 
-    def on_message_in_control_vThing(self, mosq, obj, msg):
-        payload = msg.payload.decode("utf-8", "ignore")
-        print(msg.topic + " " + str(payload))
-        jres = json.loads(payload.replace("\'", "\""))
-        try:
-            command_type = jres["command"]
-            name=jres["vThingID"].split('/')[-1]
-            n=get_vthing_name(name)
-            if command_type == "getContextRequest":
-                self.on_message_get_thing_context(jres,n)
-        except:
-            traceback.print_exc()
-
-    def on_message_in_control_TV(self, mosq, obj, msg):
-        payload = msg.payload.decode("utf-8", "ignore")
-        jres = json.loads(payload)
-        print(msg.topic + " " + str(jres))
-        try:
-            command_type = jres["command"]
-            if command_type == "destroyTV":
-                self.on_message_destroy_thing_visor(jres)
-            elif command_type == "updateTV":
-                self.on_message_update_thing_visor(jres)
-        except:
-            traceback.print_exc()
-        return 'invalid command'
-
-    def run(self):
-        print("Thread mqtt control started")
-        global mqtt_control_client, mqtt_control_status
-        #mqtt_control_client.connect(MQTT_control_broker_IP, MQTT_control_broker_port, 30)
-
-        # HERE vThings are processed in cameraBot TV
-
-        # Add message callbacks that will only trigger on a specific subscription match
-        mqtt_control_client.message_callback_add(tv_control_prefix + "/" + thing_visor_ID + "/" + in_control_suffix,
-                                                 self.on_message_in_control_TV)
-        mqtt_control_client.subscribe(tv_control_prefix + "/" + thing_visor_ID + "/" + in_control_suffix)
-
-        mqtt_control_client.loop_forever()
-        print("Thread '" + self.name + "' terminated")
-    
-    def create_vthing(self,n):
-        # Publish on the thingVisor out_control topic the createVThing command and other parameters
-        v_thing_message = {"command": "createVThing",
-                        "thingVisorID": thing_visor_ID,
-                        "vThing": v_things[n]['v_thing']}
-        mqtt_control_client.publish(tv_control_prefix + "/" + thing_visor_ID + "/" + out_control_suffix,
-                                    json.dumps(v_thing_message))
-
-        v_things[n]['future'] = executor.submit(create_endpoint, n)
-
-        # Add message callbacks that will only trigger on a specific subscription match
-        mqtt_control_client.message_callback_add(v_things[n]['topic'] + "/" + in_control_suffix,
-                                                self.on_message_in_control_vThing)
-        mqtt_control_client.subscribe(v_things[n]['topic'] + '/' + in_control_suffix)
 
 # main
-if __name__ == '__main__':
-    MAX_RETRY = 3
-    thing_visor_ID = os.environ["thingVisorID"]
+#if __name__ == '__main__':
+thingvisor.initialize_thingvisor("thingVisor_facerecognition")
 
-    # Mongodb settings
-    time.sleep(1.5)  # wait before query the system database
-    db_name = "viriotDB"  # name of system database
-    thing_visor_collection = "thingVisorC"
-    db_IP = os.environ['systemDatabaseIP']  # IP address of system database
-    db_port = os.environ['systemDatabasePort']  # port of system database
-    db_client = MongoClient('mongodb://' + db_IP + ':' + str(db_port) + '/')
-    db = db_client[db_name]
-    tv_entry = db[thing_visor_collection].find_one({"thingVisorID": thing_visor_ID})
+# global variables
+pending_commands = dict()
+known_encodings = []
+known_metadata = []
+# the three arrays above must be protecterd by a guard lock because
+# they have to stay in sync
+known_encodings_lock = Lock()
+# EVE is used to store and fetch images in a mongo DB
+app = Eve()
+app.on_post_POST_targetfacesAPI += encode_target_face_process
+proxies = { "http": "http://viriot-nginx.default.svc.cluster.local",}
+# create the detector vThing: name, type, description, array of commands
+thingvisor.initialize_vthing("detector","FaceRecognitionEvent","faceRecognition virtual thing",["startjob","deletejob"])
+print("All vthings initialized")  
+print(thingvisor.v_things['detector'])
 
-    valid_tv_entry = False
-    for x in range(MAX_RETRY):
-        if tv_entry is not None:
-            valid_tv_entry = True
-            break
-        time.sleep(3)
+if not 'upstream_vthingid' in thingvisor.params:
+    print("NO UPSTREAM camera sensor where to fetch frames has been configured. Waiting for it.")
+if 'fps' in thingvisor.params:
+    print("parsed fps parameter: " + str(thingvisor.params['fps']))
+else:
+    thingvisor.params['fps'] = 2
+    print("defaulting fps parameter: " + str(thingvisor.params['fps']))
 
-    if not valid_tv_entry:
-        print("Error: ThingVisor entry not found for thing_visor_ID:", thing_visor_ID)
-        exit()
+# enters the main timer thread that obtains the new video frame every fps
+periodically_every_fps()
 
-    try:
-        # import paramenters from DB
-        MQTT_data_broker_IP = tv_entry["MQTTDataBroker"]["ip"]
-        MQTT_data_broker_port = int(tv_entry["MQTTDataBroker"]["port"])
-        MQTT_control_broker_IP = tv_entry["MQTTControlBroker"]["ip"]
-        MQTT_control_broker_port = int(tv_entry["MQTTControlBroker"]["port"])
-
-        parameters = tv_entry["params"]
-        if parameters:
-            params = json.loads(parameters)
-        else:
-            params={}
-
-    except json.decoder.JSONDecodeError:
-        print("error on params (JSON) decoding" + "\n")
-        exit()
-    except Exception as e:
-        print("Error: Parameters not found in tv_entry", e)
-        exit()
-
-    
-    robot_ip=None
-    robot_port=None
-    controller_url=None
-    tenant_id=None
-    admin_psw=None
-
-    if params:
-        if 'robot_ip' in params:
-            robot_ip = params['robot_ip']
-        if 'robot_port' in params:
-            robot_port = params['robot_port']
-        if 'controller_url' in params:
-            controller_url = params['controller_url']
-        if 'tenant_id' in params:
-            tenant_id = params['tenant_id']
-        if 'admin_psw' in params:
-            admin_psw = params['admin_psw']
-
-    v_things={}
-
-    # Map images to names, save image count for every name
-    image_to_name_mapping={}
-    image_count={}
-    command_data={}
-
-    # mqtt settings
-    tv_control_prefix = "TV"  # prefix name for controller communication topic
-    v_thing_prefix = "vThing"  # prefix name for virtual Thing data and control topics
-    v_thing_data_suffix = "data_out"
-    in_control_suffix = "c_in"
-    out_control_suffix = "c_out"
-    out_data_suffix = "data_out"
-    in_data_suffix = "data_in"
-    v_silo_prefix = "vSilo"
-
-    port_mapping = db[thing_visor_collection].find_one({"thingVisorID": thing_visor_ID}, {"port": 1, "_id": 0})
-    print("port mapping: " + str(port_mapping))
-
-    mqtt_control_client = mqtt.Client()
-    mqtt_data_client = mqtt.Client()
-
-    mqtt_control_status=False
-    mqtt_data_status=False
-
-    # threadPoolExecutor of size one to handle one command at a time in a fifo order
-    executor = ThreadPoolExecutor(1)
-
-    mqtt_control_client.connect(MQTT_control_broker_IP, MQTT_control_broker_port, 30)
-    mqtt_control_thread = MqttControlThread()  # mqtt control thread
-    mqtt_control_thread.start()
-
-    mqtt_data_client.connect(MQTT_data_broker_IP, MQTT_data_broker_port, 30)
-    mqtt_data_thread = mqttDataThread()  # mqtt data thread
-    mqtt_data_thread.start()
-
-    # create the robot vThing
-    detector=create_vthing("detector","FaceDetector",["start","stop","set-face-feature","delete-by-name"])
-
-    # post item for robot
-    with app.app_context():
-        with app.test_request_context():
-            post_internal('robots', {"_id": 0})
-
-    # set eve callbacks
-    app.on_post_PATCH_faceInput += on_post_PATCH_faceInput
-    app.on_post_POST_faceOutput += on_post_POST_faceOutput
-
-    # runs eve
-    app.run(debug=False,host='0.0.0.0',port='5000')
-
-    # while True:
-    #     try:
-    #         time.sleep(3)
-    #     except:
-    #         print("KeyboardInterrupt"+"\n")
-    #         time.sleep(1)
-    #         os._exit(1)
+# runs eve, and halts the main thread
+app.run(debug=False,host='0.0.0.0',port='5000')
+print("EVE was running. Bye.")

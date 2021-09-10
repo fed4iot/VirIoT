@@ -1,0 +1,75 @@
+<!-- 
+    Copyright (C) 2012, 2013 Universidad de Murcia
+
+    Authors:
+        Ginés Dólera Tormo <ginesdt@um.es>
+        Juan M. Marín Pérez <juanmanuel@um.es>
+        Jorge Bernal Bernabé <jorgebernal@um.es>
+        Gregorio Martínez Pérez <gregorio@um.es>
+        Antonio F. Skarmeta Gómez <skarmeta@um.es>
+
+    This file is part of XACML Web Policy Administration Point (XACML-WebPAP).
+
+    XACML-WebPAP is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    XACML-WebPAP is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with XACML-WebPAP. If not, see <http://www.gnu.org/licenses/>.
+-->
+<window id="newSubjectDialog" title="New Subject" border="normal" >        
+<zscript>
+    void addNameSubject(){
+        if(subjectName.getValue().trim().equals("") || subjectID.getValue().trim().equals(""))return;     
+        sessionScope.put("subjectname",subjectName.getValue());
+        sessionScope.put("subjectID",subjectID.getValue());
+        newSubjectDialog.detach();
+        
+    }
+
+    void cancel(){
+        sessionScope.put("subjectname",null);
+        newSubjectDialog.detach();
+    }
+
+</zscript>
+    Type Subject Name
+    <vbox>
+        <textbox id="subjectName"></textbox>
+    </vbox> 
+    
+    Type Subject ID
+    <vbox>
+        <combobox id="subjectID">
+            <comboitem label="urn:oasis:names:tc:xacml:2.0:subject:role"/>
+            <comboitem label="urn:oasis:names:tc:xacml:2.0:subject:applicationrole"/>
+            <comboitem label="urn:oasis:names:tc:xacml:1.0:subject:subject-id"/>
+			<comboitem label="urn:ietf:params:scim:schemas:core:2.0:address:type"/>
+			<comboitem label="urn:ietf:params:scim:schemas:core:2.0:address:streetaddress"/>
+			<comboitem label="urn:ietf:params:scim:schemas:core:2.0:address:postalCode"/>
+			<comboitem label="urn:ietf:params:scim:schemas:core:2.0:address:country"/>
+			<comboitem label="urn:ietf:params:scim:schemas:core:2.0:department"/>
+			<comboitem label="urn:ietf:params:scim:schemas:core:2.0:domain_id"/>
+			<comboitem label="urn:ietf:params:scim:schemas:core:2.0:email"/>
+			<comboitem label="urn:ietf:params:scim:schemas:core:2.0:id"/>
+			<comboitem label="urn:ietf:params:scim:schemas:core:2.0:manufacturername"/>
+			<comboitem label="urn:ietf:params:scim:schemas:core:2.0:model"/>
+			<comboitem label="urn:ietf:params:scim:schemas:core:2.0:name"/>
+			<comboitem label="urn:ietf:params:scim:schemas:core:2.0:name:formatted"/>
+			<comboitem label="urn:ietf:params:scim:schemas:core:2.0:nickname"/>
+			<comboitem label="urn:ietf:params:scim:schemas:core:2.0:organization"/>
+            <comboitem label="urn:ietf:params:scim:schemas:core:2.0:organizationname"/>
+			<comboitem label="urn:ietf:params:scim:schemas:core:2.0:username"/>
+        </combobox>
+    </vbox>
+    
+    <button label="OK" onClick="addNameSubject();"/> 
+    <button label="CANCEL" onClick="cancel()" />
+</window>
+

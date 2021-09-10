@@ -1,0 +1,58 @@
+<!-- 
+    Copyright (C) 2012, 2013 Universidad de Murcia
+
+    Authors:
+        Ginés Dólera Tormo <ginesdt@um.es>
+        Juan M. Marín Pérez <juanmanuel@um.es>
+        Jorge Bernal Bernabé <jorgebernal@um.es>
+        Gregorio Martínez Pérez <gregorio@um.es>
+        Antonio F. Skarmeta Gómez <skarmeta@um.es>
+
+    This file is part of XACML Web Policy Administration Point (XACML-WebPAP).
+
+    XACML-WebPAP is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    XACML-WebPAP is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with XACML-WebPAP. If not, see <http://www.gnu.org/licenses/>.
+-->
+<window id="newResourceDialog" title="New Resource" border="normal" >        
+<zscript>
+	void addNameResource(){
+		if(resourceName.getValue().trim().equals("") || resourceID.getValue().trim().equals(""))return;		
+		sessionScope.put("resourcename",resourceName.getValue());
+        sessionScope.put("resourceid",resourceID.getValue());
+
+		newResourceDialog.detach();
+		
+	}
+
+	void cancel(){
+		sessionScope.put("resourcename",null);
+        sessionScope.put("resourceid",null);
+		
+		newResourceDialog.detach();
+	}
+
+</zscript>
+	Type Resource Name
+	<vbox>
+	<textbox id="resourceName"></textbox>
+	</vbox> 
+	   Type Attribute ID
+    <vbox>
+        <combobox id="resourceID">
+               <comboitem label="urn:oasis:names:tc:xacml:1.0:resource:resource-id"/>
+        </combobox>
+    </vbox>
+	
+	<button label="OK" onClick="addNameResource();"/>	
+	<button label="CANCEL" onClick="cancel()" />
+</window>

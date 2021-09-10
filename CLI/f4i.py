@@ -16,6 +16,7 @@ import f4i_inspect_thingvisor
 import f4i_inspect_flavour
 import f4i_inspect_vsilo
 import f4i_list_flavours
+import f4i_list_users
 import f4i_list_thingvisors
 import f4i_list_vsilos
 import f4i_list_vthings
@@ -110,6 +111,10 @@ if __name__ == '__main__':
     # list flavours
     parser_lf = subparsers.add_parser('list-flavours', help='dump installed IoT slice flavours')
     f4i_list_flavours.init_args(parser_lf)
+
+    # list users
+    parser_lf = subparsers.add_parser('list-users', help='dump registered users')
+    f4i_list_users.init_args(parser_lf)
 
     # list thingvisors
     parser_lh = subparsers.add_parser('list-thingvisors', help='dump installed thing hypervisors')

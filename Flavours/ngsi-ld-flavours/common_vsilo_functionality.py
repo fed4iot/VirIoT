@@ -34,6 +34,8 @@ import requests
 # It is thread-safe, so we use it to also signal if the vthing is already
 # created (and we can proceed with data insert in parallel), or by
 # removing it (and we block the parallel ongoing data insert)
+# I MAY GET RID OF THIS if the NGSI-LD Broker supports the query "get all entities with this property having this value,
+# REGARDLESS the entity type" as was specified in version 1.3.1 of the API
 import plyvel
 # the following is used to delete the folder of the on-disk hashmap at startup
 # and in production would not be needed because we only run dockerized and
@@ -72,31 +74,23 @@ def recv_notify(attr):
         return 'Bad notification format', 401
     
     entity=jres['data'][0]
-    if 'cmd-id' in entity[attr]['value']:
-        # in any case lets overwrite the nuri, to avoid injecting a malicious nuri
-        # so, not only if 'cmd-nuri' not in entity[attr]['value']:
-        entity[attr]['value']['cmd-nuri'] = 'viriot://vSilo/'+v_silo_id+'/data_in'
-        # BEWARE HERE that 'object' is ok if generatedByVThing is a Relationship
-        # but if it is a Property, then it has to be 'value'. This may be the case
-        # because some NGSI-LD Brokers (maybe Stellio) do not allow dangling Relationships.
-        # This is why we decided to use Property instead of Relationship.
-        vThingID=entity['generatedByVThing']['value']
+    if attr in entity:
+        if 'cmd-id' in entity[attr]['value']:
+            # in any case lets overwrite the nuri, to avoid injecting a malicious nuri
+            # so, not only if 'cmd-nuri' not in entity[attr]['value']:
+            entity[attr]['value']['cmd-nuri'] = 'viriot://vSilo/'+v_silo_id+'/data_in'
+            # BEWARE HERE that 'object' is ok if generatedByVThing is a Relationship
+            # but if it is a Property, then it has to be 'value'. This may be the case
+            # because some NGSI-LD Brokers (maybe Stellio) do not allow dangling Relationships.
+            # This is why we decided to use Property instead of Relationship.
+            vThingID=entity['generatedByVThing']['value']
 
-        cmd_value = entity[attr]['value']
-        cmd_name = attr
-        cmd_LD_ID = entity['id']
-        cmd_LD_Type = entity['type']
-
-        print("Clearing command \""+cmd_name+"\"")
-        # let's set to emty the only property we received, i.e. the one referring to the command
-        entity[cmd_name]['value']={}
-        # the notification did not contain @context
-        entity['@context']=["http://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"]
-        # let's POST the entity, which contains just the one (command) property to be modified
-        brokerspecific.add_or_modify_entity_under_vThing_on_Broker(vThingID, entity)
-
-        print("Sending command out...")
-        send_command_out(cmd_LD_ID, cmd_LD_Type,cmd_name, cmd_value, vThingID)
+            cmd_value = entity[attr]['value']
+            cmd_name = attr
+            cmd_LD_ID = entity['id']
+            cmd_LD_Type = entity['type']
+            print("Sending command out...")
+            send_command_out(cmd_LD_ID, cmd_LD_Type,cmd_name, cmd_value, vThingID)
 
     #print(jres)
     # return ""
@@ -149,11 +143,11 @@ def mqtt_data_on_disconnect(client, userdata, rc):
     client.reconnect()
 
 # We immediately (on startup) subscribe to:
+# - [see above] the data messages unicast sent to this specific vSilo via its in_vsilo_data_topic
+# (data_in) topic. This is the unicast topic used in the actuation workflow.
 # - the control messages coming into this vSilo (i.e. published by others on the in_vsilo_control_topic
 # of this vSilo).
-# - the data messages unicast sent to this specific vSilo via its in_vsilo_data_topic
-# (data_in) topic. This is the unicast topic used in the actuation workflow.
-# If we are a System vSilo we also subscribe to (createVThing) control messages being spit out to the
+# - If we are a System vSilo we also subscribe to (createVThing) control messages being spit out to the
 # thing_visor_prefix + '/' + tv_id + '/' + out_control_suffix
 # (for instance: TV/tv123/c_out) by EACH TV, BUT we don't know all TVs identifiers.
 # Can we subscribe to TV/# ? No, because we would also
@@ -221,35 +215,31 @@ def message_to_jres(message):
 
 # this vsilo control
 def mqtt_on_in_vsilo_controltopic_message(client, userdata, message):
-    jres = message_to_jres(message)
-    executor.submit(process_in_vsilo_control_msg, jres)
+    executor.submit(process_in_vsilo_control_msg, message)
 
 def mqtt_on_in_vsilo_datatopic_message(client, userdata, message):
-    jres = message_to_jres(message)
-    # executor.submit(data_insert_entities_under_vThing, jres)
-    executor.submit(batch_data_insert_entities_under_vThing, jres)
+    # executor.submit(data_insert_entities_under_vThing, message)
+    executor.submit(batch_data_insert_entities_under_vThing, message)
 
 # our vthings control
 def mqtt_on_out_vthing_controltopic_message(client, userdata, message):
-    jres = message_to_jres(message)
-    executor.submit(process_out_vthing_control_msg, jres)
+    executor.submit(process_out_vthing_control_msg, message)
 
 # our vthings data
 def mqtt_on_out_vthing_datatopic_message(client, userdata, message):
-    jres = message_to_jres(message)
     # messages to vthing's data_out topic contain entities to be inserted in our broker
-    # executor.submit(data_insert_entities_under_vThing, jres)
-    executor.submit(batch_data_insert_entities_under_vThing, jres)
+    # executor.submit(data_insert_entities_under_vThing, message)
+    executor.submit(batch_data_insert_entities_under_vThing, message)
 
 # any thingvisor control
 def mqtt_on_out_generic_thingvisor_controltopic_message(client, userdata, message):
-    jres = message_to_jres(message)
-    executor.submit(process_out_generic_thingvisor_control_msg, jres)
+    executor.submit(process_out_generic_thingvisor_control_msg, message)
 
 
 # BEGIN SYSTEM VSILO =====================================================================
 # System vSilo processing commands coming from thing visors ==============================
-def process_out_generic_thingvisor_control_msg(jres):
+def process_out_generic_thingvisor_control_msg(message):
+    jres = message_to_jres(message)
     print("Process out_generic_thingvisor_control has " + str(connected_clients) + " connected clients")
     commandType = jres['command']
     if commandType == "createVThing":
@@ -323,7 +313,8 @@ def invoke_REST_add_vthing(token, v_thing_id):
 
 
 # vsilo incoming control messages switch and process
-def process_in_vsilo_control_msg(jres):
+def process_in_vsilo_control_msg(message):
+    jres = message_to_jres(message)
     print("Process in_vsilo_control has " + str(connected_clients) + " connected clients")
     commandType = jres['command']
     if commandType == "addVThing":
@@ -343,9 +334,11 @@ def process_in_vsilo_control_msg(jres):
     elif commandType == "getContextResponse":
         print("COMMAND received getContextResponse " + json.dumps(jres))
         print("COMMAND received STARTING RECONSTRUCTING A CONTEXT FOR A VTHING")
-        del jres["command"] # this is unnecessary because the command field is not inspected in insert_vThing_data_on_Broker
-        #data_insert_entities_under_vThing(jres)
-        batch_data_insert_entities_under_vThing(jres)
+        #del jres["command"] # this is unnecessary because the command field is not inspected in data_insert_entities_under_vThing
+        # so i can safely forward the message itself insted of the jres, which is good because
+        # conversion into a jres happens later and is part of the future executor
+        #data_insert_entities_under_vThing(message)
+        batch_data_insert_entities_under_vThing(message)
         print("COMMAND received JUST FINISHED RECONSTRUCTING A CONTEXT FOR A VTHING")
         return "received context response"
     else:
@@ -444,7 +437,8 @@ def send_destroy_v_silo_ack_message():
 
 # vthing outgoing control messages switch and process
 # to capture control commands sent out by the vThing
-def process_out_vthing_control_msg(jres):
+def process_out_vthing_control_msg(message):
+    jres = message_to_jres(message)
     print("Process out_vthing_control has " + str(connected_clients) + " connected clients. jres is " + json.dumps(jres))
     # we are the silo controller: when we receive a deleteVThing message that
     # has been published (by a vThing) on the vthingID/out_control channel, we react here
@@ -519,7 +513,8 @@ def deactivate_vThing_in_hashmap(v_thing_id):
 # ========== HASHMAP + BROKER
 
 # Here we receive a data item, which is composed of "data" and "meta" fields
-def data_insert_entities_under_vThing(jres):
+def data_insert_entities_under_vThing(message):
+    jres = message_to_jres(message)
     v_thing_id = jres['meta']['vThingID']
     print("STARTING TO INSERT ENTITIES UNDER VTHING " + v_thing_id)
     # (in this method we should track what NGSI-LD entities are under the same vThing)
@@ -552,7 +547,8 @@ def data_insert_entities_under_vThing(jres):
 
 
     # Here we receive a data item, which is composed of "data" and "meta" fields
-def batch_data_insert_entities_under_vThing(jres):
+def batch_data_insert_entities_under_vThing(message):
+    jres = message_to_jres(message)
     v_thing_id = jres['meta']['vThingID']
     print("STARTING TO INSERT ENTITIES UNDER VTHING " + v_thing_id)
     data = jres['data']
@@ -706,8 +702,8 @@ def start_silo_controller(broker_specific_module_name):
     print("importing module: " + broker_specific_module_name)
     brokerspecific = import_module(broker_specific_module_name)
 
-    # threadPoolExecutor of size one to handle one command at a time in a fifo order
-    executor = ThreadPoolExecutor(1)
+    # threadPoolExecutor default size is number of CPUs
+    executor = ThreadPoolExecutor()
 
     # connect to the on-disk hashmap
     shutil.rmtree('plyvelhashmap', ignore_errors=True)

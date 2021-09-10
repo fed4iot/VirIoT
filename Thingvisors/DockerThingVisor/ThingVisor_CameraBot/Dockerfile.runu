@@ -1,0 +1,16 @@
+# This file is expected to be used via `sh runu/docker-build.sh`
+
+FROM thehajime/runu-python:0.3
+
+COPY thingVisor_hello.py /app/
+COPY context.py /app/
+COPY site-packages/ /usr/lib/python3.5/site-packages/
+
+ENV RUMP_VERBOSE=1
+
+# FIXME: this can be handled by runu itself:
+# users should not configure those internal info.
+COPY runu/kube-resolv.conf /etc/resolv.conf
+
+ENTRYPOINT []
+CMD ["python", "/app/thingVisor_hello.py"]

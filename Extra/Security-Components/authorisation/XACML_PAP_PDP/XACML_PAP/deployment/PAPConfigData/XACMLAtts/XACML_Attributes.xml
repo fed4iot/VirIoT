@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<attributes storingDate="2019-09-12T08:28:18.778">
+  <attributes>
+    <attribute name="bob" xacml_id="urn:oasis:names:tc:xacml:1.0:subject:subject-id" sortedValue="subject" xacml_DataType="#string" />
+    <attribute name="jorgebernal" xacml_id="urn:oasis:names:tc:xacml:1.0:subject:subject-id" sortedValue="subject" xacml_DataType="#string" />
+    <attribute name="nickName:SocIoTalClient" xacml_id="urn:oasis:names:tc:xacml:1.0:subject:subject-id" sortedValue="subject" xacml_DataType="#string" />
+    <attribute name="urn:ietf:params:scim:schemas:core:2.0:User:nickName:sociotal" xacml_id="urn:oasis:names:tc:xacml:1.0:subject:subject-id" sortedValue="subject" xacml_DataType="#string" />
+    <attribute name="urn:ietf:params:scim:schemas:core:2.0:User:organization:umu" xacml_id="urn:oasis:names:tc:xacml:1.0:subject:subject-id" sortedValue="subject" xacml_DataType="#string" />
+    <attribute name="umu" xacml_id="urn:ietf:params:scim:schemas:core:2.0:organization" sortedValue="subject" xacml_DataType="#string" />
+    <attribute name="clientOne" xacml_id="urn:ietf:params:scim:schemas:core:2.0:username" sortedValue="subject" xacml_DataType="#string" />
+    <attribute name="SocIoTal:UNIS:SmartphoneContext:VirtualSmartphoneContext_359901045590128" xacml_id="urn:ietf:params:scim:schemas:core:2.0:id" sortedValue="subject" xacml_DataType="#string" />
+    <attribute name="Client one organization" xacml_id="urn:ietf:params:scim:schemas:core:2.0:organization" sortedValue="subject" xacml_DataType="#string" />
+    <attribute name="jorge" xacml_id="urn:ietf:params:scim:schemas:core:2.0:id" sortedValue="subject" xacml_DataType="#string" />
+    <attribute name="GET" xacml_id="urn:oasis:names:tc:xacml:1.0:action:action-id" sortedValue="action" xacml_DataType="#string" />
+    <attribute name="POST" xacml_id="urn:oasis:names:tc:xacml:1.0:action:action-id" sortedValue="action" xacml_DataType="#string" />
+    <attribute name="PUT" xacml_id="urn:oasis:names:tc:xacml:1.0:action:action-id" sortedValue="action" xacml_DataType="#string" />
+    <attribute name="DELETE" xacml_id="urn:oasis:names:tc:xacml:1.0:action:action-id" sortedValue="action" xacml_DataType="#string" />
+    <attribute name="queryContext" xacml_id="ngsi:action" sortedValue="action" xacml_DataType="#string" />
+    <attribute name="updateContext" xacml_id="ngsi:action" sortedValue="action" xacml_DataType="#string" />
+    <attribute name="SocIoTal:IoTWeek:WeatherStation:Dev_001" xacml_id="urn:oasis:names:tc:xacml:1.0:resource:resource-id" sortedValue="resource" xacml_DataType="#string" />
+    <attribute name="SocIoTal:UNIS:SmartphoneContext:VirtualSmartphoneContext_359901045590128" xacml_id="urn:oasis:names:tc:xacml:1.0:resource:resource-id" sortedValue="resource" xacml_DataType="#string" />
+    <attribute name="*" xacml_id="urn:oasis:names:tc:xacml:1.0:resource:resource-id" sortedValue="resource" xacml_DataType="#string" />
+    <attribute name="https://193.144.201.50:3501/SocIoTal_CM_REST_V3/*" xacml_id="urn:oasis:names:tc:xacml:1.0:resource:resource-id" sortedValue="resource" xacml_DataType="#string" />
+    <attribute name="asdasd" xacml_id="urn:oasis:names:tc:xacml:1.0:resource:resource-id" sortedValue="resource" xacml_DataType="#string" />
+    <attribute name="sdasssas" xacml_id="urn:oasis:names:tc:xacml:1.0:resource:resource-id" sortedValue="resource" xacml_DataType="#string" />
+    <attribute name="ngsi-ld/v1/entities/?type=http://example.org/vehicle/Vehicle" xacml_id="urn:oasis:names:tc:xacml:1.0:resource:resource-id" sortedValue="resource" xacml_DataType="#string" />
+  </attributes>
+</attributes>
+

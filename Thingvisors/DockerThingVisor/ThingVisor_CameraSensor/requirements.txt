@@ -1,0 +1,6 @@
+jsonmerge
+paho-mqtt
+pymongo
+requests
+flask
+redis

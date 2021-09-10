@@ -1,0 +1,60 @@
+#
+#Copyright Odin Solutions S.L. All Rights Reserved.
+#
+#SPDX-License-Identifier: Apache-2.0
+#
+
+version: '3.1'
+
+services:
+  pepproxy:
+    build: ./
+    image: fed4iot/pep-proxy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    ports:
+        - "1040:1027"
+    restart: unless-stopped
+    volumes:
+      #- ./certs/fullchain.pem:/opt/PEP-Proxy/certs/server-public-cert.pem  # volumes to import certificates to container
+      #- ./certs/privkey.pem:/opt/PEP-Proxy/certs/server-priv-rsa.pem
+      - ./certs/server-public-cert.pem:/opt/PEP-Proxy/certs/server-public-cert.pem  # volumes to import certificates to container
+      - ./certs/server-priv-rsa.pem:/opt/PEP-Proxy/certs/server-priv-rsa.pem
+    environment:
+      #- pep_protocol=http #(OPTIONAL default https)
+
+      #API protocol. Admitted values: "http","https"
+      - target_protocol=http
+      #API host.
+      - target_host=<specify API Public IP address>
+      - target_port=8090
+      #Broker API. Admitted values: "NGSIv1","NGSIv2","NGSILDv1","GenericAPI", "Fed4IoTMC"
+      - target_API=Fed4IoTMC #<specify Broker API type
+
+      #Validate Capability token using blockchain: Admitted values: "0: No use; 1:Use"
+      - blockchain_usevalidation=0
+
+      #Environment variables are considered only if blockchain_usevalidation=1
+      #BlockChain protocol. Admitted values: "http","https"
+      - blockchain_protocol=http
+      #BlockChain host.
+      - blockchain_host=<specify BlockChain Public IP address>
+      - blockchain_port=8000
+
+      # PEP proxy endpoint: protocol+ip+port
+      # HOST NO admitted: 0.0.0.0, localhost, 127.0.0.1
+      - PEP_ENDPOINT=<specify PEP-Proxy Public address ex: https://<PEP-IP>:<PEP-PORT>>
+
+      #Fed4IoT Master Controller protocol. Admitted values: "http","https"
+      - fed4iotmc_protocol=<define protocol>
+      #Fed4IoT Master Controller host.
+      - fed4iotmc_host=<define host> #<specify Fed4IoT Master Controller Public IP address>
+      #Fed4IoT Master Controller Port.
+      - fed4iotmc_port=<define port>
+      - fed4iotmc_authz_testpath=/listFlavours # to obtain if it using JWT token has authorisation 
+      - fed4iotmc_login_path=/login
+      - fed4iotmc_login_userID=<define user>
+      - fed4iotmc_login_password=<define user>

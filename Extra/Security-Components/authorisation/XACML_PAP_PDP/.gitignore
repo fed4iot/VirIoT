@@ -1,0 +1,16 @@
+XACML_PAP/.DS_Store
+XACML_PAP/*.class
+XACML_PAP/.settings
+XACML_PAP/sources/target
+XACML_PAP/*.iml
+XACML_PDP_SunXACML/.DS_Store
+XACML_PDP_SunXACML/target/
+XACML_PDP_SunXACML/build/
+XACML_PDP_SunXACML/.settings/
+XACML_PDP_SunXACML/.project
+XACML_PDP_SunXACML/.classpath
+XACMLServletPDP/.classpath
+XACMLServletPDP/.project
+XACMLServletPDP/.settings/
+XACMLServletPDP/target/
+XACMLServletPDP/build/

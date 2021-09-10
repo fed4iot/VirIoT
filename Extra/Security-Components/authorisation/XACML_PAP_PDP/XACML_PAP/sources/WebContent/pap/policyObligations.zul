@@ -1,0 +1,74 @@
+<!-- 
+    Copyright (C) 2012, 2013 Universidad de Murcia
+
+    Authors:
+        Ginés Dólera Tormo <ginesdt@um.es>
+        Juan M. Marín Pérez <juanmanuel@um.es>
+        Jorge Bernal Bernabé <jorgebernal@um.es>
+        Gregorio Martínez Pérez <gregorio@um.es>
+        Antonio F. Skarmeta Gómez <skarmeta@um.es>
+
+    This file is part of XACML Web Policy Administration Point (XACML-WebPAP).
+
+    XACML-WebPAP is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    XACML-WebPAP is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with XACML-WebPAP. If not, see <http://www.gnu.org/licenses/>.
+-->
+<window id="defineObligations" title="Define Obligations" border="normal" width="600px"
+	height="480px" apply="umu.xacml.webpap.EventControllerObligations" >  
+<borderlayout>
+<center>      
+<borderlayout>
+                <west id="resources" title="Obligations"
+                        size="50%" splittable="true">
+                        <borderlayout>
+                                <center>
+                                        <listbox id="obligationList"
+                                                height="100%" vflex="true" 
+                                                 style="text-align:left;"
+                                                multiple="true">
+                                        </listbox>
+                                </center>
+                                <south height="25px">
+                                        <hbox>
+                                                <button id="btNewObligation"
+                                                        label="New" />
+                                                <button id="btDeleteObligation"
+                                                        label="Delete" />
+                                        </hbox>
+                                </south>
+                        </borderlayout>
+                </west>
+                <center>							
+                        <borderlayout>
+                                <north size="25px">
+                                    <div align="center">                                                        
+                                        <label value="Fullfill On: " style="font-size:14px" />
+                                        <radiogroup id="rg1" />
+                                        <radio id="rbPermit" label="Permit" radiogroup="rg1" />
+                                        <radio id="rbDeny" label="Deny" radiogroup="rg1" />
+                                    </div>
+                                </north>                                									
+                        </borderlayout>
+                </center>
+        </borderlayout>	
+</center>
+<south>
+<div align="center">
+    <hbox>
+	<button id="btOk" label="OK" />	
+	<button id="btCancel" label="CANCEL" />
+        </hbox>
+</div>
+</south>
+</borderlayout>
+</window>

@@ -37,7 +37,7 @@ python3 f4i.py create-vsilo -f Raw-base-actuator-f -t tenant1 -s Silo1
 python3 f4i.py add-vthing -v relay-tv/timestamp
 ```
 
-Test with curl, where 'vsilo-service-ip' is the IP address (cluster IP, or NodePort) of the ThingVisor
+Test with curl, where 'vsilo-service-ip' is the IP address (cluster IP, or NodePort) of the vSilo
 ```bash
 curl vsilo-service-ip/vstream/relay-tv/timestamp/20MB.zip
 ```

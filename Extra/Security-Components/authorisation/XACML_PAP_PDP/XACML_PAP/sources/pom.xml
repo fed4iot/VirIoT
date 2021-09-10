@@ -1,0 +1,94 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>XACML</groupId>
+  <artifactId>XACML-WebPAP</artifactId>
+  <version>2</version>
+  <packaging>war</packaging>
+  <name>WebPAP</name>
+  <description>XACML Web-based PAP</description>
+  <build>
+    <sourceDirectory>src</sourceDirectory>
+    <resources>
+      <resource>
+        <directory>src</directory>
+        <excludes>
+          <exclude>**/*.java</exclude>
+        </excludes>
+      </resource>
+    </resources>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.0</version>
+        <configuration>
+          <source>1.8</source>
+          <target>1.8</target>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-war-plugin</artifactId>
+        <version>3.2.1</version>
+        <configuration>
+          <warSourceDirectory>WebContent</warSourceDirectory>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  
+  <dependencies>
+	  <!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
+	<dependency>
+	    <groupId>com.google.code.gson</groupId>
+	    <artifactId>gson</artifactId>
+	    <version>2.2.4</version>
+	</dependency>
+	<!-- https://mvnrepository.com/artifact/org.jdom/jdom -->
+	<dependency>
+	    <groupId>org.jdom</groupId>
+	    <artifactId>jdom</artifactId>
+	    <version>1.1</version>
+	</dependency>
+		<!-- https://mvnrepository.com/artifact/org.zkoss.zk/zul -->
+	<dependency>
+	    <groupId>org.zkoss.zk</groupId>
+	    <artifactId>zul</artifactId>
+	    <version>5.0.7</version>
+	</dependency>
+
+	<dependency>
+	    <groupId>net.sf.xmldb-org</groupId>
+	    <artifactId>xmldb-api</artifactId>
+	    <version>1.7.0</version>
+	</dependency>
+	
+	<dependency>
+	    <groupId>org.exist-db</groupId>
+	    <artifactId>exist-core</artifactId>
+	    <version>5.0.0</version>
+	    <scope>runtime</scope>
+	</dependency>
+
+		<!-- https://mvnrepository.com/artifact/org.zkoss.zk/zhtml -->
+	<dependency>
+	    <groupId>org.zkoss.zk</groupId>
+	    <artifactId>zhtml</artifactId>
+	    <version>5.0.7</version>
+	</dependency>
+		
+	<!-- https://mvnrepository.com/artifact/org.apache.directory.studio/org.apache.commons.lang -->
+	<dependency>
+	    <groupId>org.apache.directory.studio</groupId>
+	    <artifactId>org.apache.commons.lang</artifactId>
+	    <version>2.6</version>
+	</dependency>
+		
+	<!-- https://mvnrepository.com/artifact/com.googlecode.json-simple/json-simple -->
+	<dependency>
+    	<groupId>com.googlecode.json-simple</groupId>
+    	<artifactId>json-simple</artifactId>
+    	<version>1.1</version>
+	</dependency>
+			
+  </dependencies>
+  
+</project>

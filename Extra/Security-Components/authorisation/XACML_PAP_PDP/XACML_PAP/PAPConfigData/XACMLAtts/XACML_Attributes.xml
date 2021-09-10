@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<attributes storingDate="2020-07-29T07:59:47.139572">
+  <attributes>
+    <attribute name="jamartinez" xacml_id="urn:ietf:params:scim:schemas:core:2.0:username" sortedValue="subject" xacml_DataType="#string" />
+    <attribute name="jasanchez" xacml_id="urn:ietf:params:scim:schemas:core:2.0:username" sortedValue="subject" xacml_DataType="#string" />
+    <attribute name="GET" xacml_id="urn:oasis:names:tc:xacml:1.0:action:action-id" sortedValue="action" xacml_DataType="#string" />
+    <attribute name="POST" xacml_id="urn:oasis:names:tc:xacml:1.0:action:action-id" sortedValue="action" xacml_DataType="#string" />
+    <attribute name="PUT" xacml_id="urn:oasis:names:tc:xacml:1.0:action:action-id" sortedValue="action" xacml_DataType="#string" />
+    <attribute name="DELETE" xacml_id="urn:oasis:names:tc:xacml:1.0:action:action-id" sortedValue="action" xacml_DataType="#string" />
+    <attribute name="PATCH" xacml_id="urn:oasis:names:tc:xacml:1.0:action:action-id" sortedValue="action" xacml_DataType="#string" />
+    <attribute name="https://localhost:1040/addThingVisor" xacml_id="urn:oasis:names:tc:xacml:1.0:resource:resource-id" sortedValue="resource" xacml_DataType="#string" />
+    <attribute name="https://localhost:1040/listThingVisors" xacml_id="urn:oasis:names:tc:xacml:1.0:resource:resource-id" sortedValue="resource" xacml_DataType="#string" />
+    <attribute name="https://localhost:1040/deleteThingVisor" xacml_id="urn:oasis:names:tc:xacml:1.0:resource:resource-id" sortedValue="resource" xacml_DataType="#string" />
+    <attribute name="https://localhost:1040/addFlavour" xacml_id="urn:oasis:names:tc:xacml:1.0:resource:resource-id" sortedValue="resource" xacml_DataType="#string" />
+    <attribute name="https://localhost:1040/listFlavours" xacml_id="urn:oasis:names:tc:xacml:1.0:resource:resource-id" sortedValue="resource" xacml_DataType="#string" />
+    <attribute name="https://localhost:1040/deleteFlavour" xacml_id="urn:oasis:names:tc:xacml:1.0:resource:resource-id" sortedValue="resource" xacml_DataType="#string" />
+    <attribute name="https://localhost:1040/siloCreate" xacml_id="urn:oasis:names:tc:xacml:1.0:resource:resource-id" sortedValue="resource" xacml_DataType="#string" />
+    <attribute name="https://localhost:1040/listVirtualSilos" xacml_id="urn:oasis:names:tc:xacml:1.0:resource:resource-id" sortedValue="resource" xacml_DataType="#string" />
+    <attribute name="https://localhost:1040/siloDestroy" xacml_id="urn:oasis:names:tc:xacml:1.0:resource:resource-id" sortedValue="resource" xacml_DataType="#string" />
+    <attribute name="https://localhost:1040/addVThing" xacml_id="urn:oasis:names:tc:xacml:1.0:resource:resource-id" sortedValue="resource" xacml_DataType="#string" />
+    <attribute name="https://localhost:1040/deleteVThing" xacml_id="urn:oasis:names:tc:xacml:1.0:resource:resource-id" sortedValue="resource" xacml_DataType="#string" />
+  </attributes>
+</attributes>
+

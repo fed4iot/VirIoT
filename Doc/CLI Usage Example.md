@@ -109,24 +109,23 @@ Add a vSilo flavour for [Stellio](https://github.com/stellio-hub/stellio-context
 Stellio is an [NGSI-LD](https://www.etsi.org/deliver/etsi_gs/CIM/001_099/009/01.03.01_60/gs_CIM009v010301p.pdf)
 compliant context broker developed by EGM.
 NGSI-LD is an open API and Datamodel specification for context management published by ETSI.
-This project is part of FIWARE. For more information check the FIWARE Catalogue entry for Core Context.
 
 ```bash
-# Docker: the STELLIO broker is only available with Kubernetes deployments of VirIoT
+# Docker: the Stellio broker is only available with Kubernetes deployments of VirIoT
 # Kubernetes: point to the yaml file of the flavour using argument -y
-python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -y "../yaml/flavours-ngsild-stellio.yaml" -f ngsild-stellio-f -d "silo with a Stellio NGSI-LD broker" -s '{"brokerport":8090}'   
+python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -y "../yaml/flavours-ngsild-stellio-multicontainer.yaml" -f ngsild-stellio-f -d "silo with a Stellio NGSI-LD broker" -s '{"brokerport":8090}'   
 ```  
 
 #### ORIONLD (for developers that want to use the ETSI NGSI-LD standard for IoT and context data)
-Add a vSilo flavour for [OrionLD](https://github.com/FIWARE/context.Orion-LD).
+Add a vSilo flavour for [Orion-LD](https://github.com/FIWARE/context.Orion-LD).
 OrionLD is an [NGSI-LD](https://www.etsi.org/deliver/etsi_gs/CIM/001_099/009/01.03.01_60/gs_CIM009v010301p.pdf)
 compliant context broker developed by FIWARE.
 NGSI-LD is an open API and Datamodel specification for context management published by ETSI.
-This Generic Enabler implements the NGSI-LD API Orion-LD extends the Orion Context Broker
+Orion-LD is a Context Broker and CEF building block for context data management which supports both the NGSI-LD and the NGSI-v2 APIs. It is currently a fork of the original Orion Context Broker extending support to add NGSI-LD and linked data concepts.
 This project is part of FIWARE. For more information check the FIWARE Catalogue entry for Core Context.
 
 ```bash
-# Docker: the STELLIO broker is only available with Kubernetes deployments of VirIoT
+# Docker: the ORION-LD broker is only available with Kubernetes deployments of VirIoT
 # Kubernetes: point to the yaml file of the flavour using argument -y 
 python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -y "../yaml/flavours-ngsild-orionld-multicontainer.yaml" -f ngsild-orionld-f -d "silo with a OrionLD NGSI-LD broker" -s '{"brokerport":1026}'  
 ```  

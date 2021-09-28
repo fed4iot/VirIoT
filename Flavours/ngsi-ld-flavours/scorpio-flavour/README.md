@@ -11,10 +11,10 @@ This flavour is for developers that want to use the NGSI-LD datamodel, which is 
 
 ### Local Docker deployment
 
-First (as admin) add a "scoprio flavour" to the system, based on the Docker image available on the fed4iot dockerhub, pointing to it with argument -i. Use the VirIoT CLI as admin and run the following command  (use "f4i.py add-flavour --help" for CLI parameters).
+First (as admin) add a "scorpio flavour" to the system, based on the Docker image available on the fed4iot dockerhub, pointing to it with argument -i. Use the VirIoT CLI as admin and run the following command  (use "f4i.py add-flavour --help" for CLI parameters).
 
 ```bash  
-python3 f4i.py add-flavour -f ngsild-scorpio-f -i fed4iot/ngsild-scorpio-f:2.2 -d "silo with a Scorpio NGSI-LD broker" -s ""
+python3 f4i.py add-flavour -f ngsild-scorpio-f -i fed4iot/ngsild-scorpio-f:2.2 -d "silo with a Scorpio NGSI-LD Context Broker" -s ""
 ```
 
 Then (either as admin or as a regular user, e.g. tenant1) create a vSilo of that flavour, by running the following command (use "f4i.py create-vsilo --help" for CLI parameters).
@@ -28,13 +28,13 @@ python3 f4i.py create-vsilo -f ngsild-scorpio-f -t tenant1 -s Silo1
 Same as above, except that with Kubernetes deployment we add the flavour by pointing to a yaml file, using argument -y, instead of a Docker image. Use the VirIoT CLI as admin and run the following command  (use "f4i.py add-flavour --help" for CLI parameters).
 
 ```bash
-python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -f ngsild-scorpio-f -d "silo with a Scorpio NGSI-LD broker" -s "" -y "yaml/flavours-ngsild-scorpio.yaml"
+python3 f4i.py add-flavour -c http://[k8s_node_ip]:[NodePort] -f ngsild-scorpio-f -d "silo with a Scorpio NGSI-LD Context Broker" -s '{"brokerport":9090}' -y "yaml/flavours-ngsild-scorpio-multicontainer.yaml"
 ```
 
 To create a vSilo, as above, run the following command (use "f4i.py create-vsilo --help" for CLI parameters). You need to specify the Kubernetes IP and the NodePort to reach the Master Controller you have already deployed in the cluster.
 
 ```bash
-python3 f4i.py create-vsilo -c http://[k8s_node_ip]:[NodePort] -f Mobius-base-actuator-f -t tenant1 -s Silo1  
+python3 f4i.py create-vsilo -c http://[k8s_node_ip]:[NodePort] -f ngsild-scorpio-f -t tenant1 -s Silo1  
 ```
 
 
@@ -43,7 +43,3 @@ Since this vSilo is based on a NGSI-LD broker, the mapping between the internal 
 | NGSI-LD internal                   |    | NGSI-LD external                               |
 |------------------------------------|----|------------------------------------------------|
 | entity                             | -> | entity                                         |
-
-
-
-This flavour does not (yet) support actuation and inserting commands.

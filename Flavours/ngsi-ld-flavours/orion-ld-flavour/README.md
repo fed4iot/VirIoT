@@ -1,6 +1,6 @@
 # README
 
-This flavour exposes vThing information in [NGSI-LD](https://www.etsi.org/deliver/etsi_gs/CIM/001_099/009/01.02.02_60/gs_CIM009v010202p.pdf) format, through the [Orion-LD](hhttps://github.com/FIWARE/context.Orion-LD) Context Broker, which is an NGSI-LD compliant context broker developed by FIWARE. Orion-LD is a Context Broker and CEF building block for context data management which supports both the NGSI-LD and the NGSI-v2 APIs. It is currently a fork of the original Orion Context Broker extending support to add NGSI-LD and linked data concepts.
+This flavour exposes vThing information in [NGSI-LD](https://www.etsi.org/deliver/etsi_gs/CIM/001_099/009/01.02.02_60/gs_CIM009v010202p.pdf) format, through the [Orion-LD](https://github.com/FIWARE/context.Orion-LD) Context Broker, which is an NGSI-LD compliant context broker developed by FIWARE. Orion-LD is a Context Broker and CEF building block for context data management which supports both the NGSI-LD and the NGSI-v2 APIs. It is currently a fork of the original Orion Context Broker extending support to add NGSI-LD and linked data concepts.
 
 NGSI-LD is an open API and Datamodel specification for context management published by ETSI.
 

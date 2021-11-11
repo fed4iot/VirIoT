@@ -166,8 +166,8 @@ def batch_entity_delete(url, entities_ids):
   return batch_delete_success
 
 # Subscribe to an entity changes given the entity id
-def subscribe_to_entity(broker_url, entity_id_to_subscribe, entity_type, nuri, watchedAttributes=[]):
-  subscriptions_end_point = "/subscriptions/"
+def subscribe_to_entity(broker_url, entity_id_to_subscribe, entity_type, entity_context, nuri, watchedAttributes=[]):
+      subscriptions_end_point = "/subscriptions/"
   subscriptions_url = broker_url + subscriptions_end_point
   subscription_id = entity_id_to_subscribe + ":subscription"
 
@@ -188,11 +188,11 @@ def subscribe_to_entity(broker_url, entity_id_to_subscribe, entity_type, nuri, w
         "uri": nuri,
         "accept": "application/json"
       }
-    },
-    "@context": [
-          "http://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
-    ]
+    }
   }
+
+  if entity_context is not None:
+    dic["@context"] = [context_uri]
 
   # if we have attributes to watch, then define them into the subscription (watchedAttributes field)
   # and also inform the broker that we want all other (non-watched) attributes
@@ -204,8 +204,13 @@ def subscribe_to_entity(broker_url, entity_id_to_subscribe, entity_type, nuri, w
     dic['notification']['attributes'].append("generatedByVThing")
   payload = json.dumps(dic)
 
+  if "@context" in dic:
+    content_type_value = "ld+json"
+  else:
+    content_type_value = "json"
+
   headers = {
-    'Content-Type': "application/ld+json",
+    'Content-Type': "application/{}".format(content_type_value),
     'Accept': "application/json"
   }
   post_subscription_url = subscriptions_url

@@ -166,8 +166,13 @@ def batch_entity_delete(url, entities_ids):
   return batch_delete_success
 
 # Subscribe to an entity changes given the entity id
-def subscribe_to_entity(broker_url, entity_id_to_subscribe, entity_type, entity_context, nuri, watchedAttributes=[]):
-      subscriptions_end_point = "/subscriptions/"
+def subscribe_to_entity(broker_url, entity_id_to_subscribe, entity_type, entity_context, nuri, watchedAttributes=None):
+  # When a parameter has a list or a dict, it is treated as a static list/dict.
+  # We don't want that.
+  if watchedAttributes is None:
+    watchedAttributes = []
+
+  subscriptions_end_point = "/subscriptions/"
   subscriptions_url = broker_url + subscriptions_end_point
   subscription_id = entity_id_to_subscribe + ":subscription"
 
@@ -191,6 +196,7 @@ def subscribe_to_entity(broker_url, entity_id_to_subscribe, entity_type, entity_
     }
   }
 
+  # If
   if entity_context is not None:
     dic["@context"] = [context_uri]
 

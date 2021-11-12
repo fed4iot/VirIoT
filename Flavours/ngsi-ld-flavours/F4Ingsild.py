@@ -198,7 +198,7 @@ def subscribe_to_entity(broker_url, entity_id_to_subscribe, entity_type, entity_
 
   # If
   if entity_context is not None:
-    dic["@context"] = [context_uri]
+    dic["@context"] = [entity_context]
 
   # if we have attributes to watch, then define them into the subscription (watchedAttributes field)
   # and also inform the broker that we want all other (non-watched) attributes

@@ -24,7 +24,7 @@ from context import Context
 from concurrent.futures import ThreadPoolExecutor
 from importlib import import_module
 
-def initialize_vthing(vthingindex, type, description, commands, jsonld_at_context_field = [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]):
+def initialize_vthing(vthingindex, type, description, commands, jsonld_at_context_field = None):
     v_things[vthingindex]={}
 
     v_things[vthingindex]['name']=vthingindex #detector
@@ -147,7 +147,8 @@ def publish_attributes_of_a_vthing(vthingindex, attributes):
             ngsildentity[attribute["attributename"]] = {"type":"Relationship", "object":attribute["attributevalue"]}
         else:
             ngsildentity[attribute["attributename"]] = {"type":"Property", "value":attribute["attributevalue"]}
-    ngsildentity['@context']=v_things[vthingindex]['jsonld_at_context_field']
+    if v_things[vthingindex]['jsonld_at_context_field'] is not None:
+        ngsildentity['@context']=v_things[vthingindex]['jsonld_at_context_field']
     data = [ngsildentity]
     v_things[vthingindex]['context'].update(data)
     message = { "data": data, "meta": {"vThingID": v_things[vthingindex]['ID']} }  # neutral-format message
@@ -240,7 +241,8 @@ def publish_actuation_response_message(cmd_name, cmd_info, id_LD, payload, type_
         field = "cmd-" + type_of_message
         pvalue[field] = payload
         ngsiLdEntity = { "id": id_LD, "type": vtentity['type'], pname: {"type": "Property", "value": pvalue} }
-        ngsiLdEntity['@context']=v_things[vthingindex]['jsonld_at_context_field']
+        if v_things[vthingindex]['jsonld_at_context_field'] is not None:
+            ngsiLdEntity['@context']=v_things[vthingindex]['jsonld_at_context_field']
         data = [ngsiLdEntity]
         # not updating the vthings context in the actuation because the commands results are ephemeral
         message = { "data": data, "meta": {"vThingID": v_things[vthingindex]['ID']} }  # neutral-format message

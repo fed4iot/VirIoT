@@ -24,7 +24,7 @@ from context import Context
 from concurrent.futures import ThreadPoolExecutor
 from importlib import import_module
 
-def initialize_vthing(vthingindex, type, description, commands):
+def initialize_vthing(vthingindex, type, description, commands, context_attr = [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]):
     v_things[vthingindex]={}
 
     v_things[vthingindex]['name']=vthingindex #detector
@@ -55,6 +55,8 @@ def initialize_vthing(vthingindex, type, description, commands):
     # set the commands array for the vThing
     v_things[vthingindex]['commands']=commands
 
+    v_things[vthingindex]['context_attr']=context_attr
+
     create_vthing_initial_context(vthingindex)
 
     # data
@@ -83,7 +85,7 @@ def mqtt_control_reconnect(client, userdata, rc):
 def create_vthing_initial_context(vthingindex):
     print("Creating initial vthing context (commands, initial data...)")
     ngsiLdEntity = { "id": v_things[vthingindex]['ID_LD'], "type": v_things[vthingindex]['type_attr'], "commands": {"type": "Property", "value": v_things[vthingindex]['commands']} }
-    add_core_context_to_ngsildentity(ngsiLdEntity)
+    ngsiLdEntity['@context']=v_things[vthingindex]['context_attr']
     data = [ngsiLdEntity]
     v_things[vthingindex]['context'].set_all(data)
     # at startup we want to renew the "commands" property, in case existing
@@ -115,21 +117,26 @@ def subscribe_vthing_control_in_topic(vthingindex):
 
 
 def remove_vthing(vthingindex):
-    mqtt_control_thread.publish_deleteVThing_command(vthingindex)
+    mqtt_control_client.publish_deleteVThing_command(vthingindex)
     del v_things[vthingindex]
 
 
 def get_vthing_name(name):
-    name=name.split(':')[-1]
+    name=name.split(':')[3]
     return name
+
+
+def find_context_entity(name):
+    vthingindex = get_vthing_name(name)
+    vtcontext=v_things[vthingindex]['context'].get_all()
+    for vtentity in vtcontext:
+        if vtentity["id"]==name:
+            return vtentity
+    return None
 
 
 def get_silo_name(nuri):
     return nuri.split('/')[-2]
-
-
-def add_core_context_to_ngsildentity(entity):
-    entity['@context'] = [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]
 
 
 def publish_attributes_of_a_vthing(vthingindex, attributes):
@@ -144,7 +151,7 @@ def publish_attributes_of_a_vthing(vthingindex, attributes):
             ngsildentity[attribute["attributename"]] = {"type":"Relationship", "object":attribute["attributevalue"]}
         else:
             ngsildentity[attribute["attributename"]] = {"type":"Property", "value":attribute["attributevalue"]}
-    add_core_context_to_ngsildentity(ngsildentity)
+    ngsildentity['@context']=v_things[vthingindex]['context_attr']
     data = [ngsildentity]
     v_things[vthingindex]['context'].update(data)
     message = { "data": data, "meta": {"vThingID": v_things[vthingindex]['ID']} }  # neutral-format message
@@ -176,8 +183,8 @@ def processor_for_mqtt_data_in_vthing(message):
         data = jres["data"]
         for entity in data:
             id_LD = entity["id"]
-            vthingindex = get_vthing_name(id_LD)
-            for cmd in v_things[vthingindex]['commands']:
+            vtentity=find_context_entity(id_LD)
+            for cmd in vtentity['commands']['value']:
                 if cmd in entity:
                     process_actuation_request(entity)
                     continue
@@ -204,8 +211,7 @@ def processor_for_mqtt_control_in_vthing(message):
     jres = message_to_jres(message)
     try:
         command_type = jres["command"]
-        name=jres["vThingID"].split('/')[-1]
-        n=get_vthing_name(name)
+        n=jres["vThingID"].split('/')[-1]
         if command_type == "getContextRequest":
             publish_getContextResponse_command(jres,n)
     except:
@@ -228,16 +234,17 @@ def processor_for_mqtt_control_in_TV(message):
 
 
 def publish_actuation_response_message(cmd_name, cmd_info, id_LD, payload, type_of_message):
-    try:  
+    try:
         vthingindex = get_vthing_name(id_LD)
+        vtentity=find_context_entity(id_LD)
         # type_of_message can be "result" or "status"
         pname = cmd_name + "-" + type_of_message #e.g. startdevice-result
         pvalue = cmd_info.copy()
         # lets set either cmd-result or cmd-status field of the actuation workflow
         field = "cmd-" + type_of_message
         pvalue[field] = payload
-        ngsiLdEntity = { "id": id_LD, "type": v_things[vthingindex]['type_attr'], pname: {"type": "Property", "value": pvalue} }
-        add_core_context_to_ngsildentity(ngsiLdEntity)
+        ngsiLdEntity = { "id": id_LD, "type": vtentity['type'], pname: {"type": "Property", "value": pvalue} }
+        ngsiLdEntity['@context']=v_things[vthingindex]['context_attr']
         data = [ngsiLdEntity]
         # not updating the vthings context in the actuation because the commands results are ephemeral
         message = { "data": data, "meta": {"vThingID": v_things[vthingindex]['ID']} }  # neutral-format message
@@ -255,8 +262,8 @@ def publish_actuation_response_message(cmd_name, cmd_info, id_LD, payload, type_
 def process_actuation_request(cmd_entity):
     try:
         id_LD = cmd_entity["id"]
-        vthingindex = get_vthing_name(id_LD)
-        for cmd_name in v_things[vthingindex]['commands']:
+        vtentity=find_context_entity(id_LD)
+        for cmd_name in vtentity['commands']['value']:
             if cmd_name in cmd_entity:
                 cmd_info = cmd_entity[cmd_name]['value']
                 fname = cmd_name.replace('-','_')

@@ -24,7 +24,7 @@ from context import Context
 from concurrent.futures import ThreadPoolExecutor
 from importlib import import_module
 
-def initialize_vthing(vthingindex, type, description, commands, context_attr = [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]):
+def initialize_vthing(vthingindex, type, description, commands, jsonld_at_context_field = [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]):
     v_things[vthingindex]={}
 
     v_things[vthingindex]['name']=vthingindex #detector
@@ -55,7 +55,7 @@ def initialize_vthing(vthingindex, type, description, commands, context_attr = [
     # set the commands array for the vThing
     v_things[vthingindex]['commands']=commands
 
-    v_things[vthingindex]['context_attr']=context_attr
+    v_things[vthingindex]['jsonld_at_context_field']=jsonld_at_context_field
 
     create_vthing_initial_context(vthingindex)
 
@@ -85,7 +85,7 @@ def mqtt_control_reconnect(client, userdata, rc):
 def create_vthing_initial_context(vthingindex):
     print("Creating initial vthing context (commands, initial data...)")
     ngsiLdEntity = { "id": v_things[vthingindex]['ID_LD'], "type": v_things[vthingindex]['type_attr'], "commands": {"type": "Property", "value": v_things[vthingindex]['commands']} }
-    ngsiLdEntity['@context']=v_things[vthingindex]['context_attr']
+    ngsiLdEntity['@context']=v_things[vthingindex]['jsonld_at_context_field']
     data = [ngsiLdEntity]
     v_things[vthingindex]['context'].set_all(data)
     # at startup we want to renew the "commands" property, in case existing
@@ -121,9 +121,9 @@ def remove_vthing(vthingindex):
     del v_things[vthingindex]
 
 
-def get_vthing_name(name):
-    name=name.split(':')[3]
-    return name
+def get_vthing_name(id_LD):
+    id_LD=id_LD.split(':')[3]
+    return id_LD
 
 
 def find_context_entity(name):
@@ -151,7 +151,7 @@ def publish_attributes_of_a_vthing(vthingindex, attributes):
             ngsildentity[attribute["attributename"]] = {"type":"Relationship", "object":attribute["attributevalue"]}
         else:
             ngsildentity[attribute["attributename"]] = {"type":"Property", "value":attribute["attributevalue"]}
-    ngsildentity['@context']=v_things[vthingindex]['context_attr']
+    ngsildentity['@context']=v_things[vthingindex]['jsonld_at_context_field']
     data = [ngsildentity]
     v_things[vthingindex]['context'].update(data)
     message = { "data": data, "meta": {"vThingID": v_things[vthingindex]['ID']} }  # neutral-format message
@@ -244,7 +244,7 @@ def publish_actuation_response_message(cmd_name, cmd_info, id_LD, payload, type_
         field = "cmd-" + type_of_message
         pvalue[field] = payload
         ngsiLdEntity = { "id": id_LD, "type": vtentity['type'], pname: {"type": "Property", "value": pvalue} }
-        ngsiLdEntity['@context']=v_things[vthingindex]['context_attr']
+        ngsiLdEntity['@context']=v_things[vthingindex]['jsonld_at_context_field']
         data = [ngsiLdEntity]
         # not updating the vthings context in the actuation because the commands results are ephemeral
         message = { "data": data, "meta": {"vThingID": v_things[vthingindex]['ID']} }  # neutral-format message

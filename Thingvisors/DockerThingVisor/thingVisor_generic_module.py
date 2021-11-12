@@ -116,7 +116,7 @@ def subscribe_vthing_control_in_topic(vthingindex):
 
 
 def remove_vthing(vthingindex):
-    mqtt_control_client.publish_deleteVThing_command(vthingindex)
+    publish_deleteVThing_command(vthingindex)
     del v_things[vthingindex]
 
 

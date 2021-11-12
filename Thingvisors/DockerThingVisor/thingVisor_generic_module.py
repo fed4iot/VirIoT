@@ -84,10 +84,6 @@ def mqtt_control_reconnect(client, userdata, rc):
     
 def create_vthing_initial_context(vthingindex):
     print("Creating initial vthing context (commands, initial data...)")
-    ngsiLdEntity = { "id": v_things[vthingindex]['ID_LD'], "type": v_things[vthingindex]['type_attr'], "commands": {"type": "Property", "value": v_things[vthingindex]['commands']} }
-    ngsiLdEntity['@context']=v_things[vthingindex]['jsonld_at_context_field']
-    data = [ngsiLdEntity]
-    v_things[vthingindex]['context'].set_all(data)
     # at startup we want to renew the "commands" property, in case existing
     # Brokers have an outdated list of "commands". We use the publish_attributes function:
     # each item is an attribute to be injected in the Entity, as follows:

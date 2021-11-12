@@ -24,7 +24,10 @@ from context import Context
 from concurrent.futures import ThreadPoolExecutor
 from importlib import import_module
 
-def initialize_vthing(vthingindex, type, description, commands, jsonld_at_context_field = None):
+def initialize_vthing(vthingindex, type, description, commands, jsonld_at_context_field = None, id_LD = None):
+    if id_LD is None:
+        id_LD="urn:ngsi-ld:" + thing_visor_ID + ":" + vthingindex
+    
     v_things[vthingindex]={}
 
     v_things[vthingindex]['name']=vthingindex #detector
@@ -39,7 +42,7 @@ def initialize_vthing(vthingindex, type, description, commands, jsonld_at_contex
     }
     v_things[vthingindex]['caching']=False
     # the identifier in the neutral format NGSI-LD entities created by this vthing
-    v_things[vthingindex]['ID_LD']="urn:ngsi-ld:" + thing_visor_ID + ":" + v_things[vthingindex]['name'] #urn:ngsi-ld:facerec-tv:detector
+    v_things[vthingindex]['ID_LD']=id_LD #urn:ngsi-ld:facerec-tv:detector
 
     # Context is a "map" of current virtual thing state
     # create and save the Context for the new vThing

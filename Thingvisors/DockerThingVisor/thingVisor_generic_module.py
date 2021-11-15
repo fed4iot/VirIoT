@@ -41,7 +41,7 @@ def initialize_vthing(vthingindex, type, description, commands, jsonld_at_contex
         "description": v_things[vthingindex]['description']
     }
     v_things[vthingindex]['caching']=False
-    # the identifier in the neutral format NGSI-LD entities created by this vthing
+    # the identifier in the neutral format NGSI-LD of the master entity created by this vthing
     v_things[vthingindex]['ID_LD']=id_LD #urn:ngsi-ld:facerec-tv:detector
 
     # Context is a "map" of current virtual thing state

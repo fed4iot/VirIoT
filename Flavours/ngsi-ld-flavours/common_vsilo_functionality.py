@@ -112,8 +112,13 @@ def send_command_out(cmd_LD_ID, cmd_LD_Type, cmd_name, cmd_value, vThingID):
     data = [ngsiLdEntity]
     topic = "vThing/"+vThingID+"/data_in"
     # publish changed status
-    message = {"data": data, "meta": {
-        "vSiloID": v_silo_id}}  # neutral-format
+    message = {
+        "data": data, 
+        "meta": {
+            "vSiloID": v_silo_id,
+            "vThingID": vThingID
+        }
+    }  # neutral-format
     future = executor.submit(publish_on_virIoT, message, topic)
     #publish_on_virIoT(message, topic)
     return

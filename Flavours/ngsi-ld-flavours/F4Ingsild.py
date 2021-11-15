@@ -166,7 +166,12 @@ def batch_entity_delete(url, entities_ids):
   return batch_delete_success
 
 # Subscribe to an entity changes given the entity id
-def subscribe_to_entity(broker_url, entity_id_to_subscribe, entity_type, nuri, watchedAttributes=[]):
+def subscribe_to_entity(broker_url, entity_id_to_subscribe, entity_type, entity_context, nuri, watchedAttributes=None):
+  # When a parameter has a list or a dict, it is treated as a static list/dict.
+  # We don't want that.
+  if watchedAttributes is None:
+    watchedAttributes = []
+
   subscriptions_end_point = "/subscriptions/"
   subscriptions_url = broker_url + subscriptions_end_point
   subscription_id = entity_id_to_subscribe + ":subscription"
@@ -186,12 +191,10 @@ def subscribe_to_entity(broker_url, entity_id_to_subscribe, entity_type, nuri, w
     "notification": {
       "endpoint": {
         "uri": nuri,
-        "accept": "application/json"
+        "accept": "application/ld+json"
       }
     },
-    "@context": [
-          "http://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
-    ]
+    "@context": entity_context
   }
 
   # if we have attributes to watch, then define them into the subscription (watchedAttributes field)

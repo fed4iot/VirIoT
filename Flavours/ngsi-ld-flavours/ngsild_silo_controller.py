@@ -169,6 +169,10 @@ def batch_add_or_modify_entity_under_vThing_on_Broker(v_thing_id, entities):
         # lets add the vThingID as a property into each entity
         entity['generatedByVThing'] = {'type':'Property','value':v_thing_id}
 
+        # Whenever an entity doesn't have a @context field, we provide it as an empty list.
+        if '@context' not in entity:
+            entity['@context'] = []
+
         # if the "commands" property exists,
         # foreach command in the array, create 3 additional properties in entity:
         # command, command-status, command-result 
@@ -187,7 +191,8 @@ def batch_add_or_modify_entity_under_vThing_on_Broker(v_thing_id, entities):
                 try:
                     entity_id_to_subscribe = entity['id']
                     entity_type = entity['type']
-                    entity_context = entity['@context'] if '@context' in entity else None
+                    # Exctract the @context from the entity to put it in the subscription.
+                    entity_context = entity['@context']
                     notification_URI = "http://localhost:5555/receive_notification_from_broker/"+command
                     status = F4Ingsild.subscribe_to_entity(brokerurl, entity_id_to_subscribe, entity_type, entity_context, notification_URI, [command])
                 except Exception:

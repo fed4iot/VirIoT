@@ -1,0 +1,34 @@
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: f4i-tv-domus
+spec:
+  selector:
+    matchLabels:
+      app: f4i-domus
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: f4i-domus
+    spec:
+      containers:
+      - name: f4i-domus
+        image: mirkesx/domus-tv:latest
+        ports:
+        - containerPort: 8089
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: f4i-tv-svc-domus
+  labels:
+    app: f4i-domus
+spec:
+  type: NodePort
+  ports:
+  - port: 8089
+    targetPort:
+    nodePort:
+  selector:
+    app: f4i-domus

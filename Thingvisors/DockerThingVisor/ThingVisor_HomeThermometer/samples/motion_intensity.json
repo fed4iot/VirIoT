@@ -1,0 +1,44 @@
+[
+  {
+    "summary_id": "x314c08b-5d6ee698",
+    "user_id": 4,
+    "startTimeInSeconds": "1569963000",
+    "durationInSeconds": "29340",
+    "timestamp": 1571470200,
+    "activity_type": "SEDENTARY",
+    "intensity": "SEDENTARY",
+    "mean_motion_intensity": 0,
+    "max_motion_intensity": 0,
+    "distance_in_meters": 0,
+    "steps": 0,
+    "activity_type": "something"
+  },
+  {
+    "summary_id": "x314c08b-5d6ee698",
+    "startTimeInSeconds": "1569963000",
+    "durationInSeconds": "29340",
+    "timestamp": 1571470200,
+    "user_id": 4,
+    "activity_type": "SEDENTARY",
+    "intensity": "SEDENTARY",
+    "mean_motion_intensity": 0,
+    "max_motion_intensity": 0,
+    "distance_in_meters": 0,
+    "steps": 0,
+    "activity_type": "something"
+  },
+  {
+    "summary_id": "x314c08b-5d6ee698",
+    "startTimeInSeconds": "1569963000",
+    "durationInSeconds": "29340",
+    "timestamp": 1571470200,
+    "user_id": 4,
+    "activity_type": "SEDENTARY",
+    "intensity": "SEDENTARY",
+    "mean_motion_intensity": 0,
+    "max_motion_intensity": 0,
+    "distance_in_meters": 0,
+    "steps": 0,
+    "activity_type": "something"
+  }
+]

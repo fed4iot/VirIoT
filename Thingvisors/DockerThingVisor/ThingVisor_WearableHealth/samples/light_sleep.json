@@ -1,0 +1,112 @@
+[
+  {
+    "summary_id": "x315ee18-5d8e8840",
+    "startTimeInSeconds": "1569622080",
+    "durationInSeconds": "24360",
+    "value": {
+      "endTimeInSeconds": 1569625380,
+      "startTimeInSeconds": 1569622560
+    },
+    "lightSleepInSeconds": 3000,
+    "user_id": 5
+  },
+  {
+    "summary_id": "x315ee18-5d8e8840",
+    "startTimeInSeconds": "1569622080",
+    "durationInSeconds": "24360",
+    "value": {
+      "endTimeInSeconds": 1569625620,
+      "startTimeInSeconds": 1569625440
+    },
+    "lightSleepInSeconds": 3000,
+    "user_id": 5
+  },
+  {
+    "summary_id": "x314c08b-5d93bbf8",
+    "startTimeInSeconds": "1569963000",
+    "durationInSeconds": "29340",
+    "value": {
+      "endTimeInSeconds": 1569964140,
+      "startTimeInSeconds": 1569963480
+    },
+    "lightSleepInSeconds": 7200,
+    "user_id": 4
+  },
+  {
+    "summary_id": "x314c08b-5d93bbf8",
+    "startTimeInSeconds": "1569963000",
+    "durationInSeconds": "29340",
+    "value": {
+      "endTimeInSeconds": 1569968040,
+      "startTimeInSeconds": 1569965580
+    },
+    "lightSleepInSeconds": 7200,
+    "user_id": 4
+  },
+  {
+    "summary_id": "x314c08b-5d93bbf8",
+    "startTimeInSeconds": "1569963000",
+    "durationInSeconds": "29340",
+    "value": {
+      "endTimeInSeconds": 1569971400,
+      "startTimeInSeconds": 1569969660
+    },
+    "lightSleepInSeconds": 7200,
+    "user_id": 4
+  },
+  {
+    "summary_id": "x314c08b-5d93bbf8",
+    "startTimeInSeconds": "1569963000",
+    "durationInSeconds": "29340",
+    "value": {
+      "endTimeInSeconds": 1569975420,
+      "startTimeInSeconds": 1569975180
+    },
+    "lightSleepInSeconds": 7200,
+    "user_id": 4
+  },
+  {
+    "summary_id": "x314c08b-5d93bbf8",
+    "startTimeInSeconds": "1569963000",
+    "durationInSeconds": "29340",
+    "value": {
+      "endTimeInSeconds": 1569982320,
+      "startTimeInSeconds": 1569981300
+    },
+    "lightSleepInSeconds": 7200,
+    "user_id": 4
+  },
+  {
+    "summary_id": "x314c08b-5d93bbf8",
+    "startTimeInSeconds": "1569963000",
+    "durationInSeconds": "29340",
+    "value": {
+      "endTimeInSeconds": 1569983640,
+      "startTimeInSeconds": 1569982560
+    },
+    "lightSleepInSeconds": 7200,
+    "user_id": 4
+  },
+  {
+    "summary_id": "x314c08b-5d6ee698",
+    "startTimeInSeconds": "1567549080",
+    "durationInSeconds": "27300",
+    "value": {
+      "endTimeInSeconds": 1567551060,
+      "startTimeInSeconds": 1567549800
+    },
+    "lightSleepInSeconds": 4320,
+    "user_id": 4
+  },
+  {
+    "summary_id": "x314c08b-5d6ee698",
+    "startTimeInSeconds": "1567549080",
+    "durationInSeconds": "27300",
+    "value": {
+      "endTimeInSeconds": 1567557240,
+      "startTimeInSeconds": 1567554840
+    },
+    "lightSleepInSeconds": 4320,
+    "user_id": 4
+  }
+]

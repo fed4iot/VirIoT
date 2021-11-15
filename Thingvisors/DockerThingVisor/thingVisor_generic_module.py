@@ -55,12 +55,9 @@ def initialize_vthing(vthingindex, type, description, commands, jsonld_at_contex
     # v_thing_prefix is constant "vThing"
     v_things[vthingindex]['topic']=v_thing_prefix + "/" + v_things[vthingindex]['ID'] #vThing/facerec-tv/detector
 
-    # set the commands array for the vThing
-    v_things[vthingindex]['commands']=commands
-
     v_things[vthingindex]['jsonld_at_context_field']=jsonld_at_context_field
 
-    create_vthing_initial_context(vthingindex)
+    create_vthing_initial_context(vthingindex,commands)
 
     # data
     subscribe_vthing_data_in_topic(vthingindex)
@@ -85,7 +82,7 @@ def mqtt_control_reconnect(client, userdata, rc):
     client.reconnect()
     
     
-def create_vthing_initial_context(vthingindex):
+def create_vthing_initial_context(vthingindex, commands):
     print("Creating initial vthing context (commands, initial data...)")
     # at startup we want to renew the "commands" property, in case existing
     # Brokers have an outdated list of "commands". We use the publish_attributes function:
@@ -94,7 +91,7 @@ def create_vthing_initial_context(vthingindex):
     publish_attributes_of_a_vthing(vthingindex,
                                     [{
                                     "attributename" : "commands",
-                                    "attributevalue" : v_things[vthingindex]['commands']
+                                    "attributevalue" : commands
                                     }] )
     
 

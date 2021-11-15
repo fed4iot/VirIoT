@@ -413,7 +413,7 @@ def initialize(_v_thing_contexts, _entity_types,_endpoint, _create_entities_func
     endpoint=_endpoint
     create_entities_function=_create_entities_function
     data_endpoints=_entity_types.copy()
-    data_endpoints.append('sensor')
+    data_endpoints.append('sensors')
 
 ## FLASK THREAD CLASS
 

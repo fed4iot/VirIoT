@@ -208,7 +208,7 @@ def create_sensors_context_entities(sensors_data):
     return entities
 
 def create_entities(filtered_data, v_thing_type):
-    if v_thing_type == "sensor":
+    if v_thing_type == "sensors":
         entities = create_sensors_context_entities(filtered_data)
         return entities
     else:

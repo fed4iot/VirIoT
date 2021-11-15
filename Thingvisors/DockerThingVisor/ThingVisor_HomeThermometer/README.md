@@ -9,7 +9,7 @@ This ThingVisor creates vThings whose data can be collected by Oregon Scientific
 The data can be sent by POST HTTP Requests in one of these three endpoints:
 - /home_temperature
 - /home_humidity
-- /sensor 
+- /sensors 
 
 
 ### Build locally with Docker (optional)
@@ -275,7 +275,7 @@ curl --location --request POST '<ip_thingvisor>:<port_thingvisor>/home_humidity'
 #### Example of a valid input
 
 ```bash
-curl --location --request POST '<ip_thingvisor>:<port_thingvisor>/sensor' \
+curl --location --request POST '<ip_thingvisor>:<port_thingvisor>/sensors' \
 --header 'Content-Type: application/json' \
 --data-raw '[
     {
@@ -326,7 +326,7 @@ curl --location --request POST '<ip_thingvisor>:<port_thingvisor>/sensor' \
         },
         "generatedByVThing": {
             "type": "Property",
-            "value": "home-thermometer-tv/sensor"
+            "value": "home-thermometer-tv/sensors"
         },
         "status": {
             "type": "Property",

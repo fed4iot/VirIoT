@@ -14,7 +14,7 @@ The data can be sent by POST HTTP Requests in one of these eight endpoints:
 - /motion_intensity
 - /heart_rate
 - /pulse_ox
-- /sensor
+- /sensors
 
 ## How To Run
 
@@ -782,7 +782,7 @@ curl --location --request POST '<ip_thingvisor>:<port_thingvisor>/awake_periods'
 #### Example of a valid input
 
 ```bash
-curl --location --request POST '<ip_thingvisor>:<port_thingvisor>/sensor' \
+curl --location --request POST '<ip_thingvisor>:<port_thingvisor>/sensors' \
 --header 'Content-Type: application/json' \
 --data-raw '[
     {
@@ -836,7 +836,7 @@ curl --location --request POST '<ip_thingvisor>:<port_thingvisor>/sensor' \
         },
         "generatedByVThing": {
             "type": "Property",
-            "value": "wearable-health-tv/sensor"
+            "value": "wearable-health-tv/sensors"
         },
         "status": {
             "type": "Property",

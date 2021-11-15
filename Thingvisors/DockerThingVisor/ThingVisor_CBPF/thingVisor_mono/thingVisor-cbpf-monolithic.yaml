@@ -1,0 +1,37 @@
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: f4i-tv-cbpf-mono
+spec:
+  selector:
+    matchLabels:
+      app: f4i-cbpf-mono
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: f4i-cbpf-mono
+    spec:
+      containers:
+      - name: f4i-cbpf-monoc
+        image: <docker image name>
+        ports:
+        - containerPort: 5000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: f4i-cbpf-mono-tv-svc
+  labels:
+    app: f4i-cbpf-mono
+spec:
+  type: NodePort
+  ports:
+  - port: 5000
+    targetPort: 5000
+    nodePort:
+    name: input
+  selector:
+    app: f4i-cbpf-mono
+
+

@@ -1,0 +1,1 @@
+"{\"dev_id\": \"TX2\", \"cam_no\": \"PANA_1\", \"d_time\": \"20210311145238\", \"gps_info\": {\"type\": \"point\", \"crs\": {\"type\": \"name\", \"properties\": {\"name\": \"urn:ogc:def:crs:0GC:1.3:CRS84\"}}, \"coordinates\": [32.7899, 130.7425]}, \"img_name\": \"img20210311145236.jpg\"}"

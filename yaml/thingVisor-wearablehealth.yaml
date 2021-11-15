@@ -1,0 +1,39 @@
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: f4i-tv-wearablehealth
+spec:
+  selector:
+    matchLabels:
+      app: f4i-wearablehealth
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: f4i-wearablehealth
+    spec:
+      containers:
+      - name: f4i-wearablehealth
+        image: domussapiens/wearablehealth-tv:latest
+        ports:
+        - containerPort: 8089
+        securityContext:
+          privileged: true
+          capabilities:
+            add:
+            - NET_ADMIN
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: f4i-tv-svc-wearablehealth
+  labels:
+    app: f4i-wearablehealth
+spec:
+  type: NodePort
+  ports:
+  - port: 8089
+    targetPort:
+    nodePort:
+  selector:
+    app: f4i-wearablehealth

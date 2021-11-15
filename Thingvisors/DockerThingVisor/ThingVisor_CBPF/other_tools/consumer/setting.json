@@ -1,0 +1,10 @@
+{
+  "control broker ip": "",
+  "control broker port": "9092",
+  "control topic": "cbpf_to_exporter",
+  "influxdb ip": "",
+  "influxdb port": "8086",
+  "influxdb user": "",
+  "influxdb pass": "",
+  "influxdb database": "cbpf_app"
+}

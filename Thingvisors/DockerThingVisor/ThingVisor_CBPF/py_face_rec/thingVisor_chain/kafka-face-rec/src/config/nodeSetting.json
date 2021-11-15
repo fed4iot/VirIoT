@@ -1,0 +1,14 @@
+{"iface": "eno1",
+ "mode": "chain",
+ "sleep": "10000",
+ "cache time": "9000",
+ "expiry": "9000",
+ "timeout": "500",
+ "segSize": "1200",
+ "icnMode": "async",
+ "topic to controller": "tvf_log_out",
+ "topic from controller": "control_in",
+ "host": "0.0.0.0",
+ "revSize": 1024,
+ "logLevel": "info"
+}

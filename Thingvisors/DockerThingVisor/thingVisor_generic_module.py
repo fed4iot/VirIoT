@@ -120,12 +120,11 @@ def remove_vthing(vthingindex):
     del v_things[vthingindex]
 
 
-def find_context_entity(id_LD):
-    for vthingindex in v_things:
-        context=v_things[vthingindex]['context'].get_all()
-        for context_entity in context:
-            if context_entity["id"]==id_LD:
-                return context_entity
+def find_entity_within_context(vthingindex,id_LD):
+    context=v_things[vthingindex]['context'].get_all()
+    for context_entity in context:
+        if context_entity["id"]==id_LD:
+            return context_entity
     return None
 
 
@@ -177,12 +176,13 @@ def processor_for_mqtt_data_in_vthing(message):
     try:
         data = jres["data"]
         meta = jres["meta"]
+        vthingindex=meta["vThingID"].split('/')[-1]
         for entity in data:
             id_LD = entity["id"]
-            context_entity=find_context_entity(id_LD)
+            context_entity=find_entity_within_context(vthingindex,id_LD)
             for cmd in context_entity['commands']['value']:
                 if cmd in entity:
-                    process_actuation_request(meta["vThingID"].split('/')[-1],entity)
+                    process_actuation_request(vthingindex,entity)
                     continue
     except:
         traceback.print_exc()
@@ -228,7 +228,7 @@ def processor_for_mqtt_control_in_TV(message):
         traceback.print_exc()
     return 'invalid command'
 
-def publish_actuation_response_message(vThingID, cmd_entity, cmd_name, cmd_info, payload, type_of_message):
+def publish_actuation_response_message(vthingindex, cmd_entity, cmd_name, cmd_info, payload, type_of_message):
     try:
         # type_of_message can be "result" or "status"
         pname = cmd_name + "-" + type_of_message #e.g. startdevice-result
@@ -237,14 +237,14 @@ def publish_actuation_response_message(vThingID, cmd_entity, cmd_name, cmd_info,
         field = "cmd-" + type_of_message
         pvalue[field] = payload
         ngsiLdEntity = { "id": cmd_entity["id"], "type": cmd_entity['type'], pname: {"type": "Property", "value": pvalue} }
-        if v_things[vThingID]['jsonld_at_context_field'] is not None:
-            ngsiLdEntity['@context']=v_things[vThingID]['jsonld_at_context_field']
+        if v_things[vthingindex]['jsonld_at_context_field'] is not None:
+            ngsiLdEntity['@context']=v_things[vthingindex]['jsonld_at_context_field']
         data = [ngsiLdEntity]
         # not updating the vthings context in the actuation because the commands results are ephemeral
-        message = { "data": data, "meta": {"vThingID": v_things[vThingID]['ID']} }  # neutral-format message
+        message = { "data": data, "meta": {"vThingID": v_things[vthingindex]['ID']} }  # neutral-format message
         # fallback broadcast topic, so that data is sent to all subscribers of this vthing, in case the
         # unicast cmd-nuri was not set in the received actuation command 
-        topic = v_things[vThingID]['topic'] + "/" + out_data_suffix
+        topic = v_things[vthingindex]['topic'] + "/" + out_data_suffix
         if "cmd-nuri" in cmd_info:
             if cmd_info['cmd-nuri'].startswith("viriot://"):
                 topic = cmd_info['cmd-nuri'][len("viriot://"):]
@@ -253,10 +253,10 @@ def publish_actuation_response_message(vThingID, cmd_entity, cmd_name, cmd_info,
         traceback.print_exc()
 
 
-def process_actuation_request(vThingID,cmd_entity):
+def process_actuation_request(vthingindex,cmd_entity):
     try:
         id_LD = cmd_entity["id"]
-        context_entity=find_context_entity(id_LD)
+        context_entity=find_entity_within_context(vthingindex,id_LD)
         for cmd_name in context_entity['commands']['value']:
             if cmd_name in cmd_entity:
                 cmd_info = cmd_entity[cmd_name]['value']
@@ -271,8 +271,8 @@ def process_actuation_request(vThingID,cmd_entity):
                 #f = globals()[fname]
                 if "cmd-qos" in cmd_info:
                     if int(cmd_info['cmd-qos']) == 2:
-                        publish_actuation_response_message(vThingID, cmd_entity, cmd_name, cmd_info, "PENDING", "status")
-                future = executor.submit(f, vThingID, cmd_entity, cmd_name, cmd_info)
+                        publish_actuation_response_message(vthingindex, cmd_entity, cmd_name, cmd_info, "PENDING", "status")
+                future = executor.submit(f, vthingindex, cmd_entity, cmd_name, cmd_info)
                 print("processed actuation command with errors: "+f'{future.result()}')
                 #f(cmd_name, cmd_info, id_LD)
     except:

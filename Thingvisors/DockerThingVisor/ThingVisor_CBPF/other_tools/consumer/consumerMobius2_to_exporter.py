@@ -32,7 +32,7 @@ log_name = './logs/consumer_mobius2_'+str(pid)+'.csv'
 print (log_name)
 ####
 
-kafka_broker = "133.9.250.211:9092"
+kafka_broker = ""
 data_topic = "cbpf_to_exporter"
 prev_data = ""
 TIMEOUT = 10

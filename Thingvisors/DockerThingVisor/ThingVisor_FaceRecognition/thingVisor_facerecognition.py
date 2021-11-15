@@ -87,11 +87,13 @@ def process_job_command(cmd_name, cmd_info, id_LD, jobtype):
         print("no cmd-value for command "+jobtype)
 
 
-def on_startjob(cmd_name, cmd_info, id_LD):
+def on_startjob(vThingID, cmd_entity, cmd_name, cmd_info):
+    id_LD=cmd_entity['id']
     process_job_command(cmd_name, cmd_info, id_LD, "START")
 
 
-def on_deletejob(cmd_name, cmd_info, id_LD):
+def on_deletejob(vThingID, cmd_entity, cmd_name, cmd_info):
+    id_LD=cmd_entity['id']
     process_job_command(cmd_name, cmd_info, id_LD, "DELETE")
 
 

@@ -191,14 +191,11 @@ def subscribe_to_entity(broker_url, entity_id_to_subscribe, entity_type, entity_
     "notification": {
       "endpoint": {
         "uri": nuri,
-        "accept": "application/json"
+        "accept": "application/ld+json"
       }
-    }
+    },
+    "@context": entity_context
   }
-
-  # If
-  if entity_context is not None:
-    dic["@context"] = [entity_context]
 
   # if we have attributes to watch, then define them into the subscription (watchedAttributes field)
   # and also inform the broker that we want all other (non-watched) attributes
@@ -210,13 +207,8 @@ def subscribe_to_entity(broker_url, entity_id_to_subscribe, entity_type, entity_
     dic['notification']['attributes'].append("generatedByVThing")
   payload = json.dumps(dic)
 
-  if "@context" in dic:
-    content_type_value = "ld+json"
-  else:
-    content_type_value = "json"
-
   headers = {
-    'Content-Type': "application/{}".format(content_type_value),
+    'Content-Type': "application/ld+json",
     'Accept': "application/json"
   }
   post_subscription_url = subscriptions_url

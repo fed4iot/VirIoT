@@ -1,5 +1,0 @@
-*.pyc
-*.cpython-36.pyc
-*.jpg
-__pycache__/
-local.json

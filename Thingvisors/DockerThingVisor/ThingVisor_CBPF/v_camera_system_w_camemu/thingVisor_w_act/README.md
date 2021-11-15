@@ -1,2 +1,0 @@
-# ThingVisor CBPF
-

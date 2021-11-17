@@ -126,7 +126,7 @@ else:
 def decode_base64url(s):
     return base64.urlsafe_b64decode(s + b'=' * ((4 - len(s) & 3) & 3))
 
-def on_start(cmd_name, cmd_info, id_LD):
+def on_start(vThingID, cmd_entity, cmd_name, cmd_info):
     global face_rec_start_flg
 
     print("***Face search start at: " + str(datetime.datetime.utcnow().isoformat()))
@@ -144,7 +144,7 @@ def on_start(cmd_name, cmd_info, id_LD):
 
         face_rec_start_flg = True
         #'''
-            # thingvisor.publish_actuation_response_message(cmd_name, cmd_info, id_LD, jsonify({"api result": "Face recognition is started."}))
+            # thingvisor.publish_actuation_response_message(vThingID, cmd_entity, cmd_name, cmd_info, jsonify({"api result": "Face recognition is started."}))
 
         # os.chdir(config.root_path)
 
@@ -165,14 +165,14 @@ def on_start(cmd_name, cmd_info, id_LD):
         # give status uodate that we have started
         if "cmd-qos" in cmd_info:
             if int(cmd_info['cmd-qos']) > 0:
-                thingvisor.publish_actuation_response_message(cmd_name, cmd_info, id_LD, "STARTING job: "+job+"\n Upload a face picture at http://"+result[0]+"/api/upload", "result")
+                thingvisor.publish_actuation_response_message(vThingID, cmd_entity, cmd_name, cmd_info, "STARTING job: "+job+"\n Upload a face picture at http://"+result[0]+"/api/upload", "result")
     else:
         print("no cmd-value for START command")
 
 # Permissible file extensions for upload
 ALLOW_EXTENSIONS = ['jpg', 'jpeg', 'png']
 
-def on_stop(cmd_name, cmd_info, id_LD):
+def on_stop(vThingID, cmd_entity, cmd_name, cmd_info):
     global face_rec_start_flg
 
     print("***Face search stop at: " + str(datetime.datetime.utcnow().isoformat()))
@@ -182,12 +182,12 @@ def on_stop(cmd_name, cmd_info, id_LD):
         face_rec_start_flg = False
         if "cmd-qos" in cmd_info:
             if int(cmd_info['cmd-qos']) > 0:
-                thingvisor.publish_actuation_response_message(cmd_name, cmd_info, id_LD, "STOPPED job: "+job, "result")
+                thingvisor.publish_actuation_response_message(vThingID, cmd_entity, cmd_name, cmd_info, "STOPPED job: "+job, "result")
     else:
         print("no cmd-value for STOP command")
         
 
-def on_delete_by_name(cmd_name, cmd_info, id_LD):
+def on_delete_by_name(vThingID, cmd_entity, cmd_name, cmd_info):
     print("***delete_by_name is requested at: " + str(datetime.datetime.utcnow().isoformat()))
 
     result_str = "Nothing to delete"
@@ -210,7 +210,7 @@ def on_delete_by_name(cmd_name, cmd_info, id_LD):
 
         if "cmd-qos" in cmd_info:
             if int(cmd_info["cmd-qos"]) > 0:
-                thingvisor.publish_actuation_response_message(cmd_name, cmd_info, id_LD, result_str, "result")
+                thingvisor.publish_actuation_response_message(vThingID, cmd_entity, cmd_name, cmd_info, result_str, "result")
         
 
 def allowed_file(file_name):

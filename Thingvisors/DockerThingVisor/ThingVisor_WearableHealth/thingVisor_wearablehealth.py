@@ -42,7 +42,7 @@ from context import Context
 from flask import Flask
 from flask import request
 sys.path.insert(0, 'PyLib/')
-logging.basicConfig(format='%(asctime)s: %(message)s', level=logging.DEBUG)
+logging.basicConfig(format='%(asctime)s: %(message)s', level=logging.INFO)
 
 # Mqtt settings
 tv_control_prefix = "TV"  # prefix name for controller communication topic
@@ -67,13 +67,22 @@ if parameters:
         params = json.loads(parameters.replace("'", '"'))
     except json.decoder.JSONDecodeError:
         # TODO manage exception
-        logging.debug("error on params (JSON) decoding")
+        logging.info("error on params (JSON) decoding")
         os._exit(1)
     except KeyError:
-        logging.debug(Exception.with_traceback())
+        logging.info(Exception.with_traceback())
         os._exit(1)
     except Exception as err:
-        logging.debug("ERROR on params (JSON): {}".format(err))
+        logging.info("ERROR on params (JSON): {}".format(err))
+
+# offset in seconds
+filter_heart_rate_offset = 0
+filter_pulse_ox_offset = 0
+
+if "filter_heart_rate_offset" in params:
+    filter_heart_rate_offset = params["filter_heart_rate_offset"]
+if "filter_pulse_ox_offset" in params:
+    filter_pulse_ox_offset = params["filter_pulse_ox_offset"]
 
 
 ## METHODS USED TO CONVERT DATA FROM DB IN NGSI-LD ENTITIES
@@ -136,8 +145,41 @@ def create_motion_intensity_entity(raw_measurements):
     entity['distanceInMeters'] = {'type': 'Property', 'value': refined_measurements['distanceInMeters']}
     entity['steps'] = {'type': 'Property', 'value': refined_measurements['steps']}
     entity['activityType'] = {'type': 'Property', 'value': refined_measurements['activityType']}
-    entity['measuredBySensor'] = {'type': 'Relationship', 'object': "urn:ngsi-ld:sensors:1"}
+    entity['measuredBySensor'] = {'type': 'Relationship', 'object': "urn:ngsi-ld:{}:sensors:{}".format(thing_visor_ID, refined_measurements['email'])}
     return entity
+
+
+def perform_filter_operation(data_to_be_filtered, params_offset):
+    filtered_data = [data_to_be_filtered[0]]
+    startTimeInSeconds = int(data_to_be_filtered[0]["startTimeInSeconds"])
+    offset = int(list(data_to_be_filtered[0]["value"].keys())[0]) # we can do it because these measurements have exactly one item
+    last_timestamp = startTimeInSeconds + offset
+    i = 1
+    while i < len(data_to_be_filtered):
+        startTimeInSeconds = int(data_to_be_filtered[i]["startTimeInSeconds"])
+        offset = int(list(data_to_be_filtered[i]["value"].keys())[0]) # we can do it because these measurements have exactly one item
+        current_timestamp = startTimeInSeconds + offset
+        # If the delta between timestamp of the current measurement
+        # and the last one added in filtered_data is greater than the params_offset
+        # we can add this measurement inside filtered_data
+        if current_timestamp - last_timestamp >= params_offset:
+            last_timestamp = current_timestamp
+            filtered_data.append(data_to_be_filtered[i])
+        i+=1
+    return filtered_data
+
+# This method is called to filter heart_rate and pulse_ox measurements based on the parameters 
+# filter_heart_rate_offset and filter_pulse_ox_offset that could have been passed when the
+# the thingvisor was created. It returns the data filtered if those values are more than 0.
+def filter_measurements_from_offset(data_type, raw_data):
+    data = raw_data.copy()
+    if data_type == "heart_rate":
+        if filter_heart_rate_offset > 0:
+            data = perform_filter_operation(data, filter_heart_rate_offset)
+    else: # data_type == pulse_ox
+        if filter_pulse_ox_offset > 0:
+            data = perform_filter_operation(data, filter_pulse_ox_offset)
+    return data
 
 
 #used to group all the properties into a single object. Used for every vthing except motion_intensity
@@ -146,6 +188,8 @@ def group_measurements(raw, v_thing_type):
 
     #sorting to assure they are all ordered by startTimeInSeconds
     raw.sort(key=lambda measure: measure['startTimeInSeconds'])
+    if v_thing_type in ['heart_rate', 'pulse_ox']:
+        raw = filter_measurements_from_offset(v_thing_type, raw)
     #print(raw)
     
     refined_data['email'] = raw[0]['email']
@@ -196,7 +240,7 @@ def create_entity_from_measurements(raw_measurements, v_thing_type):
     entity[ map_prop_names[v_thing_type]['map_name'] ] = {"type": 'Property', 'value': refined_measurements[  map_prop_names[v_thing_type]['map_name'] ] }
     if v_thing_type not in ['heart_rate','pulse_ox']:
         entity[ map_prop_names[v_thing_type]['prop_name'] ] = {'type': 'Property', 'value': refined_measurements[ map_prop_names[v_thing_type]['prop_name'] ]} #sum of each measure
-    entity['measuredBySensor'] = {'type': 'Relationship', 'object': "urn:ngsi-ld:sensors:1"}
+    entity['measuredBySensor'] = {'type': 'Relationship', 'object': "urn:ngsi-ld:{}:sensors:{}".format(thing_visor_ID, refined_measurements['email'])}
     return entity
 
 def create_sensors_context_entities(sensors_data):
@@ -220,7 +264,7 @@ def create_entities(filtered_data, v_thing_type):
         return [entity]
 
 
-def create_datatypes_empty_entities(emails,map_emails_rooms):
+def create_datatypes_empty_entities(emails):
     for sensor in entity_types:
         entities = []
 
@@ -243,6 +287,19 @@ def create_datatypes_empty_entities(emails,map_emails_rooms):
             entities.append(ngsiLdEntity)
         thingvisor.v_things[sensor]['context'].update(entities)
 
+def create_sensors_empty_entities(sensors_data):
+    entities = []
+    #setting the entity for each sensor stored in the database
+    for sensor_data in sensors_data:
+        entity = {"@context": v_thing_contexts, "id": "urn:ngsi-ld:{}:sensors:{}".format(thing_visor_ID, sensor_data['email']),"type": "sensor"} #urn:ngsi-ld:tv-name:sensors:(last_id_value)
+        entity['owner'] = {"type": 'Property', 'value': sensor_data['owner'] if 'owner' in sensor_data else "-"}
+        entity['email'] = {"type": 'Property', 'value': sensor_data['email'] if 'email' in sensor_data else "-"}
+        entity['geoPosition'] = {"type": 'Property', 'value': sensor_data['geoPosition'] if 'geoPosition' in sensor_data else "-"}
+        entity['status'] = {"type": 'Property', 'value': sensor_data['status'] if 'status' in sensor_data else 0}
+        entity['address'] = {"type": 'Property', 'value': sensor_data['address'] if 'address' in sensor_data else "-"}
+        entities.append(entity)
+    thingvisor.v_things['sensors']['context'].update(entities)
+
 
 def on_query(vThingID, cmd_entity, cmd_name, cmd_info):
     common.on_query(vThingID, cmd_entity, cmd_name, cmd_info)
@@ -255,11 +312,12 @@ if __name__ == '__main__':
 
     #creating all the vthings
     emails = common.get_all_patients_emails()
-    map_emails_rooms = common.get_map_emails_rooms()
+    sensors_data = common.get_sensors_data("summary/sensors/getAll")
     common.create_datatypes_vthings(emails)
     common.create_patients_vthing(emails)
     common.create_sensors_vthing()
-    create_datatypes_empty_entities(emails,map_emails_rooms)
+    create_datatypes_empty_entities(emails)
+    create_sensors_empty_entities(sensors_data)
     common.retrieve_latest_data_sensors(emails)
     print("All vthings initialized")
 
@@ -270,6 +328,6 @@ if __name__ == '__main__':
         try:
             time.sleep(3)
         except:
-            logging.debug("KeyboardInterrupt")
+            logging.info("KeyboardInterrupt")
             time.sleep(1)
             os._exit(1)

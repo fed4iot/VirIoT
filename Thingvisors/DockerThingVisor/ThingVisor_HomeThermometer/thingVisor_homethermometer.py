@@ -42,7 +42,7 @@ from context import Context
 from flask import Flask
 from flask import request
 sys.path.insert(0, 'PyLib/')
-logging.basicConfig(format='%(asctime)s: %(message)s', level=logging.DEBUG)
+logging.basicConfig(format='%(asctime)s: %(message)s', level=logging.INFO)
 
 # Mqtt settings
 tv_control_prefix = "TV"  # prefix name for controller communication topic
@@ -67,61 +67,82 @@ if parameters:
         params = json.loads(parameters.replace("'", '"'))
     except json.decoder.JSONDecodeError:
         # TODO manage exception
-        logging.debug("error on params (JSON) decoding")
+        logging.info("error on params (JSON) decoding")
         os._exit(1)
     except KeyError:
-        logging.debug(Exception.with_traceback())
+        logging.info(Exception.with_traceback())
         os._exit(1)
     except Exception as err:
-        logging.debug("ERROR on params (JSON): {}".format(err))
+        logging.info("ERROR on params (JSON): {}".format(err))
 
 
 ## METHODS USED TO CONVERT DATA FROM DB IN NGSI-LD ENTITIES
 
 
-#used to group all the oregon measurements into one single dict easier to model as ngsi-ld entity
+# used to group all the oregon measurements into one single dict easier to model as ngsi-ld entity
+# also it splits indoor from outdoors measurements
 def group_oregon_measurements(raw):
-    refined_data = dict()
+    group_refined_data = []
+    email = raw[0]['email'] # they are all measurements about the same user so the email is the same on the whole data
 
-    #sorting to assure they are all ordered by startTimeInSeconds
-    raw.sort(key=lambda measure: measure['startTimeInSeconds'])
-    
-    refined_data['email'] = raw[0]['email']
-    refined_data['location'] = raw[0]['location']
-    refined_data['room'] = raw[0]['room']
-    firstStartTime = int(raw[0]['startTimeInSeconds'])
-    lastStartTime = int(raw[-1]['startTimeInSeconds'])
+    rooms = list(set(map(lambda x: x['room'], raw))) # list of strings
 
-    refined_data['startTimeInSeconds'] = firstStartTime
-    #durationtInSeconds is calculated by last - first and adding the last duration (which is the same for the first when len=1)
-    refined_data['frequencyInSeconds'] = int(raw[0]['frequencyInSeconds'])
-    refined_data['endTimeInSeconds'] = lastStartTime + int(raw[-1]['frequencyInSeconds'])
-    refined_data['dataMap'] = dict()
+    for room in rooms:
+        raw_filtered_by_room = list(filter(lambda x: x['room'] == room, raw))
 
-    #creating the map of values
-    for raw_data in raw:
-        offset = str(int(raw_data['startTimeInSeconds']) - firstStartTime)
-        refined_data['dataMap'][offset] = raw_data['value']
+        locations = list(set(map(lambda x: x['location'], raw_filtered_by_room))) # contains either ['indoor','outdoor'] or ['indoor'] or ['outdoor']
 
-    return refined_data
+        for location in locations:
+            refined_data = dict()
+            raw_filtered_by_location = list(filter(lambda x: x['location'] == location, raw_filtered_by_room))
+            #sorting to assure they are all ordered by startTimeInSeconds
+            raw_filtered_by_location.sort(key=lambda measure: measure['startTimeInSeconds'])
+            
+            refined_data['email'] = email
+            refined_data['location'] = location
+            refined_data['room'] = room
+
+            # we can assume that the information about the mac_address that we have 
+            # here comes from the same sensor since we narrowed down both the room and the location
+            refined_data['mac_address'] = raw_filtered_by_location[0]['mac_address'].replace(":","")
+
+            firstStartTime = int(raw_filtered_by_location[0]['startTimeInSeconds'])
+            lastStartTime = int(raw_filtered_by_location[-1]['startTimeInSeconds'])
+
+            refined_data['startTimeInSeconds'] = firstStartTime
+            #durationtInSeconds is calculated by last - first and adding the last duration (which is the same for the first when len=1)
+            refined_data['frequencyInSeconds'] = int(raw_filtered_by_location[0]['frequencyInSeconds'])
+            refined_data['endTimeInSeconds'] = lastStartTime + int(raw_filtered_by_location[-1]['frequencyInSeconds'])
+            refined_data['dataMap'] = dict()
+
+            #creating the map of values
+            for raw_data in raw_filtered_by_location:
+                offset = str(int(raw_data['startTimeInSeconds']) - firstStartTime)
+                refined_data['dataMap'][offset] = raw_data['value']
+
+            group_refined_data.append(refined_data)
+    return group_refined_data
 
 
 #
 def create_oregon_entity(raw_measurements, v_thing_type):
-    refined_measurements = group_oregon_measurements(raw_measurements)
-    entity = {"@context": v_thing_contexts, "id": "urn:ngsi-ld:{}:{}:{}:{}:{}".format(thing_visor_ID, v_thing_type, refined_measurements['email'],refined_measurements['room'],refined_measurements['location']),"type": v_thing_type} #urn:ngsi-ld:tv-name:(sensor):(email):(room):(indoor|outdoor)
-    entity['userEmail'] = {"type": 'Property', 'value': refined_measurements['email']}
-    entity['startTimeInSeconds'] = {"type": 'Property', 'value': refined_measurements['startTimeInSeconds']}
-    entity['endTimeInSeconds'] = {"type": 'Property', 'value': refined_measurements['endTimeInSeconds']}
-    entity['frequencyInSeconds'] = {"type": 'Property', 'value': refined_measurements['frequencyInSeconds']}
-    if v_thing_type == 'home_temperature':
-        entity['temperatureCelsiusOffsetMap'] = {'type': 'Property', 'value': refined_measurements['dataMap']}
-    else:
-        entity['humidityPercentageOffsetMap'] = {'type': 'Property', 'value': refined_measurements['dataMap']}
-    entity['room'] = {"type": 'Property', 'value': refined_measurements['room']}
-    entity['isIndoor'] = {"type": 'Property', 'value': refined_measurements['location'] == "indoor"}
-    entity['measuredBySensor'] = {'type': 'Relationship', 'object': "urn:ngsi-ld:sensors:1"}
-    return entity
+    entities = []
+    grouped_refined_measurements = group_oregon_measurements(raw_measurements)
+    for refined_measurements in grouped_refined_measurements:
+        entity = {"@context": v_thing_contexts, "id": "urn:ngsi-ld:{}:{}:{}:{}:{}".format(thing_visor_ID, v_thing_type, refined_measurements['email'],refined_measurements['room'],refined_measurements['location']),"type": v_thing_type} #urn:ngsi-ld:tv-name:(sensor):(email):(room):(indoor|outdoor)
+        entity['userEmail'] = {"type": 'Property', 'value': refined_measurements['email']}
+        entity['startTimeInSeconds'] = {"type": 'Property', 'value': refined_measurements['startTimeInSeconds']}
+        entity['endTimeInSeconds'] = {"type": 'Property', 'value': refined_measurements['endTimeInSeconds']}
+        entity['frequencyInSeconds'] = {"type": 'Property', 'value': refined_measurements['frequencyInSeconds']}
+        if v_thing_type == 'home_temperature':
+            entity['temperatureCelsiusOffsetMap'] = {'type': 'Property', 'value': refined_measurements['dataMap']}
+        else:
+            entity['humidityPercentageOffsetMap'] = {'type': 'Property', 'value': refined_measurements['dataMap']}
+        entity['room'] = {"type": 'Property', 'value': refined_measurements['room']}
+        entity['isIndoor'] = {"type": 'Property', 'value': refined_measurements['location'] == "indoor"}
+        entity['measuredBySensor'] = {'type': 'Relationship', 'object': "urn:ngsi-ld:{}:sensors:{}".format(thing_visor_ID, refined_measurements['mac_address'])}
+        entities.append(entity)
+    return entities
 
 
 def create_sensors_context_entities(sensors_data):
@@ -129,6 +150,10 @@ def create_sensors_context_entities(sensors_data):
     for sensor_data in sensors_data:
         last_id_value = sensor_data['mac_address'].replace(":","").upper()
         entity=common.create_sensor_context_entity(sensor_data,last_id_value)
+
+        #adding this custom property only for sensors of this specific thingvisor
+        entity['frequencyInSeconds'] = {"type": 'Property', 'value': sensor_data['frequencyInSeconds']}
+
         entities.append(entity)
     return entities
 
@@ -137,9 +162,8 @@ def create_entities(filtered_data, v_thing_type):
         entities = create_sensors_context_entities(filtered_data)
         return entities
     else:
-        entity = {}
-        entity = create_oregon_entity(filtered_data, v_thing_type)
-        return [entity]
+        entities = create_oregon_entity(filtered_data, v_thing_type)
+        return entities
 
 
 def create_datatypes_empty_entities(emails,map_emails_rooms):
@@ -180,10 +204,54 @@ def create_datatypes_empty_entities(emails,map_emails_rooms):
         thingvisor.v_things[type]['context'].update(entities)
 
 
+def create_sensors_empty_entities(sensors_data):
+    entities = []
+    #setting the entity for each sensor stored in the database
+    for sensor_data in sensors_data:
+        mac_address = sensor_data['mac_address'].replace(":","").upper()
+        entity = {"@context": v_thing_contexts, "id": "urn:ngsi-ld:{}:sensors:{}".format(thing_visor_ID, mac_address),"type": "sensor"} #urn:ngsi-ld:tv-name:sensors:(last_id_value)
+        entity['owner'] = {"type": 'Property', 'value': sensor_data['owner'] if 'owner' in sensor_data else "-"}
+        entity['email'] = {"type": 'Property', 'value': sensor_data['email'] if 'email' in sensor_data else "-"}
+        entity['geoPosition'] = {"type": 'Property', 'value': sensor_data['geoPosition'] if 'geoPosition' in sensor_data else "-"}
+        entity['status'] = {"type": 'Property', 'value': sensor_data['status'] if 'status' in sensor_data else 0}
+        entity['address'] = {"type": 'Property', 'value': sensor_data['address'] if 'address' in sensor_data else "-"}
+        entity['frequencyInSeconds'] = {"type": 'Property', 'value': sensor_data['frequency_in_seconds']}
+        entity['commands'] = {"type": 'Property', 'value': ['set_frequencyInSeconds']}
+        entities.append(entity)
+    thingvisor.v_things['sensors']['context'].update(entities)
+
+
 def on_query(vThingID, cmd_entity, cmd_name, cmd_info):
     common.on_query(vThingID, cmd_entity, cmd_name, cmd_info)
 
+def on_set_frequencyInSeconds(vThingID, cmd_entity, cmd_name, cmd_info):
+    try:
+        data = 0
+        id_LD=cmd_entity['id']
+        topic = common.removeViriot(cmd_info['cmd-nuri'])
 
+        if id_LD == "urn:ngsi-ld:" + thing_visor_ID + ":sensors":
+            data = "{}".format(time.time())
+        else:
+            # logging.info("{}".format(cmd_info))
+            mac_address = id_LD.split(":")[-1] #last element of the id_LD is the mac address of the sensor
+            mac_address_with_colons = ':'.join(mac_address[i:i+2] for i in range(0, len(mac_address), 2)) #needed because the mac_address from the id_LD doesn't have the ":"
+            payload = {
+                "params": {
+                    "is_actuation": True,
+                    "mac": mac_address_with_colons,
+                    "config": {
+                        "new_frequency_in_seconds": int(cmd_info['cmd-value']['new_frequency_in_seconds'])
+                    }
+                }
+            }
+            data = common.send_request_to_backend_and_fix("POST", "api/oregon/sensors/config", json=payload)
+            #data = "{}".format(time.time())
+
+        thingvisor.publish_actuation_response_message(vThingID, cmd_entity, cmd_name, cmd_info, {"code": "OK", "data": data}, "result")
+    except:
+        traceback.print_exc()
+        thingvisor.publish_actuation_response_message(vThingID, cmd_entity, cmd_name, cmd_info, {"code": "ERROR"}, "result")
 
 # main
 if __name__ == '__main__':
@@ -193,10 +261,12 @@ if __name__ == '__main__':
     #creating all the vthings
     emails = common.get_all_patients_emails()
     map_emails_rooms = common.get_map_emails_rooms()
+    sensors_data = common.get_sensors_data("api/oregon/sensors/getAll")
     common.create_datatypes_vthings(emails)
     common.create_patients_vthing(emails)
     common.create_sensors_vthing()
     create_datatypes_empty_entities(emails,map_emails_rooms)
+    create_sensors_empty_entities(sensors_data)
     common.retrieve_latest_data_sensors(emails)
     print("All vthings initialized")
 
@@ -207,6 +277,6 @@ if __name__ == '__main__':
         try:
             time.sleep(3)
         except:
-            logging.debug("KeyboardInterrupt")
+            logging.info("KeyboardInterrupt")
             time.sleep(1)
             os._exit(1)

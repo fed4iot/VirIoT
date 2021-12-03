@@ -2,7 +2,6 @@ import thingVisor_generic_module as thingvisor
 
 import sys
 import traceback
-import paho.mqtt.client as mqtt
 import sched, time
 import logging
 import os
@@ -44,13 +43,13 @@ if parameters:
         params = json.loads(parameters.replace("'", '"'))
     except json.decoder.JSONDecodeError:
         # TODO manage exception
-        logging.debug("error on params (JSON) decoding")
+        logging.info("error on params (JSON) decoding")
         os._exit(1)
     except KeyError:
-        logging.debug(Exception.with_traceback())
+        logging.info(Exception.with_traceback())
         os._exit(1)
     except Exception as err:
-        logging.debug("ERROR on params (JSON): {}".format(err))
+        logging.info("ERROR on params (JSON): {}".format(err))
 
 if 'backendUri' in params.keys():
     backend_uri = params['backendUri']
@@ -68,22 +67,26 @@ def get_token():
     payload = {'username': login_username, 'password': login_password}
     endpoint = 'user/login'
     r = requests.post('{}:{}/{}'.format(backend_uri, backend_port, endpoint), json=payload)
-    logging.debug('{}, token refreshed'.format(r.status_code))
+    logging.info('{}, token refreshed'.format(r.status_code))
     return r.json()["payload"]
 
-def send_request_to_backend(method, endpoint, params={}, token = None):
+def send_request_to_backend(method, endpoint, params={}, token = None, json = None):
+    if params is None:
+        params = {}
+    if json is None:
+        json = {}
     try:
         if token is None:
             token = get_token()
         h = {'Authorization': 'Bearer ' + token}
-        r = requests.request(method,'{}:{}/{}'.format(backend_uri, backend_port, endpoint), headers=h, params=params)
+        r = requests.request(method,'{}:{}/{}'.format(backend_uri, backend_port, endpoint), headers=h, params=params, json=json)
         return r
     except Exception as err:
-        logging.debug('An error occured: {}'.format(err))
+        logging.info('An error occured: {}'.format(err))
         return None
 
-def send_request_to_backend_and_fix(method, endpoint, params={}, token = None):
-    r=send_request_to_backend(method, endpoint, params, token)
+def send_request_to_backend_and_fix(method, endpoint, params=None, token = None, json = None):
+    r=send_request_to_backend(method, endpoint, params, token, json)
     if r is None:
         return []
     if r.status_code>=400:
@@ -115,14 +118,21 @@ def send_query_to_backend(data, token_oauth):
 def get_all_patients_emails():
     r = send_request_to_backend_and_fix('GET','api/private/user/getPatientsEmails')
     emails = [el['email'] for el in r if el['email']]
-    logging.debug("Retrieved this email list: {}".format(emails))
+    logging.info("Retrieved this email list: {}".format(emails))
     return emails
 
 ##used to get all the patients emails
 def get_map_emails_rooms():
     map_emails_rooms = send_request_to_backend_and_fix('GET','api/oregon/sensors/mapEmailRooms')
-    logging.debug("Retrieved this map email-room: {}".format(map_emails_rooms))
+    logging.info("Retrieved this map email-room: {}".format(map_emails_rooms))
     return map_emails_rooms
+
+##used to get all the data of sensors stored in the backend
+def get_sensors_data(endpoint):
+    sensors_data = send_request_to_backend_and_fix('GET',endpoint)
+    logging.info("Retrieved data about {} sensors.".format(len(sensors_data)))
+    return sensors_data
+
 
 def create_sensor_context_entity(sensor_data,last_id_value):
     entity = {"@context": v_thing_contexts, "id": "urn:ngsi-ld:{}:sensors:{}".format(thing_visor_ID, last_id_value),"type": "sensor"} #urn:ngsi-ld:tv-name:sensors:(last_id_value)
@@ -169,7 +179,7 @@ def publish_entities(entitiesList, topic, v_thing_ID):
             del entity['commands']
 
     message = {"data": entitiesList, "meta": {"vThingID": v_thing_ID}}
-    logging.debug("Publishing data with topic name: {} ,message dimension in B: {}\n\n".format(topic,len(json.dumps(message))))
+    logging.info("Publishing data with topic name: {} ,message dimension in B: {}".format(topic,len(json.dumps(message))))
     # #DEBUG
     # url_endpoint = "http://49c1c7610209.ngrok.io/relay/" + topic
     # payload = {
@@ -184,7 +194,7 @@ def publish_entities(entitiesList, topic, v_thing_ID):
 #this method cretes the entities and then send them in the MQTT system
 def create_entities_and_send(data_measurements, data_type, query_timestamp=None, cmd_nuri=None):
     if data_measurements == None:
-        logging.debug("create_entities_and_send: Data is empty!")
+        logging.info("create_entities_and_send: Data is empty!")
         return 0
     #this allows us to have as many vThing as the endpoints
     identifier = thing_visor_ID + "/" + data_type #used to pick the right context
@@ -209,8 +219,9 @@ def make_entities_list(data_type, data_measurements, query_timestamp = None, cmd
     ngsi_LD_entity_list, emails_list = make_ngsi_ld_entity_by_emails(data_type, data_measurements)
 
     now = int(time.time())
+    print("\n\n\n")
     for entity in ngsi_LD_entity_list:
-        logging.debug("Sending entity with this id: {}".format(entity['id']))
+        logging.info("Sending entity with this id: {}".format(entity['id']))
         entity['createdAtTimestamp'] = {
             "type": "Property",
             "value": now
@@ -247,7 +258,7 @@ def make_ngsi_ld_entity_by_emails(v_thing_type, data):
             entities = create_entities_function(filtered_data, v_thing_type)
             ngsi_LD_entities += entities
         except ValueError as err:
-            logging.debug("ERROR make_ngsi_ld_entity_by_emails: {}".format(err))
+            logging.info("ERROR make_ngsi_ld_entity_by_emails: {}".format(err))
     return ngsi_LD_entities, emails
 
 def context_latest_data(data_type, email, topic):
@@ -323,11 +334,11 @@ def retrieve_latest_data_sensors(emails):
                 make_entities_list(type, r['data'])
             time.sleep(0.25)
     except Exception as err:
-        logging.debug('An error occured: {}'.format(err))
+        logging.info('An error occured: {}'.format(err))
 
 
 def retrievePatientMeasurement(cmd_info, data_type, email, topic):
-    logging.debug("RetrievePatientMeasurement: {}".format(cmd_info))
+    logging.info("RetrievePatientMeasurement: {}".format(cmd_info))
     params = {
         "email": email,
         "data_type": data_type
@@ -430,9 +441,9 @@ class httpRxThread(Thread):
     def run(self):
         global app
 
-        logging.debug("Thread Rx HTTP started")
+        logging.info("Thread Rx HTTP started")
         app.run(host='0.0.0.0', port=flask_port)
-        logging.debug("Thread {} closed".format(self.name))
+        logging.info("Thread {} closed".format(self.name))
 
 
 @app.route('/<string:endpoint>', methods=['POST'])
@@ -447,7 +458,7 @@ def recv_notify(endpoint):
         
         return 'OK', 201
     except ValueError as err:
-        logging.debug('Requested URL /{} was not found in this server. {}'.format(endpoint, err))
+        logging.info('Requested URL /{} was not found in this server. {}'.format(endpoint, err))
         return 'Requested URL /{} was not found in this server'.format(endpoint), 404
 
 @app.route('/query', methods=['GET'])
@@ -463,10 +474,10 @@ def send_get_message():
         r = send_query_to_backend(params, token_oauth)
         if r['data'] != None:
             create_entities_and_send(r['data'],params['data_type'])
-        logging.debug('OK httpRxThread /query: 222')
+        logging.info('OK httpRxThread /query: 222')
         return r
     except ValueError as err:
-        logging.debug("ERROR httpRxThread /query: {}".format(err))
+        logging.info("ERROR httpRxThread /query: {}".format(err))
         return 'Error', 404
 
 @app.route('/getContext', methods=['GET'])
@@ -479,15 +490,15 @@ def retrieve_context_data():
         r = dict()
         if 'entity_id' in request.args:
             entity_id = request.args.get('entity_id')
-            #logging.debug(entity_id)
+            #logging.info(entity_id)
             if entity_id is not None:
                 r['data'] = list(filter(lambda entity: entity['id'] == entity_id, contextMap))
             else:
                 r['data'] = []
         else:
             r['data'] = contextMap
-        logging.debug('OK httpRxThread /getContext: 202')
+        logging.info('OK httpRxThread /getContext: 202')
         return r
     except ValueError as err:
-        logging.debug("ERROR httpRxThread /getContext: {}".format(err))
+        logging.info("ERROR httpRxThread /getContext: {}".format(err))
         return 'Error', 404

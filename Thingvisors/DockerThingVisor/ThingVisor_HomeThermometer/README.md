@@ -283,7 +283,8 @@ curl --location --request POST '<ip_thingvisor>:<port_thingvisor>/sensors' \
         "owner": "Paziente 14",
         "address": "-",
         "geoPosition": "-",
-        "status": 0
+        "status": 0,
+        "frequencyInSeconds": 1800,
         "mac_address": "F1:53:DB:EF:B4:3A"
     }
 ]
@@ -327,6 +328,10 @@ curl --location --request POST '<ip_thingvisor>:<port_thingvisor>/sensors' \
         "generatedByVThing": {
             "type": "Property",
             "value": "home-thermometer-tv/sensors"
+        },
+        "frequencyInSeconds": {
+            "type": "Property",
+            "value": 1800
         },
         "status": {
             "type": "Property",
@@ -373,6 +378,28 @@ curl --location --request POST '<context_broker_ip>:<context_broker_port>/ngsi-l
             "cmd-id": "query",
             "cmd-value": {
                 "date": "latest"
+            }
+        }
+    }
+}'
+```
+
+Entities of type "sensor" can be actuated to change their frequencyInSeconds property. 
+
+It allows you to set how many seconds the sensor must wait between one measurement and the next one.
+
+It expects an integer value.
+
+curl --location --request POST '<context_broker_ip>:<context_broker_port>/ngsi-ld/v1/entities/<id_entity_of_type_sensor>/attrs' \
+--header 'Accept: application/ld+json' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "set_frequencyInSeconds" : {
+        "type": "Property",
+        "value": {
+            "cmd-id": "new_frequencyInSeconds",
+            "cmd-value": {
+                "new_frequency_in_seconds": 1200
             }
         }
     }

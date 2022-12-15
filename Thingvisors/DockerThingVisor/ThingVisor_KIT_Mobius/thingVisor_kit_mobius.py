@@ -52,22 +52,19 @@ class FetcherThread(Thread):
         context_hello.set_all([ngsiLdEntity1])
 
     def run(self):
-        while True:
-            location="KIT"
-            sensor='Test01'
-            sensorType= "test"
-            app="detectedObject"
-            sensorName="Test"
-            sensorNumber= "001"
+        location="KIT"
+        sensorType= "zigbee"
+        app="detectedObject"
 
-            ipaddr = '192.168.11.183'
-            port = '7579'
-            resource_name = 'MukaiLab_001'
-            sensor_name = 'test'
-            ae_id = 'Se0CnueCqkL'
+        ipaddr = '192.168.37.102'
+        port = '7579'
+        resource_name = 'ZigBee_001'
+        sensor_names = ['Coordinator', 'Router01', 'EndDevice01', 'EndDevice02']
+        mobius_url = r'http://' + ipaddr + ':' + port + r'/Mobius'
 
-            mobius_url = r'http://' + ipaddr + ':' + port + r'/Mobius'
+        ae_id = MobiusOperation.ae_get(mobius_url, resource_name)
 
+        def run_main(location, sensorType, app, mobius_url, resource_name, sensor_name, ae_id):
             response = MobiusOperation.get_sensor_data(mobius_url, resource_name, sensor_name, ae_id)
 
             result = response.json()
@@ -75,7 +72,7 @@ class FetcherThread(Thread):
             nowtime = str(datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))))
             data["tvtime"] = nowtime
 
-            ngsiLdEntity1 = {"id": "urn:ngsi-ld:{0}:{1}".format(location,sensor),
+            ngsiLdEntity1 = {"id": "urn:ngsi-ld:{0}:{1}".format(location,sensor_name),
                              "type": sensorType,
                              app: {"type": "Property", "value":data}}
 
@@ -89,7 +86,10 @@ class FetcherThread(Thread):
             mqtt_data_client.publish(v_thing_topic + '/' + v_thing_data_suffix, str(message).replace("\'","\""))
             #self.publish(message)
 
-            time.sleep(1)  # possible fetch interval
+        while True:
+            for sensor_name in sensor_names:
+                run_main(location, sensorType, app, mobius_url, resource_name, sensor_name, ae_id)
+                time.sleep(1)  # possible fetch interval
 
 class mqttDataThread(Thread):
     # mqtt client for sending data

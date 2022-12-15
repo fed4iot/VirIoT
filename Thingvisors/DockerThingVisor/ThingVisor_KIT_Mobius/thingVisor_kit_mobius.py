@@ -67,6 +67,9 @@ class FetcherThread(Thread):
         def run_main(location, sensorType, app, mobius_url, resource_name, sensor_name, ae_id):
             response = MobiusOperation.get_sensor_data(mobius_url, resource_name, sensor_name, ae_id)
 
+            if response.status_code != 200:
+                return
+                
             result = response.json()
             data = result #result['m2m:cin']['con']
             nowtime = str(datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))))

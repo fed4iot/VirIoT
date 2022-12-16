@@ -23,7 +23,6 @@ import requests
 from threading import Thread
 from pymongo import MongoClient
 from context import Context
-from FiwareOperation import FiwareOperation
 # -*- coding: utf-8 -*-
 
 class FetcherThread(Thread):    
@@ -41,25 +40,28 @@ class FetcherThread(Thread):
 
         data = [{"id":"null", "score": "null", "bbox": "null"}]
 
-        ngsiLdEntity1 = {"id": "urn:ngsi-ld:"+location+":"+sensor,
+        ngsiLdEntity = {"id": "urn:ngsi-ld:"+location+":"+sensor,
                          "type": sensorType,
                          app: {"type": "Property", "value": str(data)}
                         }
 
         # set initial context for hello virtual thing
-        context_hello.set_all([ngsiLdEntity1])
+        context_hello.set_all([ngsiLdEntity])
 
     def run(self):
-        def run_main(sensorInfo, data):
-            ngsiLdEntity1 = {"id": "urn:ngsi-ld:" + sensorInfo["location"] + ":" + sensorInfo["sensor"],
+        def run_main(sensorInfo, data):            
+            del data['id'], data['type'], data['name']
+            data['dateissued']['value'] = data['dateissued']['value'].split('.')[:-1][0]
+
+            ngsiLdEntity = {"id": "urn:ngsi-ld:" + sensorInfo["location"] + ":" + sensorInfo["sensor"],
                             "type": sensorInfo["sensorType"],
-                            sensorInfo["app"]: {"type": "Property", "value":data}}
+                            'detectobject': {'type': 'Property', 'value':data}}
 
             # update context status for virtual thing hello
-            context_hello.update([ngsiLdEntity1])
+            context_hello.update([ngsiLdEntity])
 
             # publish changed entities
-            message = {"data": [ngsiLdEntity1], "meta": {"vThingID": v_thing_ID}}
+            message = {"data": [ngsiLdEntity], "meta": {"vThingID": v_thing_ID}}
             print(str(message))
 
             mqtt_data_client.publish(v_thing_topic + '/' + v_thing_data_suffix, str(message).replace("\'","\""))
@@ -71,9 +73,8 @@ class FetcherThread(Thread):
         sensorInfos = [
             {
                 "location":"KIT",
-                "sensor":"Arduino01",
-                "sensorType": "bme280",
-                "app": "detectedObject",
+                "sensor":"WeatherSensor",
+                "sensorType": "weather",
                 "sensorName":"BME280",
                 "sensorNumber": "001"
             }

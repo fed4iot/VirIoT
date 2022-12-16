@@ -60,16 +60,14 @@ class FetcherThread(Thread):
         port = '7579'
         resource_name = 'ZigBee_001'
         sensor_names = ['Coordinator', 'Router01', 'EndDevice01', 'EndDevice02']
+        # ae_id = 'SsXSvL48fg2'
         mobius_url = r'http://' + ipaddr + ':' + port + r'/Mobius'
+        ae_id = MobiusOperation.ae_get(mobius_url, resource_name).json()['m2m:ae']['aei']
 
-        ae_id = MobiusOperation.ae_get(mobius_url, resource_name)
 
         def run_main(location, sensorType, app, mobius_url, resource_name, sensor_name, ae_id):
             response = MobiusOperation.get_sensor_data(mobius_url, resource_name, sensor_name, ae_id)
 
-            if response.status_code != 200:
-                return
-                
             result = response.json()
             data = result #result['m2m:cin']['con']
             nowtime = str(datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))))
@@ -250,4 +248,5 @@ if __name__ == '__main__':
             print("KeyboardInterrupt")
             time.sleep(1)
             os._exit(1)
+
 

@@ -194,24 +194,30 @@ class FetcherThread(Thread):
             #self.publish(message)
 
         while True:
-            for sensor_info_mobius in sensor_infos_mobius:
-                ngsiLdEntity = get_mobius(mobius_url, sensor_info_mobius, app)
-                if ngsiLdEntity is not None:
-                    pub(ngsiLdEntity)
-                time.sleep(1)  # possible fetch interval
+            try:
+                for sensor_info_mobius in sensor_infos_mobius:
+                    ngsiLdEntity = get_mobius(mobius_url, sensor_info_mobius, app)
+                    if ngsiLdEntity is not None:
+                        pub(ngsiLdEntity)
+                    time.sleep(1)  # possible fetch interval
+            except:
+                time.sleep(1)
 
-            response = requests.get(fiware_url)
-            if response.status_code != 200:
-                continue
+            try:
+                response = requests.get(fiware_url)
+                if response.status_code != 200:
+                    continue
 
-            for sensor_info_fiware in sensor_infos_fiware:
-                for data in response.json():
-                    if data["id"] == "urn:ngsi-ld:" + sensor_info_fiware["real_sensor_name"] + ":" + sensor_info_fiware["real_sensor_number"]:
-                        ngsiLdEntity = get_fiware(sensor_info_fiware, data)
-                        break
-                if ngsiLdEntity is not None:
-                    pub(ngsiLdEntity)
-                time.sleep(1)  # possible fetch interval
+                for sensor_info_fiware in sensor_infos_fiware:
+                    for data in response.json():
+                        if data["id"] == "urn:ngsi-ld:" + sensor_info_fiware["real_sensor_name"] + ":" + sensor_info_fiware["real_sensor_number"]:
+                            ngsiLdEntity = get_fiware(sensor_info_fiware, data)
+                            break
+                    if ngsiLdEntity is not None:
+                        pub(ngsiLdEntity)
+                    time.sleep(1)  # possible fetch interval
+            except:
+                time.sleep(1)
 
 class mqttDataThread(Thread):
     # mqtt client for sending data

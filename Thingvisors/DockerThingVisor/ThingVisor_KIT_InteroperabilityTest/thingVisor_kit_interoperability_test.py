@@ -68,17 +68,13 @@ class FetcherThread(Thread):
         port = '7579'
         mobius_url = r'http://' + ipaddr + ':' + port + r'/Mobius'
         
-        ae_id = MobiusOperation.ae_get(mobius_url, mobius_resource_name).json()['m2m:ae']['aei']
-        time.sleep(1)
-
         sensor_infos_mobius = [
             {
                 'location':location, 
                 'sensor_type':sensor_type, 
                 'virtual_sensor_name': virtual_sensor_name,
                 'resource_name': mobius_resource_name, 
-                'real_sensor_name': mobius_sensor_name, 
-                'ae_id': ae_id
+                'real_sensor_name': mobius_sensor_name 
             } for mobius_sensor_name in mobius_sensor_names
         ]
 
@@ -107,8 +103,8 @@ class FetcherThread(Thread):
             sensor_infos_tmp.append(sensor_info_fiware)
             serial_number += 1
 
-        def get_mobius(mobius_url, sensor_info, app):
-            response = MobiusOperation.get_sensor_data(mobius_url, sensor_info['resource_name'], sensor_info['real_sensor_name'], sensor_info['ae_id'])
+        def get_mobius(mobius_url, sensor_info, ae_id, app):
+            response = MobiusOperation.get_sensor_data(mobius_url, sensor_info['resource_name'], sensor_info['real_sensor_name'], ae_id)
 
             if response.status_code != 200:
                 return
@@ -195,8 +191,9 @@ class FetcherThread(Thread):
 
         while True:
             try:
+                ae_id = MobiusOperation.ae_get(mobius_url, mobius_resource_name).json()['m2m:ae']['aei']
                 for sensor_info_mobius in sensor_infos_mobius:
-                    ngsiLdEntity = get_mobius(mobius_url, sensor_info_mobius, app)
+                    ngsiLdEntity = get_mobius(mobius_url, sensor_info_mobius, ae_id, app)
                     if ngsiLdEntity is not None:
                         pub(ngsiLdEntity)
                     time.sleep(1)  # possible fetch interval

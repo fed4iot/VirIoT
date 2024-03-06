@@ -11,7 +11,7 @@ In order to use the Docker deployment, it is required to:
 ### Clone Git Repository
 
 ```bash  
-git clone https://github.com/fed4iot/VirIoT.git
+git clone https://github.com/KIT-MukaiLab/VirIoT.git
 cd VirIoT  
 ```
 

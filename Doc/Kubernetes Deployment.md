@@ -21,7 +21,7 @@ Alternatively, you can [install Kubernetes with Minikube](https://kubernetes.io/
 ### Clone Git Repository
 
 ```bash  
-git clone https://github.com/fed4iot/VirIoT.git
+git clone https://github.com/KIT-MukaiLab/VirIoT.git
 cd VirIoT  
 ```
 

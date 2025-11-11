@@ -3,7 +3,7 @@ chardet==3.0.4
 Click==7.0
 docker==4.0.2
 Flask==1.0.3
-Flask-Cors==3.0.8
+Flask-Cors==3.0.9
 Flask-JWT-Extended==3.19.0
 idna==2.8
 itsdangerous==1.1.0
